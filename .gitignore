@@ -1,0 +1,21 @@
+# VS IDE artifacts
+.vs/
+*.user
+*.suo
+
+# Build outputs
+bin/
+obj/
+
+# dotnet
+*.nupkg
+*.snupkg
+
+# Rider
+.idea/
+
+# dotnet secrets
+**/secrets.json
+
+# Environment secrets
+.env

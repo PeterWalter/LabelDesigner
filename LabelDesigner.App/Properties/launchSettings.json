@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LabelDesigner.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "LabelDesigner.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="LabelDesigner.App/LabelDesigner.App.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+  <Project Path="LabelDesigner.Application/LabelDesigner.Application.csproj" />
+  <Project Path="LabelDesigner.Core/LabelDesigner.Core.csproj" />
+  <Project Path="LabelDesigner.Infrastructure/LabelDesigner.Infrastructure.csproj" />
+  <Project Path="LabelDesigner.Tests/LabelDesigner.Tests.csproj" />
+</Solution>
