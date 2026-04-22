@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -16,6 +18,12 @@ using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Services.Maps;
+using LabelDesigner.App.ViewModels;
+using LabelDesigner.Infrastructure;
+using LabelDesigner.Infrastructure.Interfaces;
+using LabelDesigner.Infrastructure.Barcode;
+using LabelDesigner.Infrastructure;
+
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -55,14 +63,15 @@ public partial class App : Application
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<DesignerViewModel>();
         services.AddSingleton<RibbonViewModel>();
+        services.AddSingleton<PropertiesViewModel>();
 
-        // Services
+        //// Services
         services.AddSingleton<IBarcodeService, BarcodeService>();
         services.AddSingleton<IRenderService, RenderService>();
-        services.AddSingleton<ISnapService, SnapService>();
-        services.AddSingleton<IExportService, PdfExportService>();
-        services.AddSingleton<IDataService, DataService>();
-        services.AddSingleton<IRibbonContextService, RibbonContextService>();
+        //services.AddSingleton<ISnapService, SnapService>();
+        //services.AddSingleton<IExportService, PdfExportService>();
+        //services.AddSingleton<IDataService, DataService>();
+        //services.AddSingleton<IRibbonContextService, RibbonContextService>();
 
         // Window
         services.AddSingleton<MainWindow>();
@@ -78,7 +87,7 @@ public partial class App : Application
     //    _window = new MainWindow();
     //    _window.Activate();
     //}
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         // 🔥 THIS is where the window is created
         var window = Host.Services.GetRequiredService<MainWindow>();

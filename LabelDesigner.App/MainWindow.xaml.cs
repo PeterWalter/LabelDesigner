@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Xml.Linq;
+using LabelDesigner.App.ViewModels;
+using LabelDesigner.Infrastructure.Interfaces;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -22,8 +26,26 @@ namespace LabelDesigner.App;
 /// </summary>
 public sealed partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainViewModel ViewModel
+    {
+        get;
+    }
+    private readonly DesignerViewModel _designer;
+    private readonly IRenderService _renderer;
+   
+    public MainWindow(MainViewModel vm, IRenderService renderer)
     {
         InitializeComponent();
+        ViewModel = vm;
+        RootGrid.DataContext = ViewModel;
+        LeftRuler.IsVertical = true;
+
+        //_designer = vm.Designer;
+        //_renderer = renderer;
     }
+
+    //private void Canvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
+    //{
+    //  //  _renderer.Render(ds, elements, selected, guides);
+    //}
 }

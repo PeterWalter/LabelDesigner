@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	  <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -18,7 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\LabelDesigner.Application\LabelDesigner.Application.csproj" />
     <ProjectReference Include="..\LabelDesigner.Core\LabelDesigner.Core.csproj" />
-    <ProjectReference Include="..\LabelDesigner.Infrastructure\LabelDesigner.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
