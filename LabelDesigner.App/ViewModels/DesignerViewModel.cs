@@ -14,6 +14,8 @@ namespace LabelDesigner.App;
 public partial class DesignerViewModel : ObservableObject
 {
     private readonly SnapService _snap = new();
+    private bool _isDragging = false;
+    public RectD PageBounds { get; set; } = new RectD(50, 50, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
     public ObservableCollection<DesignElement> Elements { get; } = new();
 
@@ -43,52 +45,71 @@ public partial class DesignerViewModel : ObservableObject
             Bounds = new RectD(50, 50, 200, 100)
         });
     }
+    public void ToggleOrientation()
+    {
+        PageBounds = new RectD(
+            PageBounds.X,
+            PageBounds.Y,
+            PageBounds.Height,
+            PageBounds.Width);
+    }
+    private RectD SnapToGrid(RectD rect)
+    {
+        int grid = 20;
 
+        return new RectD(
+            Math.Round(rect.X / grid) * grid,
+            Math.Round(rect.Y / grid) * grid,
+            rect.Width,
+            rect.Height);
+    }
     public void PointerPressed(Point p)
     {
         _startPoint = p;
+        _isDragging = true;
 
-        // 🔥 First: detect selection
-        Selected = Elements.FirstOrDefault(e =>
+        var hit = Elements.FirstOrDefault(e =>
         {
             var b = e.Bounds;
             return p.X >= b.X && p.X <= b.X + b.Width &&
                    p.Y >= b.Y && p.Y <= b.Y + b.Height;
         });
 
-        if (Selected == null)
+        if (hit == null)
         {
+            Selected = null;
             _activeHandle = ResizeHandle.None;
+            _isDragging = false;
             return;
         }
 
-        // 🔥 THEN detect handle
-        _activeHandle = GetHoverHandle(p);
+        Selected = hit;
 
+        _activeHandle = GetHoverHandle(p);
         _originalBounds = Selected.Bounds;
     }
 
     public void PointerMoved(Point p)
     {
-        if (Selected == null) return;
+        if (!_isDragging || Selected == null)
+            return;
 
         var dx = p.X - _startPoint.X;
         var dy = p.Y - _startPoint.Y;
 
         if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
         {
-            // 🔥 MOVE
-            Selected.Bounds = _originalBounds.Translate(dx, dy);
+            Selected.Bounds = SnapToGrid(_originalBounds.Translate(dx, dy));
         }
         else
         {
-            // 🔥 RESIZE
             Resize(dx, dy);
         }
     }
 
     public void PointerReleased()
     {
+        _isDragging = false;
         _activeHandle = ResizeHandle.None;
     }
 
@@ -249,6 +270,12 @@ public partial class DesignerViewModel : ObservableObject
         {
             Bounds = new RectD(100, 100, 200, 100),
             Value = "123456789"
+        });
+
+        Elements.Add(new TextElement
+        {
+            Bounds = new RectD(200, 300, 200, 50),
+            Text = "Hello World"
         });
     }
 }

@@ -49,6 +49,7 @@
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260416003" />
+    <PackageReference Include="Syncfusion.Ribbon.WinUI" Version="33.2.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LabelDesigner.Application\LabelDesigner.Application.csproj" />

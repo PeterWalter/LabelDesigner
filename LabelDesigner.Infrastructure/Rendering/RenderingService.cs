@@ -7,6 +7,7 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LabelDesigner.Infrastructure;
 
@@ -24,6 +25,18 @@ public class RenderService : IRenderService
                        DesignElement? selected,
                        IEnumerable<GuideLine>? guides)
     {
+        // GRID
+        int gridSize = 20;
+
+        for (int x = 0; x < 2000; x += gridSize)
+        {
+            ds.DrawLine(x, 0, x, 2000, Colors.LightGray);
+        }
+
+        for (int y = 0; y < 2000; y += gridSize)
+        {
+            ds.DrawLine(0, y, 2000, y, Colors.LightGray);
+        }
         // Clear canvas
         ds.Clear(Colors.White);
 
@@ -83,6 +96,14 @@ public class RenderService : IRenderService
                     ds.DrawRectangle(p.X - s, p.Y - s, s * 2, s * 2, Colors.Blue);
                 }
             }
+            if (el is TextElement txt)
+            {
+                ds.DrawText(
+                    txt.Text,
+                    (float)txt.Bounds.X,
+                    (float)txt.Bounds.Y,
+                    Colors.Black);
+            }
         }
 
         // ✅ Draw guides
@@ -100,5 +121,8 @@ public class RenderService : IRenderService
 
         // ✅ Debug text (optional)
         ds.DrawText("Rendering OK", 20, 20, Colors.Green);
+
+       
     }
+
 }

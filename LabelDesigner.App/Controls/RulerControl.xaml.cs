@@ -32,31 +32,41 @@ public sealed partial class RulerControl : UserControl
     }
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
     {
-        double pixelsPerMm = 3.78;
         var ds = args.DrawingSession;
 
+        double pixelsPerMm = 3.78;   // 96 DPI
         int max = 2000;
 
-        for (int i = 0; i < max; i += 10)
+        for (int i = 0; i < max; i += 5) // small step for smooth ticks
         {
-            float tick = i % 100 == 0 ? 15 : 8;
+            bool major = (i % 100 == 0);   // every 100px (~26mm)
+            bool medium = (i % 50 == 0);
+
+            float tickSize = major ? 15 : medium ? 10 : 5;
 
             if (IsVertical)
             {
-                ds.DrawLine(0, i, tick, i, Colors.Black);
+                ds.DrawLine(0, i, tickSize, i, Colors.Black);
 
-                if (i % 100 == 0)
-                    ds.DrawText((i / pixelsPerMm).ToString("0"), 20, i, Colors.Black);
+                if (major)
+                {
+                    var mm = (i / pixelsPerMm).ToString("0");
+                    ds.DrawText(mm, 20, i - 6, Colors.Black);
+                }
             }
             else
             {
-                ds.DrawLine(i, 0, i, tick, Colors.Black);
+                ds.DrawLine(i, 0, i, tickSize, Colors.Black);
 
-                if (i % 100 == 0)
-                    ds.DrawText((i / pixelsPerMm).ToString("0"), i, 15, Colors.Black);
+                if (major)
+                {
+                    var mm = (i / pixelsPerMm).ToString("0");
+                    ds.DrawText(mm, i - 6, 15, Colors.Black);
+                }
             }
         }
 
+        // unit label
         ds.DrawText("mm", 2, 2, Colors.Gray);
     }
 }

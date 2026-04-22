@@ -61,8 +61,6 @@ public sealed partial class DesignerCanvasView : UserControl
     private void OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
         VM?.PointerReleased();
-
-        (sender as CanvasControl)?.Invalidate();
     }
 
     private void UpdateCursor(ResizeHandle handle)
