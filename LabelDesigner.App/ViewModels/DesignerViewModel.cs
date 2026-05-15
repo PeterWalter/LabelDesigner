@@ -175,6 +175,55 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task Print()
+    {
+        var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
+        await print.PrintAsync(_scene.CurrentDocument);
+    }
+
+    [RelayCommand]
+    private async Task ExportPdf()
+    {
+        var pdf = App.Services!.GetRequiredService<Core.Interfaces.IPdfExportService>();
+        var savePicker = new Windows.Storage.Pickers.FileSavePicker();
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+        savePicker.SuggestedFileName = "Label.ldlabel";
+        savePicker.FileTypeChoices.Add("PDF Document", new[] { ".pdf" });
+
+        var file = await savePicker.PickSaveFileAsync();
+        if (file == null) return;
+
+        await pdf.ExportAsync(_scene.CurrentDocument, file.Path,
+            new Core.Interfaces.PdfExportOptions());
+    }
+
+    [RelayCommand]
+    private async Task ExportPng()
+    {
+        var savePicker = new Windows.Storage.Pickers.FileSavePicker();
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+        savePicker.SuggestedFileName = "Label.png";
+        savePicker.FileTypeChoices.Add("PNG Image", new[] { ".png" });
+
+        var file = await savePicker.PickSaveFileAsync();
+        if (file == null) return;
+
+        // Render at 200 DPI to a SoftwareBitmap, then encode as PNG
+        var printService = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
+        var bitmap = ((Infrastructure.Export.PrintService)printService).RenderDocumentToBitmap(_scene.CurrentDocument, 200);
+
+        using var fileStream = await file.OpenStreamForWriteAsync();
+        var encoder = Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
+            Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId,
+            fileStream.AsRandomAccessStream()).GetAwaiter().GetResult();
+
+        encoder.SetSoftwareBitmap(bitmap);
+        await encoder.FlushAsync();
+    }
+
+    [RelayCommand]
     private void ZoomToFit()
     {
         double pageW = _scene.CurrentDocument.Page.WidthMm * 3.78;

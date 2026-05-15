@@ -44,6 +44,11 @@
                     <ribbon:RibbonGroup Header="View">
                         <ribbon:RibbonButton Content="Zoom to Fit" Command="{Binding Designer.ZoomToFitCommand}"/>
                     </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Export">
+                        <ribbon:RibbonButton Content="Print" Command="{Binding Designer.PrintCommand}"/>
+                        <ribbon:RibbonButton Content="Export PDF" Command="{Binding Designer.ExportPdfCommand}"/>
+                        <ribbon:RibbonButton Content="Export PNG" Command="{Binding Designer.ExportPngCommand}"/>
+                    </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Rotate">
                         <ribbon:RibbonButton Content="Rotate 90°" Command="{Binding Designer.RotateElementCommand}"/>
                     </ribbon:RibbonGroup>

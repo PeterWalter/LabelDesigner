@@ -1,13 +1,14 @@
-using LabelDesigner.App.ViewModels;
-using LabelDesigner.Core.Interfaces;
-using LabelDesigner.Infrastructure;
-using LabelDesigner.Infrastructure.Barcode;
-using LabelDesigner.Infrastructure.Interfaces;
-using LabelDesigner.Infrastructure.Persistence;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using LabelDesigner.App.Services;
 using Microsoft.UI.Xaml;
+using LabelDesigner.App.ViewModels;
+using LabelDesigner.Infrastructure;
+using LabelDesigner.Infrastructure.Interfaces;
+using LabelDesigner.Infrastructure.Barcode;
+using LabelDesigner.Infrastructure.Persistence;
+using LabelDesigner.Infrastructure.Export;
+using LabelDesigner.Core.Interfaces;
+using LabelDesigner.App.Services;
 
 namespace LabelDesigner.App;
 
@@ -28,8 +29,6 @@ public partial class App : Microsoft.UI.Xaml.Application
     }
 
     private Window? m_window;
-    // private Window? _window;
-    // public static IHost Host { get; private set; } = null!;
 
     public App()
     {
@@ -37,13 +36,6 @@ public partial class App : Microsoft.UI.Xaml.Application
         Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(
             "Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXtfeHRcQmhfWEd1WktWYEo=");
 
-        //Host = Microsoft.Extensions.Hosting.Host
-        //    .CreateDefaultBuilder()
-        //    .ConfigureServices((context, services) =>
-        //    {
-        //        ConfigureServices(services);
-        //    })
-        //    .Build();
         ConfigureServices();
     }
 
@@ -54,7 +46,6 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         Configuration = builder.Build();
 
-        // Configure Dependency Injection
         var services = new ServiceCollection();
 
         // Core services
@@ -65,6 +56,8 @@ public partial class App : Microsoft.UI.Xaml.Application
         // Infrastructure services
         services.AddSingleton<IBarcodeService, BarcodeService>();
         services.AddSingleton<IRenderService, RenderService>();
+        services.AddSingleton<IPrintService, PrintService>();
+        services.AddSingleton<IPdfExportService, PdfExportService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();
@@ -75,6 +68,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         // Window
         services.AddSingleton<MainWindow>();
 
+        // Build the provider
         Services = services.BuildServiceProvider();
     }
 
@@ -83,11 +77,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         m_window = Services!.GetRequiredService<MainWindow>();
         m_window.ExtendsContentIntoTitleBar = true;
         MainWindow = m_window;
-       
-        // Apply saved theme to root element
+
         if (MainWindow.Content is FrameworkElement root)
         {
-            root.RequestedTheme = AppSettingsService.AppTheme;
+            root.RequestedTheme = LabelDesigner.App.Services.AppSettingsService.AppTheme;
         }
 
         MainWindow.Activate();
