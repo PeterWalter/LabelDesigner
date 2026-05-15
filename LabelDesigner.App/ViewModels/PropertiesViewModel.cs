@@ -40,6 +40,12 @@ public partial class PropertiesViewModel : ObservableObject
     [ObservableProperty]
     private string _barcodeValue = "";
 
+    [ObservableProperty]
+    private string _fillColor = "#CCCCCC";
+
+    [ObservableProperty]
+    private string _strokeColor = "#000000";
+
     public bool IsVisible => !string.IsNullOrEmpty(ElementType);
 
     public void TrackElement(DesignElement? el)
@@ -57,6 +63,8 @@ public partial class PropertiesViewModel : ObservableObject
 
         if (el is TextElement txt) { Text = txt.Text; FontSize = txt.FontSize; }
         if (el is BarcodeElement bc) { BarcodeValue = bc.Value; }
+        if (el is ShapeElement sh) { FillColor = sh.Fill; StrokeColor = sh.Stroke; }
+        if (el is LineElement ln) { StrokeColor = ln.Stroke; }
     }
 
     partial void OnElementNameChanged(string value) { if (_trackedElement != null) _trackedElement.Name = value; }
@@ -68,4 +76,9 @@ public partial class PropertiesViewModel : ObservableObject
     partial void OnTextChanged(string value) { if (_trackedElement is TextElement txt) txt.Text = value; }
     partial void OnFontSizeChanged(double value) { if (_trackedElement is TextElement txt) txt.FontSize = value; }
     partial void OnBarcodeValueChanged(string value) { if (_trackedElement is BarcodeElement bc) bc.Value = value; }
+    partial void OnFillColorChanged(string value) { if (_trackedElement is ShapeElement sh) sh.Fill = value; }
+    partial void OnStrokeColorChanged(string value) {
+        if (_trackedElement is ShapeElement sh) sh.Stroke = value;
+        if (_trackedElement is LineElement ln) ln.Stroke = value;
+    }
 }

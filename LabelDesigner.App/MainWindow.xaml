@@ -154,6 +154,14 @@
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <TextBlock Text="Fill Color (#RRGGBB)" FontSize="11" Foreground="#666"
+                            Visibility="{Binding Designer.Properties.FillColor, Converter={StaticResource BoolToVisibility}}"/>
+                        <TextBox Text="{Binding Designer.Properties.FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Visibility="{Binding Designer.Properties.FillColor, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <TextBlock Text="Stroke Color (#RRGGBB)" FontSize="11" Foreground="#666"/>
+                        <TextBox Text="{Binding Designer.Properties.StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
