@@ -28,6 +28,8 @@
             <!-- Top ruler -->
             <RowDefinition Height="*"/>
             <!-- Main content -->
+            <RowDefinition Height="24"/>
+            <!-- Status bar -->
         </Grid.RowDefinitions>
 
         <!-- ========================= -->
@@ -87,6 +89,45 @@
             <views:DesignerCanvasView Grid.Column="1"/>
 
         </Grid>
+
+        <!-- ========================= -->
+        <!-- STATUS BAR -->
+        <!-- ========================= -->
+        <Border Grid.Row="3" Height="24" Background="#E0E0E0" BorderBrush="#B0B0B0" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Page: A4" Margin="6,0,0,0"
+                    VerticalAlignment="Center" FontSize="12" Foreground="#444"/>
+
+                <TextBlock Grid.Column="1" Text=" | " VerticalAlignment="Center"
+                    FontSize="12" Foreground="#888"/>
+
+                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#444"
+                    Text="{Binding Designer.Viewport.ZoomPercent, StringFormat='Zoom: {0}%'}"/>
+
+                <TextBlock Grid.Column="4" FontSize="12" VerticalAlignment="Center" Foreground="#444"
+                    Margin="6,0,0,0">
+                    <Run Text="Cursor:"/>
+                    <Run Text="{Binding Designer.CursorWorldX, FallbackValue=0}"/>
+                    <Run Text=","/>
+                    <Run Text="{Binding Designer.CursorWorldY, FallbackValue=0}"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="5" FontSize="12" VerticalAlignment="Center" Foreground="#444"
+                    Margin="12,0,6,0">
+                    <Run Text="Elements:"/>
+                    <Run Text="{Binding Designer.ElementCount, FallbackValue=0}"/>
+                </TextBlock>
+            </Grid>
+        </Border>
 
     </Grid>
 </Window>

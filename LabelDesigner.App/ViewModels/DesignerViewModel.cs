@@ -30,6 +30,14 @@ public partial class DesignerViewModel : ObservableObject
     private PointD _startPointD;
     private RectD _originalBounds;
 
+    [ObservableProperty]
+    private int _cursorWorldX;
+
+    [ObservableProperty]
+    private int _cursorWorldY;
+
+    public int ElementCount => _scene.CurrentDocument.AllElements.Count;
+
     public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
 
@@ -150,6 +158,21 @@ public partial class DesignerViewModel : ObservableObject
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
         _scene.AddElement(new TextElement { Bounds = new RectD(50, 50, 200, 30) }, layerId);
+    }
+
+    [RelayCommand]
+    private void ZoomToFit()
+    {
+        double pageW = _scene.CurrentDocument.Page.WidthMm * 3.78;
+        double pageH = _scene.CurrentDocument.Page.HeightMm * 3.78;
+        Viewport.ZoomToFit(1200, 800, pageW, pageH);
+    }
+
+    [RelayCommand]
+    private void RotateElement()
+    {
+        if (Selected != null && !Selected.Locked)
+            _scene.RotateSelected(90);
     }
 
     [RelayCommand]
@@ -285,6 +308,9 @@ public partial class DesignerViewModel : ObservableObject
     {
         var p = Viewport.ScreenToWorld(screenPoint);
         var pD = new PointD(p.X, p.Y);
+
+        CursorWorldX = (int)pD.X;
+        CursorWorldY = (int)pD.Y;
 
         if (!_isDragging || Selected == null)
             return;
