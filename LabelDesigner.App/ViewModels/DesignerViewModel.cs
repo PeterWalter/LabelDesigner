@@ -81,6 +81,12 @@ public partial class DesignerViewModel : ObservableObject
                 OnPropertyChanged(nameof(ZoomText));
         };
 
+        this.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Selected))
+                _properties.TrackElement(Selected);
+        };
+
         var layer = _scene.AddLayer("Default");
 
         _scene.AddElement(new BarcodeElement
@@ -150,14 +156,14 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Undo()
+    public void Undo()
     {
         _undoRedo.Undo();
         Selected = _scene.SingleSelected;
     }
 
     [RelayCommand]
-    private void Redo()
+    public void Redo()
     {
         _undoRedo.Redo();
         Selected = _scene.SingleSelected;
@@ -238,13 +244,13 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CopySelected()
+    public void CopySelected()
     {
         _clipboard = Selected;
     }
 
     [RelayCommand]
-    private void PasteElement()
+    public void PasteElement()
     {
         if (_clipboard == null) return;
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
@@ -322,7 +328,7 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void DeleteSelected()
+    public void DeleteSelected()
     {
         if (Selected != null)
             _scene.RemoveElement(Selected.Id);
