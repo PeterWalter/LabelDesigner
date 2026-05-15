@@ -72,6 +72,9 @@
                         <ribbon:RibbonButton Content="A3"
             Command="{Binding Designer.SetPageA3Command}">
             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Landscape/Portrait"
+            Command="{Binding Designer.ToggleOrientationCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Label 4x5"
             Command="{Binding Designer.SetPageLabel4x5Command}">
             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>

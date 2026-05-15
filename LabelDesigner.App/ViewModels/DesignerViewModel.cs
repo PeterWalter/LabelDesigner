@@ -559,9 +559,16 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void DecreaseFont() { if (Selected is TextElement t) t.FontSize -= 2; }
 
+    [RelayCommand]
     public void ToggleOrientation()
     {
+        IsLandscape = !IsLandscape;
+        var w = _scene.CurrentDocument.Page.WidthMm;
+        var h = _scene.CurrentDocument.Page.HeightMm;
+        _scene.CurrentDocument.Page.WidthMm = h;
+        _scene.CurrentDocument.Page.HeightMm = w;
         PageBounds = new RectD(PageBounds.X, PageBounds.Y, PageBounds.Height, PageBounds.Width);
+        RequestRedraw?.Invoke();
     }
 
     public void SetPage(PageSize size, bool landscape)
