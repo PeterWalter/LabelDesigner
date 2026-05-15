@@ -52,31 +52,14 @@ public class SceneGraphService : ISceneGraphService
     public void AddElement(DesignElement element, Guid? parentLayerId = null)
     {
         var layerId = parentLayerId ?? GetDefaultLayer().Id;
-
-        _undoRedo.Execute(new AddElementCommand(this, element, layerId));
-
-        _elements[element.Id] = element;
         element.ParentId = layerId;
-
-        if (_layers.TryGetValue(layerId, out var layer))
-            layer.ElementIds.Add(element.Id);
-
-        CurrentDocument.AllElements.Add(element);
+        _undoRedo.Execute(new AddElementCommand(this, element, layerId));
     }
 
     public void RemoveElement(Guid id)
     {
         if (!_elements.TryGetValue(id, out var element)) return;
-
         _undoRedo.Execute(new RemoveElementCommand(this, element, element.ParentId));
-
-        _elements.Remove(id);
-        _selectedIds.Remove(id);
-
-        if (element.ParentId.HasValue && _layers.TryGetValue(element.ParentId.Value, out var layer))
-            layer.ElementIds.Remove(id);
-
-        CurrentDocument.AllElements.Remove(element);
     }
 
     public void MoveElement(Guid id, Guid newParentLayerId)
