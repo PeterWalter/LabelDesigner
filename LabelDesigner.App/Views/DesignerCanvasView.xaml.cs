@@ -28,6 +28,41 @@ public sealed partial class DesignerCanvasView : UserControl
         this.PointerWheelChanged += OnPointerWheelChanged;
         this.KeyDown += OnCanvasKeyDown;
         this.KeyUp += OnCanvasKeyUp;
+
+        Loaded += OnCanvasLoaded;
+        SizeChanged += OnCanvasSizeChanged;
+        VM.RequestRedraw += InvalidateCanvas;
+    }
+
+    private void OnCanvasLoaded(object sender, RoutedEventArgs e)
+    {
+        var canvas = FindName("Canvas") as CanvasControl;
+        if (canvas != null && canvas.ActualWidth > 0) DoZoomToFit(canvas);
+    }
+
+    private void OnCanvasSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!_firstDraw)
+        {
+            var canvas = FindName("Canvas") as CanvasControl;
+            if (canvas != null) DoZoomToFit(canvas);
+        }
+    }
+
+    private void DoZoomToFit(CanvasControl canvas)
+    {
+        double pageW = VM.Scene.CurrentDocument.Page.WidthMm * 3.78;
+        double pageH = VM.Scene.CurrentDocument.Page.HeightMm * 3.78;
+        if (pageW <= 0 || pageH <= 0 || canvas.ActualWidth <= 0) return;
+        VM.Viewport.ZoomToFit(canvas.ActualWidth, canvas.ActualHeight, pageW, pageH);
+        _firstDraw = false;
+        canvas.Invalidate();
+    }
+
+    public void InvalidateCanvas()
+    {
+        var ctrl = FindName("Canvas") as CanvasControl;
+        ctrl?.Invalidate();
     }
 
     private void OnCanvasKeyDown(object sender, KeyRoutedEventArgs e)
@@ -41,6 +76,10 @@ public sealed partial class DesignerCanvasView : UserControl
         else if (ctrl && e.Key == Windows.System.VirtualKey.V) VM?.PasteElement();
         else if (e.Key == Windows.System.VirtualKey.Shift) VM?.SetShiftState(true);
         else if (e.Key == Windows.System.VirtualKey.Delete) VM?.DeleteSelected();
+        else if (ctrl && e.Key == Windows.System.VirtualKey.Add)
+        { VM.Viewport.Zoom = Math.Clamp(VM.Viewport.Zoom + 0.1, CanvasViewport.MinZoom, CanvasViewport.MaxZoom); InvalidateCanvas(); }
+        else if (ctrl && e.Key == Windows.System.VirtualKey.Subtract)
+        { VM.Viewport.Zoom = Math.Clamp(VM.Viewport.Zoom - 0.1, CanvasViewport.MinZoom, CanvasViewport.MaxZoom); InvalidateCanvas(); }
     }
 
     private void OnCanvasKeyUp(object sender, KeyRoutedEventArgs e)
@@ -52,16 +91,13 @@ public sealed partial class DesignerCanvasView : UserControl
     {
         if (VM == null) return;
 
-        if (_firstDraw)
+        if (_firstDraw && sender.ActualWidth > 0)
         {
             _firstDraw = false;
             double pageW = VM.Scene.CurrentDocument.Page.WidthMm * 3.78;
             double pageH = VM.Scene.CurrentDocument.Page.HeightMm * 3.78;
-            if (pageW > 0 && pageH > 0 && sender.ActualWidth > 0)
-            {
+            if (pageW > 0 && pageH > 0)
                 VM.Viewport.ZoomToFit(sender.ActualWidth, sender.ActualHeight, pageW, pageH);
-                (sender as CanvasControl)?.Invalidate();
-            }
         }
 
         var ds = args.DrawingSession;

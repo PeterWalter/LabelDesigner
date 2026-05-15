@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;

@@ -75,6 +75,9 @@
                         <ribbon:RibbonButton Content="Label 4x5"
             Command="{Binding Designer.SetPageLabel4x5Command}">
             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Label 6x4"
+            Command="{Binding Designer.SetPageLabel6x4Command}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Label 8x3"
             Command="{Binding Designer.SetPageLabel8x3Command}">
             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
@@ -200,8 +203,11 @@
                 <TextBlock Grid.Column="0" Text="Page: A4" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#444"/>
                 <TextBlock Grid.Column="1" Text=" | " VerticalAlignment="Center" FontSize="12" Foreground="#888"/>
                 <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#444" Text="{Binding Designer.ZoomText}"/>
-                <TextBlock Grid.Column="4" FontSize="12" VerticalAlignment="Center" Foreground="#444" Margin="6,0,0,0" Text="{Binding Designer.CursorText}"/>
-                <TextBlock Grid.Column="5" FontSize="12" VerticalAlignment="Center" Foreground="#444" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"/>
+                <Button Grid.Column="3" Content="-" Margin="2,0" Padding="4,0" MinWidth="20" Height="20" FontSize="12" Command="{Binding Designer.ZoomOutCommand}"/>
+                <Button Grid.Column="4" Content="+" Margin="2,0" Padding="4,0" MinWidth="20" Height="20" FontSize="12" Command="{Binding Designer.ZoomInCommand}"/>
+                <Button Grid.Column="5" Content="Fit" Margin="2,0" Padding="4,0" Height="20" FontSize="11" Command="{Binding Designer.ZoomToFitCommand}"/>
+                <TextBlock Grid.Column="6" FontSize="12" VerticalAlignment="Center" Foreground="#444" Margin="6,0,0,0" Text="{Binding Designer.CursorText}"/>
+                <TextBlock Grid.Column="7" FontSize="12" VerticalAlignment="Center" Foreground="#444" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"/>
             </Grid>
         </Border>
 

@@ -64,6 +64,8 @@ public partial class DesignerViewModel : ObservableObject
     private string? _currentFilePath;
     private DesignElement? _clipboard;
 
+    public Action? RequestRedraw { get; set; }
+
     public DesignerViewModel(
         ISceneGraphService scene,
         IUndoRedoService undoRedo,
@@ -242,6 +244,7 @@ public partial class DesignerViewModel : ObservableObject
         double pageW = _scene.CurrentDocument.Page.WidthMm * 3.78;
         double pageH = _scene.CurrentDocument.Page.HeightMm * 3.78;
         Viewport.ZoomToFit(1200, 800, pageW, pageH);
+        RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
@@ -281,17 +284,34 @@ public partial class DesignerViewModel : ObservableObject
     private void RotateElement()
     {
         if (Selected != null && !Selected.Locked)
-            _scene.RotateSelected(90);
+        {
+            Selected.Rotation = (Selected.Rotation + 90) % 360;
+            RequestRedraw?.Invoke();
+        }
     }
 
     [RelayCommand]
-    private void SetPageA4() => SetPage(PageSize.A4, false);
+    private void ZoomIn()
+    {
+        Viewport.Zoom = Math.Clamp(Viewport.Zoom + 0.1, CanvasViewport.MinZoom, CanvasViewport.MaxZoom);
+        RequestRedraw?.Invoke();
+    }
 
     [RelayCommand]
-    private void SetPageA5() => SetPage(PageSize.A5, false);
+    private void ZoomOut()
+    {
+        Viewport.Zoom = Math.Clamp(Viewport.Zoom - 0.1, CanvasViewport.MinZoom, CanvasViewport.MaxZoom);
+        RequestRedraw?.Invoke();
+    }
 
     [RelayCommand]
-    private void SetPageA3() => SetPage(PageSize.A3, false);
+    private void SetPageA4() { SetPage(PageSize.A4, false); RequestRedraw?.Invoke(); }
+
+    [RelayCommand]
+    private void SetPageA5() { SetPage(PageSize.A5, false); RequestRedraw?.Invoke(); }
+
+    [RelayCommand]
+    private void SetPageA3() { SetPage(PageSize.A3, false); RequestRedraw?.Invoke(); }
 
     [RelayCommand]
     private void SetPageLabel4x5()
@@ -300,6 +320,17 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.HeightMm = 127.0;
         _scene.CurrentDocument.Page.Dpi = 300;
         PageBounds = new RectD(50, 50, 101.6 * 3.78, 127.0 * 3.78);
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void SetPageLabel6x4()
+    {
+        _scene.CurrentDocument.Page.WidthMm = 152.4;
+        _scene.CurrentDocument.Page.HeightMm = 101.6;
+        _scene.CurrentDocument.Page.Dpi = 300;
+        PageBounds = new RectD(50, 50, 152.4 * 3.78, 101.6 * 3.78);
+        RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
@@ -309,6 +340,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.HeightMm = 76.2;
         _scene.CurrentDocument.Page.Dpi = 300;
         PageBounds = new RectD(50, 50, 203.2 * 3.78, 76.2 * 3.78);
+        RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
