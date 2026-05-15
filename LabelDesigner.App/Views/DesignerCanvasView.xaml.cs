@@ -21,10 +21,10 @@ public sealed partial class DesignerCanvasView : UserControl
     private CanvasControl? _canvas;
 
     public DesignerViewModel VM =>
-        App.Services.GetRequiredService<DesignerViewModel>();
+        App.Services!.GetRequiredService<DesignerViewModel>();
 
     private readonly IRenderService _renderer =
-        App.Services.GetRequiredService<IRenderService>();
+        App.Services!.GetRequiredService<IRenderService>();
 
     public DesignerCanvasView()
     {
