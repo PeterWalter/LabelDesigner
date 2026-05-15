@@ -3,11 +3,12 @@ using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
-
 using LabelDesigner.Infrastructure.Common;
 using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI;
+using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using System.Numerics;
 
@@ -60,23 +61,18 @@ public class PrintService : IPrintService
         await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Bmp);
         stream.Seek(0);
 
-        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(stream);
+        var decoder = await BitmapDecoder.CreateAsync(stream);
         return await decoder.GetSoftwareBitmapAsync();
     }
 
     private void DrawElementHighRes(CanvasDrawingSession ds, DesignElement el,
         Dictionary<Guid, DesignElement> lookup, float scale)
     {
-        if (el is BarcodeElement barcode)
-            DrawBarcodeHighRes(ds, barcode, scale);
-        else if (el is TextElement text)
-            DrawTextHighRes(ds, text, scale);
-        else if (el is ShapeElement shape)
-            DrawShapeHighRes(ds, shape, scale);
-        else if (el is LineElement line)
-            DrawLineHighRes(ds, line, scale);
-        else if (el is ImageElement image)
-            DrawImageHighRes(ds, image, scale);
+        if (el is BarcodeElement barcode) DrawBarcodeHighRes(ds, barcode, scale);
+        else if (el is TextElement text) DrawTextHighRes(ds, text, scale);
+        else if (el is ShapeElement shape) DrawShapeHighRes(ds, shape, scale);
+        else if (el is LineElement line) DrawLineHighRes(ds, line, scale);
+        else if (el is ImageElement image) DrawImageHighRes(ds, image, scale);
         else if (el is ContainerElement container)
         {
             foreach (var childId in container.ChildIds)
@@ -90,42 +86,32 @@ public class PrintService : IPrintService
     private void DrawBarcodeHighRes(CanvasDrawingSession ds, BarcodeElement b, float scale)
     {
         var bounds = b.Bounds;
-        float padding = 6 * scale;
-        float textHeight = 18 * scale;
-        RectD barcodeRect = bounds;
-        float textX = 0, textY = 0;
+        float padding = 6 * scale, textHeight = 18 * scale;
+        RectD br = bounds; float tx = 0, ty = 0;
         string text = b.DisplayText;
-
         switch (b.TextPosition)
         {
             case BarcodeTextPosition.Top:
-                barcodeRect = new RectD(bounds.X, bounds.Y + textHeight + padding, bounds.Width, bounds.Height - textHeight - padding);
-                textX = (float)(bounds.X + bounds.Width / 2); textY = (float)bounds.Y; break;
+                br = new RectD(bounds.X, bounds.Y + textHeight + padding, bounds.Width, bounds.Height - textHeight - padding);
+                tx = (float)(bounds.X + bounds.Width / 2); ty = (float)bounds.Y; break;
             case BarcodeTextPosition.Bottom:
-                barcodeRect = new RectD(bounds.X, bounds.Y, bounds.Width, bounds.Height - textHeight - padding);
-                textX = (float)(bounds.X + bounds.Width / 2); textY = (float)(bounds.Y + bounds.Height - textHeight); break;
+                br = new RectD(bounds.X, bounds.Y, bounds.Width, bounds.Height - textHeight - padding);
+                tx = (float)(bounds.X + bounds.Width / 2); ty = (float)(bounds.Y + bounds.Height - textHeight); break;
             case BarcodeTextPosition.Left:
-                barcodeRect = new RectD(bounds.X + 60 * scale, bounds.Y, bounds.Width - 60 * scale, bounds.Height);
-                textX = (float)bounds.X; textY = (float)(bounds.Y + bounds.Height / 2); break;
+                br = new RectD(bounds.X + 60 * scale, bounds.Y, bounds.Width - 60 * scale, bounds.Height);
+                tx = (float)bounds.X; ty = (float)(bounds.Y + bounds.Height / 2); break;
             case BarcodeTextPosition.Right:
-                barcodeRect = new RectD(bounds.X, bounds.Y, bounds.Width - 60 * scale, bounds.Height);
-                textX = (float)(bounds.X + bounds.Width - 60 * scale); textY = (float)(bounds.Y + bounds.Height / 2); break;
+                br = new RectD(bounds.X, bounds.Y, bounds.Width - 60 * scale, bounds.Height);
+                tx = (float)(bounds.X + bounds.Width - 60 * scale); ty = (float)(bounds.Y + bounds.Height / 2); break;
         }
-
-        var bmp = _barcode.Generate(b.Value, ZXing.BarcodeFormat.CODE_128,
-            (int)barcodeRect.Width, (int)barcodeRect.Height);
+        var bmp = _barcode.Generate(b.Value, ZXing.BarcodeFormat.CODE_128, (int)br.Width, (int)br.Height);
         if (bmp != null)
         {
             var img = CanvasBitmap.CreateFromSoftwareBitmap(ds.Device, bmp);
-            ds.DrawImage(img, barcodeRect.ToWinRect());
+            ds.DrawImage(img, br.ToWinRect());
         }
-
-        ds.DrawText(text, new Vector2(textX, textY), Colors.Black, new CanvasTextFormat
-        {
-            HorizontalAlignment = CanvasHorizontalAlignment.Center,
-            VerticalAlignment = CanvasVerticalAlignment.Center,
-            FontSize = 14 * scale
-        });
+        ds.DrawText(text, new Vector2(tx, ty), Colors.Black, new CanvasTextFormat
+        { HorizontalAlignment = CanvasHorizontalAlignment.Center, VerticalAlignment = CanvasVerticalAlignment.Center, FontSize = 14 * scale });
     }
 
     private void DrawTextHighRes(CanvasDrawingSession ds, TextElement txt, float scale)
@@ -148,6 +134,14 @@ public class PrintService : IPrintService
             ds.DrawEllipse(new Vector2((float)(b.X + b.Width / 2), (float)(b.Y + b.Height / 2)),
                 (float)(b.Width / 2), (float)(b.Height / 2), stroke, sw);
         }
+        else if (shape.Type == ShapeType.Triangle)
+        {
+            var xL = (float)b.X; var xR = (float)(b.X + b.Width); var xM = (float)(b.X + b.Width / 2);
+            var yT = (float)b.Y; var yB = (float)(b.Y + b.Height);
+            var tri = new[] { new Vector2(xM, yT), new Vector2(xL, yB), new Vector2(xR, yB) };
+            ds.FillGeometry(CanvasGeometry.CreatePolygon(ds, tri), fill);
+            ds.DrawGeometry(CanvasGeometry.CreatePolygon(ds, tri), stroke, sw);
+        }
         else
         {
             ds.FillRectangle(b, fill);
@@ -165,6 +159,34 @@ public class PrintService : IPrintService
     private void DrawImageHighRes(CanvasDrawingSession ds, ImageElement image, float scale)
     {
         var b = image.Bounds.ToWinRect();
+        try
+        {
+            if (!string.IsNullOrEmpty(image.SourcePath) && System.IO.File.Exists(image.SourcePath))
+            {
+                var bitmap = CanvasBitmap.LoadAsync(ds.Device, image.SourcePath).GetAwaiter().GetResult();
+                var srcRect = new Windows.Foundation.Rect(0, 0, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height);
+                var dstRect = b;
+
+                if (image.Stretch == ImageStretch.Uniform)
+                {
+                    float s = Math.Min((float)(b.Width / bitmap.Size.Width), (float)(b.Height / bitmap.Size.Height));
+                    float dw = (float)(bitmap.Size.Width * s), dh = (float)(bitmap.Size.Height * s);
+                    dstRect = new Windows.Foundation.Rect((float)(b.X + (b.Width - dw) / 2), (float)(b.Y + (b.Height - dh) / 2), dw, dh);
+                }
+                else if (image.Stretch == ImageStretch.UniformToFill)
+                {
+                    float s = Math.Max((float)(b.Width / bitmap.Size.Width), (float)(b.Height / bitmap.Size.Height));
+                    float dw = (float)(bitmap.Size.Width * s), dh = (float)(bitmap.Size.Height * s);
+                    dstRect = new Windows.Foundation.Rect((float)(b.X + (b.Width - dw) / 2), (float)(b.Y + (b.Height - dh) / 2), dw, dh);
+                }
+
+                ds.DrawImage(bitmap, dstRect, srcRect, 1.0f, CanvasImageInterpolation.HighQualityCubic);
+                return;
+            }
+        }
+        catch { }
         ds.FillRectangle(b, Colors.LightGray);
+        ds.DrawLine((float)b.Left, (float)b.Top, (float)b.Right, (float)b.Bottom, Colors.DarkGray, 1);
+        ds.DrawLine((float)b.Right, (float)b.Top, (float)b.Left, (float)b.Bottom, Colors.DarkGray, 1);
     }
 }
