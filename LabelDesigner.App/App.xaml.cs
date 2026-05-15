@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using LabelDesigner.App.ViewModels;
@@ -23,10 +22,6 @@ public partial class App : Microsoft.UI.Xaml.Application
     {
         get; private set;
     }
-    public static IConfiguration? Configuration
-    {
-        get; private set;
-    }
 
     private Window? m_window;
 
@@ -41,11 +36,6 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     private void ConfigureServices()
     {
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory);
-
-        Configuration = builder.Build();
-
         var services = new ServiceCollection();
 
         // Core services
