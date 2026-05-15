@@ -2,7 +2,6 @@ using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using Syncfusion.Pdf;
 using Syncfusion.Pdf.Graphics;
-using Syncfusion.Pdf.Grid;
 
 namespace LabelDesigner.Infrastructure.Export;
 
@@ -82,8 +81,8 @@ public class PdfExportService : IPdfExportService
     private void DrawShapeToPdf(PdfGraphics graphics, ShapeElement shape, float scale)
     {
         var b = shape.Bounds;
-        var brush = new PdfSolidBrush(new Syncfusion.Drawing.Color(255, 200, 200, 200));
-        var pen = new PdfPen(new Syncfusion.Drawing.Color(0, 0, 0), (float)shape.StrokeWidth * scale);
+        var brush = new PdfSolidBrush(Syncfusion.Drawing.Color.FromArgb(255, 200, 200, 200));
+        var pen = new PdfPen(Syncfusion.Drawing.Color.FromArgb(0, 0, 0), (float)shape.StrokeWidth * scale);
 
         if (shape.Type == ShapeType.Ellipse)
         {
