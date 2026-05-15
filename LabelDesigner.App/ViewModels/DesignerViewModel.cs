@@ -645,19 +645,21 @@ public partial class DesignerViewModel : ObservableObject
         CurrentPageSize = size;
         IsLandscape = landscape;
 
-        (double w, double h) = size switch
+        (double wMm, double hMm) = size switch
         {
-            PageSize.A5 => (420, 595),
-            PageSize.A4 => (595, 842),
-            PageSize.A3 => (842, 1191),
-            _ => (595, 842)
+            PageSize.A5 => (148, 210),
+            PageSize.A4 => (210, 297),
+            PageSize.A3 => (297, 420),
+            _ => (210, 297)
         };
 
-        if (landscape) (w, h) = (h, w);
-        _scene.CurrentDocument.Page.WidthMm = w / 3.78;
-        _scene.CurrentDocument.Page.HeightMm = h / 3.78;
+        if (landscape) (wMm, hMm) = (hMm, wMm);
+        _scene.CurrentDocument.Page.WidthMm = wMm;
+        _scene.CurrentDocument.Page.HeightMm = hMm;
         _scene.CurrentDocument.Page.Dpi = 300;
-        PageBounds = new RectD(50, 50, w, h);
+        double wPx = wMm * 3.78;
+        double hPx = hMm * 3.78;
+        PageBounds = new RectD(50, 50, wPx, hPx);
         RequestRedraw?.Invoke();
     }
 

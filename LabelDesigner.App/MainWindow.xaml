@@ -9,154 +9,158 @@
     xmlns:views="using:LabelDesigner.App.Views"
     xmlns:controls="using:LabelDesigner.App.Controls"
     xmlns:converters="using:LabelDesigner.App.Converters"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Title="LabelDesigner" Width="1400" Height="900">
 
-    <Grid Name="RootGrid" Background="#F3F3F3">
+    <Grid Name="RootGrid" Background="#F0F2F5">
 
         <Grid.Resources>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            <Style TargetType="TextBox" x:Key="PropBox">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Height" Value="24"/>
+                <Setter Property="BorderBrush" Value="#D0D0D0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4,0"/>
+            </Style>
         </Grid.Resources>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="20"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="24"/>
+            <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
-        <ribbon:SfRibbon>
+        <ribbon:SfRibbon Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
 
             <ribbon:SfRibbon.Tabs>
 
-                <ribbon:RibbonTab Header="Home">
-                    <ribbon:RibbonGroup Header="Elements">
-                        <ribbon:RibbonButton Content="Barcode"
-            Command="{Binding Designer.AddBarcodeCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Text"
-            Command="{Binding Designer.AddTextCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Shape"
-            Command="{Binding Designer.AddShapeCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Line"
-            Command="{Binding Designer.AddLineCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE136;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Image"
-            Command="{Binding Designer.AddImageCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Delete"
-            Command="{Binding Designer.DeleteSelectedCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                <ribbon:RibbonTab Header="Home" Background="#FAFAFA">
+                    <ribbon:RibbonGroup Header="Elements" Background="#FAFAFA">
+                        <ribbon:RibbonButton ToolTip="Insert a barcode" Content="Barcode" Command="{Binding Designer.AddBarcodeCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Insert text" Content="Text" Command="{Binding Designer.AddTextCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Insert a shape" Content="Shape" Command="{Binding Designer.AddShapeCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Draw a line" Content="Line" Command="{Binding Designer.AddLineCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE136;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Insert an image" Content="Image" Command="{Binding Designer.AddImageCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Delete selected" Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Arrange">
-                        <ribbon:RibbonButton Content="Group"
-            Command="{Binding Designer.GroupSelectedCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Ungroup"
-            Command="{Binding Designer.UngroupSelectedCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Group selected elements" Content="Group" Command="{Binding Designer.GroupSelectedCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Ungroup selected" Content="Ungroup" Command="{Binding Designer.UngroupSelectedCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Clipboard">
-                        <ribbon:RibbonButton Content="Copy"
-            Command="{Binding Designer.CopySelectedCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Paste"
-            Command="{Binding Designer.PasteElementCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE77F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Copy (Ctrl+C)" Content="Copy" Command="{Binding Designer.CopySelectedCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Paste (Ctrl+V)" Content="Paste" Command="{Binding Designer.PasteElementCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE77F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="View">
-                        <ribbon:RibbonButton Content="Zoom to Fit"
-            Command="{Binding Designer.ZoomToFitCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Fit page to canvas" Content="Fit" Command="{Binding Designer.ZoomToFitCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Page">
-                        <ribbon:RibbonButton Content="A4"
-            Command="{Binding Designer.SetPageA4Command}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="A5"
-            Command="{Binding Designer.SetPageA5Command}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="A3"
-            Command="{Binding Designer.SetPageA3Command}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Landscape/Portrait"
-            Command="{Binding Designer.ToggleOrientationCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Label 4x5"
-            Command="{Binding Designer.SetPageLabel4x5Command}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Label 6x4"
-            Command="{Binding Designer.SetPageLabel6x4Command}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Label 8x3"
-            Command="{Binding Designer.SetPageLabel8x3Command}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="ISO A4 210x297mm" Content="A4" Command="{Binding Designer.SetPageA4Command}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="ISO A5 148x210mm" Content="A5" Command="{Binding Designer.SetPageA5Command}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="ISO A3 297x420mm" Content="A3" Command="{Binding Designer.SetPageA3Command}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Toggle landscape/portrait" Content="Flip" Command="{Binding Designer.ToggleOrientationCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Label 4x5 inch" Content="4x5" Command="{Binding Designer.SetPageLabel4x5Command}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Label 6x4 inch" Content="6x4" Command="{Binding Designer.SetPageLabel6x4Command}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Label 8x3 inch" Content="8x3" Command="{Binding Designer.SetPageLabel8x3Command}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Rotate">
-                        <ribbon:RibbonButton Content="Rotate 90"
-            Command="{Binding Designer.RotateElementCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Rotate 90" Content="Rot 90" Command="{Binding Designer.RotateElementCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Data">
-                        <ribbon:RibbonButton Content="Load CSV"
-            Command="{Binding Designer.LoadDataSourceCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8E5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Print All"
-            Command="{Binding Designer.PrintWithDataCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Load CSV data" Content="CSV" Command="{Binding Designer.LoadDataSourceCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8E5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Print one per data row" Content="Print All" Command="{Binding Designer.PrintWithDataCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Preview">
-                        <ribbon:RibbonButton Content="Print Preview"
-            Command="{Binding Designer.PreviewPrintCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Show print preview" Content="Preview" Command="{Binding Designer.PreviewPrintCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Export">
-                        <ribbon:RibbonButton Content="Print"
-            Command="{Binding Designer.PrintCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Export PDF"
-            Command="{Binding Designer.ExportPdfCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Export PNG"
-            Command="{Binding Designer.ExportPngCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Print to printer" Content="Print" Command="{Binding Designer.PrintCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Export to PDF" Content="PDF" Command="{Binding Designer.ExportPdfCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton ToolTip="Export to PNG" Content="PNG" Command="{Binding Designer.ExportPngCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                 </ribbon:RibbonTab>
 
             </ribbon:SfRibbon.Tabs>
 
             <ribbon:SfRibbon.ContextualTabGroups>
-
-                    <ribbon:RibbonContextualTabGroup
+                <ribbon:RibbonContextualTabGroup
             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}">
-
                     <ribbon:RibbonContextualTabGroup.Tabs>
                         <ribbon:RibbonTab Header="Barcode">
                             <ribbon:RibbonGroup Header="Text Position">
-                                <ribbon:RibbonButton Content="Top"
-            Command="{Binding Designer.SetTextTopCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                                <ribbon:RibbonButton Content="Bottom"
-            Command="{Binding Designer.SetTextBottomCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                                <ribbon:RibbonButton Content="Left"
-            Command="{Binding Designer.SetTextLeftCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
-                                <ribbon:RibbonButton Content="Right"
-            Command="{Binding Designer.SetTextRightCommand}">
-            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                                <ribbon:RibbonButton ToolTip="Text above" Content="Top" Command="{Binding Designer.SetTextTopCommand}">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74A;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
+                                <ribbon:RibbonButton ToolTip="Text below" Content="Bottom" Command="{Binding Designer.SetTextBottomCommand}">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
+                                <ribbon:RibbonButton ToolTip="Text on left" Content="Left" Command="{Binding Designer.SetTextLeftCommand}">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
+                                <ribbon:RibbonButton ToolTip="Text on right" Content="Right" Command="{Binding Designer.SetTextRightCommand}">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
                     </ribbon:RibbonContextualTabGroup.Tabs>
-
                 </ribbon:RibbonContextualTabGroup>
-
             </ribbon:SfRibbon.ContextualTabGroups>
 
         </ribbon:SfRibbon>
 
-        <controls:RulerControl Grid.Row="1" Viewport="{Binding Designer.Viewport}"/>
+        <controls:RulerControl Grid.Row="1" Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
@@ -167,30 +171,26 @@
             </Grid.ColumnDefinitions>
 
             <controls:RulerControl Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
-                Viewport="{Binding Designer.Viewport}"/>
+                Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
 
-            <Border Grid.Column="1" Background="#F8F8F8" BorderBrush="#D0D0D0" BorderThickness="0,0,1,0" Padding="4">
+            <Border Grid.Column="1" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Padding="6,4">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="Layers" FontWeight="SemiBold" FontSize="12" Margin="2,4,0,4" Foreground="#444"/>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Layers" FontWeight="SemiBold" FontSize="13" Margin="2,4,0,6" Foreground="#2B2B2B"/>
                     <ScrollViewer Grid.Row="1">
                         <ItemsControl Name="LayersList" ItemsSource="{Binding Designer.Layers.Layers}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="#333" Margin="0,2,0,0"/>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="#333"/>
                                         <ItemsControl ItemsSource="{Binding Children}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Grid Margin="8,1,0,1" PointerPressed="OnLayerItemClick">
+                                                    <Grid Margin="8,1,0,1" PointerPressed="OnLayerItemClick" Padding="3,2">
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{Binding TypeIcon}" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Grid.Column="0" Text="{Binding TypeIcon}" FontSize="9" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="11" VerticalAlignment="Center" Foreground="#555"/>
                                                     </Grid>
                                                 </DataTemplate>
@@ -206,69 +206,59 @@
 
             <views:DesignerCanvasView Grid.Column="2"/>
 
-            <Border Grid.Column="3" Background="#F8F8F8" BorderBrush="#D0D0D0" BorderThickness="1,0,0,0"
+            <Border Grid.Column="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
                 Visibility="{Binding Designer.Properties.IsVisible, Converter={StaticResource BoolToVisibility}}">
-                <ScrollViewer Padding="8">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="{Binding Designer.Properties.ElementType}" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
-                        <TextBlock Text="Name" FontSize="11" Foreground="#666"/>
-                        <TextBox Text="{Binding Designer.Properties.ElementName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="Position" FontSize="11" Foreground="#666"/>
+                <ScrollViewer Padding="8,4">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="{Binding Designer.Properties.ElementType}" FontWeight="Bold" FontSize="15" Margin="0,4,0,4" Foreground="#2B2B2B"/>
+                        <TextBlock Text="Name" FontSize="11" Foreground="#888"/>
+                        <TextBox Text="{Binding Designer.Properties.ElementName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
+                        <TextBlock Text="Position" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
                         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding Designer.Properties.PosX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="X" Margin="0,0,2,0"/>
-                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.PosY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Y" Margin="2,0,0,0"/>
+                            <TextBox Grid.Column="0" Text="{Binding Designer.Properties.PosX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="X" Margin="0,0,2,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.PosY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="Y" Margin="2,0,0,0"/>
                         </Grid>
-                        <TextBlock Text="Size" FontSize="11" Foreground="#666"/>
+                        <TextBlock Text="Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
                         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding Designer.Properties.Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="W" Margin="0,0,2,0"/>
-                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="H" Margin="2,0,0,0"/>
+                            <TextBox Grid.Column="0" Text="{Binding Designer.Properties.Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="W" Margin="0,0,2,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="H" Margin="2,0,0,0"/>
                         </Grid>
-                        <TextBlock Text="Rotation" FontSize="11" Foreground="#666"/>
-                        <TextBox Text="{Binding Designer.Properties.Rotation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="Font Size" FontSize="11" Foreground="#666"
+                        <TextBlock Text="Rotation" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBox Text="{Binding Designer.Properties.Rotation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
+                        <TextBlock Text="Font Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"
             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBox Text="{Binding Designer.Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding Designer.Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Text" FontSize="11" Foreground="#666"
+                        <TextBlock Text="Text" FontSize="11" Foreground="#888" Margin="0,4,0,2"
             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBox Text="{Binding Designer.Properties.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding Designer.Properties.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Barcode Value" FontSize="11" Foreground="#666"
+                        <TextBlock Text="Barcode Value" FontSize="11" Foreground="#888" Margin="0,4,0,2"
             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBox Text="{Binding Designer.Properties.BarcodeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding Designer.Properties.BarcodeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Fill Color" FontSize="11" Foreground="#666"/>
+                        <TextBlock Text="Fill Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <Rectangle Grid.Column="0" Width="20" Height="20" RadiusX="3" RadiusY="3" Stroke="#999" StrokeThickness="1" Margin="0,0,4,0">
-                                <Rectangle.Fill>
-                                    <SolidColorBrush Color="{Binding Designer.Properties.FillColorValue}"/>
-                                </Rectangle.Fill>
-                            </Rectangle>
-                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="#RRGGBB"/>
+                            <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="3" Margin="0,0,4,0"
+                                Background="{Binding Designer.Properties.FillColorValue}"/>
+                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                         </Grid>
-                        <TextBlock Text="Stroke Color" FontSize="11" Foreground="#666"/>
+                        <TextBlock Text="Stroke Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <Rectangle Grid.Column="0" Width="20" Height="20" RadiusX="3" RadiusY="3" Stroke="#999" StrokeThickness="1" Margin="0,0,4,0">
-                                <Rectangle.Fill>
-                                    <SolidColorBrush Color="{Binding Designer.Properties.StrokeColorValue}"/>
-                                </Rectangle.Fill>
-                            </Rectangle>
-                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="#RRGGBB"/>
+                            <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="3" Margin="0,0,4,0"
+                                Background="{Binding Designer.Properties.StrokeColorValue}"/>
+                            <TextBox Grid.Column="1" Text="{Binding Designer.Properties.StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                         </Grid>
-                        <TextBlock Text="Palette" FontSize="11" Foreground="#666"/>
-                        <VariableSizedWrapGrid ItemWidth="20" ItemHeight="20" Orientation="Horizontal" Margin="0,0,0,4"
+                        <TextBlock Text="Palette" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <VariableSizedWrapGrid ItemWidth="22" ItemHeight="22" Orientation="Horizontal"
                             ItemsSource="{Binding Designer.Properties.PaletteColors}">
                             <VariableSizedWrapGrid.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Width="18" Height="18" Padding="0" Margin="1"
+                                    <Button Width="20" Height="20" Padding="0" Margin="1"
                                         Command="{Binding ElementName=RootGrid, Path=DataContext.Designer.Properties.SelectColorCommand}"
-                                        CommandParameter="{Binding}">
-                                        <Button.Resources>
-                                            <SolidColorBrush x:Key="ButtonBackgroundColor" Color="{Binding}"/>
-                                        </Button.Resources>
-                                    </Button>
+                                        CommandParameter="{Binding}" BorderBrush="Transparent" Background="{Binding}"/>
                                 </DataTemplate>
                             </VariableSizedWrapGrid.ItemTemplate>
                         </VariableSizedWrapGrid>
@@ -277,20 +267,21 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Height="24" Background="#E0E0E0" BorderBrush="#B0B0B0" BorderThickness="0,1,0,0">
+        <Border Grid.Row="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Page: A4" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#444"/>
-                <TextBlock Grid.Column="1" Text=" | " VerticalAlignment="Center" FontSize="12" Foreground="#888"/>
-                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#444" Text="{Binding Designer.ZoomText}"/>
-                <Button Grid.Column="3" Content="-" Margin="2,0" Padding="4,0" MinWidth="20" Height="20" FontSize="12" Command="{Binding Designer.ZoomOutCommand}"/>
-                <Button Grid.Column="4" Content="+" Margin="2,0" Padding="4,0" MinWidth="20" Height="20" FontSize="12" Command="{Binding Designer.ZoomInCommand}"/>
-                <Button Grid.Column="5" Content="Fit" Margin="2,0" Padding="4,0" Height="20" FontSize="11" Command="{Binding Designer.ZoomToFitCommand}"/>
-                <TextBlock Grid.Column="6" FontSize="12" VerticalAlignment="Center" Foreground="#444" Margin="6,0,0,0" Text="{Binding Designer.CursorText}"/>
-                <TextBlock Grid.Column="7" FontSize="12" VerticalAlignment="Center" Foreground="#444" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"/>
+                <TextBlock Grid.Column="0" Text="A4" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="#555"/>
+                <TextBlock Grid.Column="1" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC"/>
+                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.ZoomText}"/>
+                <Button Grid.Column="4" Content="−" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14" Command="{Binding Designer.ZoomOutCommand}"/>
+                <Button Grid.Column="5" Content="+" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14" Command="{Binding Designer.ZoomInCommand}"/>
+                <Button Grid.Column="6" Content="Fit" Margin="1,0" Padding="4,0" Height="20" FontSize="11" Command="{Binding Designer.ZoomToFitCommand}"/>
+                <TextBlock Grid.Column="7" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="8,0,0,0" Text="{Binding Designer.CursorText}"/>
+                <TextBlock Grid.Column="8" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"/>
             </Grid>
         </Border>
 
