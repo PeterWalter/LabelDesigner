@@ -33,6 +33,7 @@ public partial class DesignerViewModel : ObservableObject
     private ResizeHandle _activeHandle = ResizeHandle.None;
     private PointD _startPointD;
     private RectD _originalBounds;
+    private double _rotationStartAngle;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CursorText))]
@@ -293,6 +294,24 @@ public partial class DesignerViewModel : ObservableObject
     private void SetPageA3() => SetPage(PageSize.A3, false);
 
     [RelayCommand]
+    private void SetPageLabel4x5()
+    {
+        _scene.CurrentDocument.Page.WidthMm = 101.6;
+        _scene.CurrentDocument.Page.HeightMm = 127.0;
+        _scene.CurrentDocument.Page.Dpi = 300;
+        PageBounds = new RectD(50, 50, 101.6 * 3.78, 127.0 * 3.78);
+    }
+
+    [RelayCommand]
+    private void SetPageLabel8x3()
+    {
+        _scene.CurrentDocument.Page.WidthMm = 203.2;
+        _scene.CurrentDocument.Page.HeightMm = 76.2;
+        _scene.CurrentDocument.Page.Dpi = 300;
+        PageBounds = new RectD(50, 50, 203.2 * 3.78, 76.2 * 3.78);
+    }
+
+    [RelayCommand]
     private void AddShape()
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
@@ -395,6 +414,7 @@ public partial class DesignerViewModel : ObservableObject
             {
                 _activeHandle = ResizeHandle.Rotate;
                 _originalBounds = Selected.Bounds;
+                _rotationStartAngle = Selected.Rotation;
                 return;
             }
         }
@@ -443,8 +463,11 @@ public partial class DesignerViewModel : ObservableObject
 
         if (_activeHandle == ResizeHandle.Rotate)
         {
-            double angle = Math.Atan2(dy, dx) * 180.0 / Math.PI;
-            _scene.RotateSelected(angle - Selected!.Rotation);
+            var centerX = Selected!.Bounds.X + Selected.Bounds.Width / 2;
+            var centerY = Selected.Bounds.Y + Selected.Bounds.Height / 2;
+            double cursorAngle = Math.Atan2(pD.Y - centerY, pD.X - centerX) * 180.0 / Math.PI;
+            double newAngle = _rotationStartAngle + (cursorAngle - Math.Atan2(_startPointD.Y - centerY, _startPointD.X - centerX) * 180.0 / Math.PI);
+            Selected.Rotation = newAngle % 360;
         }
         else if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
         {

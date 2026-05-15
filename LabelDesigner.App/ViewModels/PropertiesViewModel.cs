@@ -41,10 +41,83 @@ public partial class PropertiesViewModel : ObservableObject
     private string _barcodeValue = "";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FillColorValue))]
     private string _fillColor = "#CCCCCC";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StrokeColorValue))]
     private string _strokeColor = "#000000";
+
+    public Windows.UI.Color FillColorValue => ParseColor(FillColor);
+    public Windows.UI.Color StrokeColorValue => ParseColor(StrokeColor);
+
+    public List<Windows.UI.Color> PaletteColors { get; } = new()
+    {
+        Windows.UI.Color.FromArgb(255, 0, 0, 0),
+        Windows.UI.Color.FromArgb(255, 128, 128, 128),
+        Windows.UI.Color.FromArgb(255, 192, 192, 192),
+        Windows.UI.Color.FromArgb(255, 255, 255, 255),
+        Windows.UI.Color.FromArgb(255, 128, 0, 0),
+        Windows.UI.Color.FromArgb(255, 255, 0, 0),
+        Windows.UI.Color.FromArgb(255, 255, 128, 128),
+        Windows.UI.Color.FromArgb(255, 255, 192, 192),
+        Windows.UI.Color.FromArgb(255, 128, 128, 0),
+        Windows.UI.Color.FromArgb(255, 255, 255, 0),
+        Windows.UI.Color.FromArgb(255, 128, 255, 0),
+        Windows.UI.Color.FromArgb(255, 192, 255, 128),
+        Windows.UI.Color.FromArgb(255, 0, 128, 0),
+        Windows.UI.Color.FromArgb(255, 0, 255, 0),
+        Windows.UI.Color.FromArgb(255, 128, 255, 128),
+        Windows.UI.Color.FromArgb(255, 192, 255, 192),
+        Windows.UI.Color.FromArgb(255, 0, 128, 128),
+        Windows.UI.Color.FromArgb(255, 0, 255, 255),
+        Windows.UI.Color.FromArgb(255, 128, 255, 255),
+        Windows.UI.Color.FromArgb(255, 192, 255, 255),
+        Windows.UI.Color.FromArgb(255, 0, 0, 128),
+        Windows.UI.Color.FromArgb(255, 0, 0, 255),
+        Windows.UI.Color.FromArgb(255, 128, 128, 255),
+        Windows.UI.Color.FromArgb(255, 192, 192, 255),
+        Windows.UI.Color.FromArgb(255, 128, 0, 128),
+        Windows.UI.Color.FromArgb(255, 255, 0, 255),
+        Windows.UI.Color.FromArgb(255, 255, 128, 255),
+        Windows.UI.Color.FromArgb(255, 255, 192, 255),
+        Windows.UI.Color.FromArgb(255, 0, 128, 192),
+        Windows.UI.Color.FromArgb(255, 64, 128, 128),
+        Windows.UI.Color.FromArgb(255, 128, 64, 64),
+        Windows.UI.Color.FromArgb(255, 64, 64, 128),
+    };
+
+    private static Windows.UI.Color ParseColor(string hex)
+    {
+        if (string.IsNullOrEmpty(hex) || hex.Length < 6) return Windows.UI.Color.FromArgb(255, 200, 200, 200);
+        hex = hex.TrimStart('#');
+        if (hex.Length == 6)
+        {
+            byte r = Convert.ToByte(hex.Substring(0, 2), 16);
+            byte g = Convert.ToByte(hex.Substring(2, 2), 16);
+            byte b = Convert.ToByte(hex.Substring(4, 2), 16);
+            return Windows.UI.Color.FromArgb(255, r, g, b);
+        }
+        if (hex.Length == 8)
+        {
+            byte a = Convert.ToByte(hex.Substring(0, 2), 16);
+            byte r = Convert.ToByte(hex.Substring(2, 2), 16);
+            byte g = Convert.ToByte(hex.Substring(4, 2), 16);
+            byte b = Convert.ToByte(hex.Substring(6, 2), 16);
+            return Windows.UI.Color.FromArgb(a, r, g, b);
+        }
+        return Windows.UI.Color.FromArgb(255, 200, 200, 200);
+    }
+
+    [RelayCommand]
+    private void SelectColor(Windows.UI.Color color)
+    {
+        if (_trackedElement is ShapeElement sh) sh.Fill = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        if (_trackedElement is ShapeElement sh2) sh2.Stroke = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        if (_trackedElement is LineElement ln) ln.Stroke = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        FillColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        StrokeColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
 
     public bool IsVisible => !string.IsNullOrEmpty(ElementType);
 
