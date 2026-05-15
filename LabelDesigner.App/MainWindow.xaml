@@ -16,6 +16,7 @@
 
         <Grid.Resources>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            <converters:ColorToBrushConverter x:Key="ColorToBrush"/>
             <Style TargetType="TextBox" x:Key="PropBox">
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Height" Value="24"/>
@@ -262,7 +263,8 @@
                                 <DataTemplate>
                                     <Button Width="20" Height="20" Padding="0" Margin="1"
                                         Command="{Binding ElementName=RootGrid, Path=DataContext.Designer.Properties.SelectColorCommand}"
-                                        CommandParameter="{Binding}" BorderBrush="Transparent" Background="{Binding}"/>
+                                        CommandParameter="{Binding}" BorderBrush="Transparent"
+                                        Background="{Binding Converter={StaticResource ColorToBrush}}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
