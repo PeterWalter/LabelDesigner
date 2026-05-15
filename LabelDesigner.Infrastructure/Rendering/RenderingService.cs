@@ -155,6 +155,14 @@ public class RenderService : IRenderService
             ds.FillEllipse(cx, (float)(b.Width / 2), (float)(b.Height / 2), fill);
             ds.DrawEllipse(cx, (float)(b.Width / 2), (float)(b.Height / 2), stroke, sw);
         }
+        else if (shape.Type == ShapeType.Triangle)
+        {
+            var xL = (float)b.X; var xR = (float)(b.X + b.Width); var xM = (float)(b.X + b.Width / 2);
+            var yT = (float)b.Y; var yB = (float)(b.Y + b.Height);
+            var tri = new[] { new Vector2(xM, yT), new Vector2(xL, yB), new Vector2(xR, yB) };
+            ds.FillGeometry(CanvasGeometry.CreatePolygon(ds, tri), fill);
+            ds.DrawGeometry(CanvasGeometry.CreatePolygon(ds, tri), stroke, sw);
+        }
         else
         {
             ds.FillRectangle(b, fill);
@@ -177,14 +185,33 @@ public class RenderService : IRenderService
             if (!string.IsNullOrEmpty(image.SourcePath) && System.IO.File.Exists(image.SourcePath))
             {
                 var bitmap = CanvasBitmap.LoadAsync(ds.Device, image.SourcePath).GetAwaiter().GetResult();
-                ds.DrawImage(bitmap, (float)b.X, (float)b.Y);
+                var srcRect = new Rect(0, 0, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height);
+                var dstRect = b;
+
+                if (image.Stretch == ImageStretch.Uniform)
+                {
+                    float scale = Math.Min((float)(b.Width / bitmap.Size.Width), (float)(b.Height / bitmap.Size.Height));
+                    float drawW = (float)(bitmap.Size.Width * scale);
+                    float drawH = (float)(bitmap.Size.Height * scale);
+                    dstRect = new Rect((float)(b.X + (b.Width - drawW) / 2), (float)(b.Y + (b.Height - drawH) / 2), drawW, drawH);
+                }
+                else if (image.Stretch == ImageStretch.UniformToFill)
+                {
+                    float scale = Math.Max((float)(b.Width / bitmap.Size.Width), (float)(b.Height / bitmap.Size.Height));
+                    float drawW = (float)(bitmap.Size.Width * scale);
+                    float drawH = (float)(bitmap.Size.Height * scale);
+                    dstRect = new Rect((float)(b.X + (b.Width - drawW) / 2), (float)(b.Y + (b.Height - drawH) / 2), drawW, drawH);
+                }
+
+                ds.DrawImage(bitmap, dstRect, srcRect, 1.0f, CanvasImageInterpolation.HighQualityCubic);
                 return;
             }
         }
         catch { }
         ds.FillRectangle(b, Colors.LightGray);
-        ds.DrawLine((float)b.Left, (float)b.Top, (float)b.Right, (float)b.Bottom, Colors.DarkGray, 1);
-        ds.DrawLine((float)b.Right, (float)b.Top, (float)b.Left, (float)b.Bottom, Colors.DarkGray, 1);
+        var l = b.Left; var t = b.Top; var r = b.Right; var bo = b.Bottom;
+        ds.DrawLine(l, t, r, bo, Colors.DarkGray, 1);
+        ds.DrawLine(r, t, l, bo, Colors.DarkGray, 1);
     }
 
     private void DrawContainer(CanvasDrawingSession ds, ContainerElement container, Dictionary<Guid, DesignElement> lookup)

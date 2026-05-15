@@ -69,6 +69,9 @@ public partial class DesignerViewModel : ObservableObject
 
     private bool _placeNextClick;
     private DesignElement? _pendingElement;
+    private bool _linePlaceMode;
+
+    public bool IsInLinePlacementMode => _linePlaceMode;
 
     public DesignerViewModel(
         ISceneGraphService scene,
@@ -177,10 +180,17 @@ public partial class DesignerViewModel : ObservableObject
         Selected = _scene.SingleSelected;
     }
 
-    private void NotifyElementsChanged()
+    public void NotifyElementsChanged()
     {
         OnPropertyChanged(nameof(ElementsText));
         Layers.Refresh();
+    }
+
+    public void CancelPlacement()
+    {
+        _placeNextClick = false;
+        _pendingElement = null;
+        _linePlaceMode = false;
     }
 
     private void EnterPlacementMode(DesignElement prototype)
@@ -491,12 +501,8 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void AddLine()
     {
-        EnterPlacementMode(new LineElement
-        {
-            X1 = 0, Y1 = 0, X2 = 150, Y2 = 0,
-            Stroke = "#000000",
-            StrokeWidth = 2
-        });
+        // Line uses click-drag mode: first click sets start, release sets end
+        _linePlaceMode = true;
     }
 
     [RelayCommand]
@@ -743,6 +749,14 @@ public partial class DesignerViewModel : ObservableObject
 
         if (b.Width < minSize) b.Width = minSize;
         if (b.Height < minSize) b.Height = minSize;
+
+        // Clamp to page bounds
+        var pageW2 = _scene.CurrentDocument.Page.WidthMm * 3.78;
+        var pageH2 = _scene.CurrentDocument.Page.HeightMm * 3.78;
+        if (b.X < 0) b.X = 0;
+        if (b.Y < 0) b.Y = 0;
+        if (b.X + b.Width > pageW2) { if (b.Width >= pageW2) { b.X = 0; b.Width = pageW2; } else b.X = pageW2 - b.Width; }
+        if (b.Y + b.Height > pageH2) { if (b.Height >= pageH2) { b.Y = 0; b.Height = pageH2; } else b.Y = pageH2 - b.Height; }
         Selected!.Bounds = b;
     }
 

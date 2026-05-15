@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Input;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.ValueObjects;
+using LabelDesigner.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LabelDesigner.App.Views;
@@ -15,6 +16,8 @@ public sealed partial class DesignerCanvasView : UserControl
 {
     private ResizeHandle _currentCursorHandle = ResizeHandle.None;
     private bool _firstDraw = true;
+    private bool _linePlacementFirstClick;
+    private PointD _lineStartPoint;
 
     public DesignerViewModel VM =>
         App.Services.GetRequiredService<DesignerViewModel>();
@@ -28,10 +31,10 @@ public sealed partial class DesignerCanvasView : UserControl
         this.PointerWheelChanged += OnPointerWheelChanged;
         this.KeyDown += OnCanvasKeyDown;
         this.KeyUp += OnCanvasKeyUp;
+        this.DoubleTapped += OnCanvasDoubleTapped;
 
         Loaded += OnCanvasLoaded;
         SizeChanged += OnCanvasSizeChanged;
-        VM.RequestRedraw += InvalidateCanvas;
     }
 
     private void OnCanvasLoaded(object sender, RoutedEventArgs e)
@@ -70,21 +73,66 @@ public sealed partial class DesignerCanvasView : UserControl
         bool ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(
             Windows.System.VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 
+        // Escape cancels placement mode
+        if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            VM?.CancelPlacement();
+            _linePlacementFirstClick = false;
+            InvalidateCanvas();
+            return;
+        }
+
         if (ctrl && e.Key == Windows.System.VirtualKey.Z) VM?.Undo();
         else if (ctrl && e.Key == Windows.System.VirtualKey.Y) VM?.Redo();
         else if (ctrl && e.Key == Windows.System.VirtualKey.C) VM?.CopySelected();
         else if (ctrl && e.Key == Windows.System.VirtualKey.V) VM?.PasteElement();
         else if (e.Key == Windows.System.VirtualKey.Shift) VM?.SetShiftState(true);
         else if (e.Key == Windows.System.VirtualKey.Delete) VM?.DeleteSelected();
-        else if (ctrl && e.Key == Windows.System.VirtualKey.Add)
-        { VM.Viewport.Zoom = Math.Clamp(VM.Viewport.Zoom + 0.1, CanvasViewport.MinZoom, CanvasViewport.MaxZoom); InvalidateCanvas(); }
-        else if (ctrl && e.Key == Windows.System.VirtualKey.Subtract)
-        { VM.Viewport.Zoom = Math.Clamp(VM.Viewport.Zoom - 0.1, CanvasViewport.MinZoom, CanvasViewport.MaxZoom); InvalidateCanvas(); }
     }
 
     private void OnCanvasKeyUp(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key == Windows.System.VirtualKey.Shift) VM?.SetShiftState(false);
+    }
+
+    private void OnCanvasDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        var point = e.GetPosition((UIElement)sender);
+        var worldPoint = VM?.Viewport.ScreenToWorld(point) ?? point;
+        var pD = new PointD(worldPoint.X, worldPoint.Y);
+        var hit = VM?.Scene.HitTest(pD);
+
+        if (hit is TextElement textEl)
+        {
+            // Simple inline editing: prompt for new text
+            var tb = new TextBox { Text = textEl.Text, MinWidth = 200 };
+            var popup = new Flyout { Content = tb };
+            tb.KeyDown += (_, ke) =>
+            {
+                if (ke.Key == Windows.System.VirtualKey.Enter)
+                {
+                    textEl.Text = tb.Text;
+                    popup.Hide();
+                    InvalidateCanvas();
+                }
+            };
+            popup.ShowAt((UIElement)sender, point);
+        }
+        else if (hit is BarcodeElement barEl)
+        {
+            var tb = new TextBox { Text = barEl.Value, MinWidth = 200 };
+            var popup = new Flyout { Content = tb };
+            tb.KeyDown += (_, ke) =>
+            {
+                if (ke.Key == Windows.System.VirtualKey.Enter)
+                {
+                    barEl.Value = tb.Text;
+                    popup.Hide();
+                    InvalidateCanvas();
+                }
+            };
+            popup.ShowAt((UIElement)sender, point);
+        }
     }
 
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
@@ -111,6 +159,45 @@ public sealed partial class DesignerCanvasView : UserControl
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         var point = e.GetCurrentPoint((UIElement)sender).Position;
+        var worldPoint = VM?.Viewport.ScreenToWorld(point) ?? point;
+        var pD = new PointD(worldPoint.X, worldPoint.Y);
+
+        // Line click-drag placement mode
+        if (VM?.IsInLinePlacementMode == true && !_linePlacementFirstClick)
+        {
+            // First click: save start point
+            _linePlacementFirstClick = true;
+            _lineStartPoint = pD;
+            return;
+        }
+        if (_linePlacementFirstClick)
+        {
+            _linePlacementFirstClick = false;
+            VM.CancelPlacement();
+            // Second click: place line from saved point to current point
+            var layerId = VM?.Scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+            var line = new LineElement
+            {
+                X1 = _lineStartPoint.X,
+                Y1 = _lineStartPoint.Y,
+                X2 = pD.X,
+                Y2 = pD.Y,
+                Stroke = "#000000",
+                StrokeWidth = 2
+            };
+            // Compute bounds from both points
+            double minX = Math.Min(line.X1, line.X2);
+            double minY = Math.Min(line.Y1, line.Y2);
+            double maxX = Math.Max(line.X1, line.X2);
+            double maxY = Math.Max(line.Y1, line.Y2);
+            line.Bounds = new RectD(minX, minY, maxX - minX, maxY - minY);
+            VM?.Scene.AddElement(line, layerId);
+            VM?.NotifyElementsChanged();
+            VM?.RequestRedraw?.Invoke();
+            (sender as CanvasControl)?.Invalidate();
+            return;
+        }
+
         VM?.PointerPressed(point);
         (sender as CanvasControl)?.Invalidate();
     }
