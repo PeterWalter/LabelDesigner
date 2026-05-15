@@ -9,8 +9,8 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI;
 using Windows.Graphics.Imaging;
+using System.IO;
 using System.Numerics;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace LabelDesigner.Infrastructure.Export;
 
@@ -25,9 +25,7 @@ public class PrintService : IPrintService
 
     public async Task PrintAsync(SceneDocument document)
     {
-        var bitmap = RenderDocumentToBitmap(document, 300);
-        // Print submission happens in the App layer via PrintManager
-        await Task.CompletedTask;
+        await RenderDocumentToBitmapAsync(document, 300);
     }
 
     public async Task ShowPrintPreviewAsync(SceneDocument document)
@@ -35,7 +33,7 @@ public class PrintService : IPrintService
         await Task.CompletedTask;
     }
 
-    public SoftwareBitmap RenderDocumentToBitmap(SceneDocument document, float dpi)
+    public async Task<SoftwareBitmap> RenderDocumentToBitmapAsync(SceneDocument document, float dpi)
     {
         double pageWidthPx = document.Page.WidthMm * dpi / 25.4;
         double pageHeightPx = document.Page.HeightMm * dpi / 25.4;
@@ -59,12 +57,13 @@ public class PrintService : IPrintService
             }
         }
 
-        return SoftwareBitmap.CreateCopyFromBuffer(
-            renderTarget.GetPixelBytes().AsBuffer(),
-            BitmapPixelFormat.Bgra8,
-            (int)pageWidthPx,
-            (int)pageHeightPx,
-            BitmapAlphaMode.Premultiplied);
+        using var memStream = new System.IO.MemoryStream();
+        await renderTarget.SaveAsync(memStream.AsRandomAccessStream(), CanvasBitmapFileFormat.Bmp);
+        memStream.Position = 0;
+
+        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(
+            memStream.AsRandomAccessStream());
+        return await decoder.GetSoftwareBitmapAsync();
     }
 
     private void DrawElementHighRes(CanvasDrawingSession ds, DesignElement el,

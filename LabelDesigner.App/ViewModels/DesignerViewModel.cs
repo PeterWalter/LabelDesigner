@@ -216,9 +216,8 @@ public partial class DesignerViewModel : ObservableObject
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
 
-        // Render at 200 DPI to a SoftwareBitmap, then encode as PNG
         var printService = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
-        var bitmap = ((Infrastructure.Export.PrintService)printService).RenderDocumentToBitmap(_scene.CurrentDocument, 200);
+        var bitmap = await ((Infrastructure.Export.PrintService)printService).RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
 
         using var fileStream = await file.OpenStreamForWriteAsync();
         var encoder = Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
