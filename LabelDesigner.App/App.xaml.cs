@@ -6,6 +6,7 @@ using LabelDesigner.Infrastructure.Interfaces;
 using LabelDesigner.Infrastructure.Barcode;
 using LabelDesigner.Infrastructure.Persistence;
 using LabelDesigner.Infrastructure.Export;
+using LabelDesigner.Infrastructure.Data;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.App.Services;
 
@@ -48,6 +49,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<IRenderService, RenderService>();
         services.AddSingleton<IPrintService, PrintService>();
         services.AddSingleton<IPdfExportService, PdfExportService>();
+        services.AddSingleton<Core.Interfaces.IDataSourceService, CsvDataSourceService>();
 
         // ViewModels
         services.AddSingleton<MainViewModel>();

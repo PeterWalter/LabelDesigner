@@ -19,6 +19,7 @@ public partial class DesignerViewModel : ObservableObject
     private readonly PropertiesViewModel _properties;
 
     public PropertiesViewModel Properties => _properties;
+    public LayerPanelViewModel Layers { get; }
 
     public CanvasViewport Viewport { get; } = new();
     public ISceneGraphService Scene => _scene;
@@ -79,6 +80,7 @@ public partial class DesignerViewModel : ObservableObject
         _undoRedo = undoRedo;
         _persistence = persistence;
         _properties = properties;
+        Layers = new LayerPanelViewModel(scene);
 
         SetPage(PageSize.A4, false);
         Viewport.PropertyChanged += (_, e) =>
@@ -175,7 +177,11 @@ public partial class DesignerViewModel : ObservableObject
         Selected = _scene.SingleSelected;
     }
 
-    private void NotifyElementsChanged() => OnPropertyChanged(nameof(ElementsText));
+    private void NotifyElementsChanged()
+    {
+        OnPropertyChanged(nameof(ElementsText));
+        Layers.Refresh();
+    }
 
     private void EnterPlacementMode(DesignElement prototype)
     {
@@ -226,6 +232,103 @@ public partial class DesignerViewModel : ObservableObject
 
         await pdf.ExportAsync(_scene.CurrentDocument, file.Path,
             new Core.Interfaces.PdfExportOptions());
+    }
+
+    [RelayCommand]
+    private async Task LoadDataSource()
+    {
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        var hwnd2 = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd2);
+        picker.FileTypeFilter.Add(".csv");
+        picker.FileTypeFilter.Add(".json");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        var dataSource = App.Services!.GetRequiredService<Core.Interfaces.IDataSourceService>();
+        var data = await dataSource.LoadAsync(file.Path);
+
+        _scene.CurrentDocument.DataSource = new DataSourceConfig
+        {
+            Type = Path.GetExtension(file.Path).TrimStart('.'),
+            Path = file.Path
+        };
+    }
+
+    [RelayCommand]
+    private async Task PrintWithData()
+    {
+        var ds = _scene.CurrentDocument.DataSource;
+        if (ds == null) { await Print(); return; }
+
+        var dataSource = App.Services!.GetRequiredService<Core.Interfaces.IDataSourceService>();
+        var records = await dataSource.LoadAsync(ds.Path);
+        if (records.Count == 0) { await Print(); return; }
+
+        var originalDoc = _scene.CurrentDocument;
+        foreach (var record in records)
+        {
+            var boundDoc = ApplyDataBinding(originalDoc, record);
+            var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
+            await print.PrintAsync(boundDoc);
+        }
+    }
+
+    private static SceneDocument ApplyDataBinding(SceneDocument doc, IReadOnlyDictionary<string, string> record)
+    {
+        var clone = new SceneDocument { Version = doc.Version, Page = doc.Page, DataSource = doc.DataSource };
+        foreach (var layer in doc.Layers)
+            clone.Layers.Add(new LayerNode { Name = layer.Name, Visible = layer.Visible, Locked = layer.Locked });
+        foreach (var el in doc.AllElements)
+        {
+            var boundEl = BindElement(el, record);
+            clone.AllElements.Add(boundEl);
+            if (boundEl.ParentId.HasValue)
+            {
+                var parentLayer = clone.Layers.FirstOrDefault(l => l.Id == boundEl.ParentId);
+                parentLayer?.ElementIds.Add(boundEl.Id);
+            }
+        }
+        return clone;
+    }
+
+    private static DesignElement BindElement(DesignElement el, IReadOnlyDictionary<string, string> record)
+    {
+        if (el is BarcodeElement bc)
+        {
+            var bound = new BarcodeElement { Bounds = bc.Bounds, Format = bc.Format, TextPosition = bc.TextPosition };
+            bound.Value = ResolveTemplate(bc.Value, record);
+            return bound;
+        }
+        if (el is TextElement txt)
+        {
+            var bound = new TextElement { Bounds = txt.Bounds, FontSize = txt.FontSize, FontFamily = txt.FontFamily };
+            bound.Text = ResolveTemplate(txt.Text, record);
+            return bound;
+        }
+        return CloneElement(el) ?? el;
+    }
+
+    private static string ResolveTemplate(string template, IReadOnlyDictionary<string, string> record)
+    {
+        int start;
+        while ((start = template.IndexOf("{{")) >= 0)
+        {
+            int end = template.IndexOf("}}", start);
+            if (end < 0) break;
+            var field = template.Substring(start + 2, end - start - 2).Trim();
+            var value = record.TryGetValue(field, out var v) ? v : "";
+            template = template.Substring(0, start) + value + template.Substring(end + 2);
+        }
+        return template;
+    }
+
+    [RelayCommand]
+    private async Task PreviewPrint()
+    {
+        var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
+        await print.ShowPrintPreviewAsync(_scene.CurrentDocument);
     }
 
     [RelayCommand]

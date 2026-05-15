@@ -87,6 +87,19 @@
             Command="{Binding Designer.RotateElementCommand}">
             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Data">
+                        <ribbon:RibbonButton Content="Load CSV"
+            Command="{Binding Designer.LoadDataSourceCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8E5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Print All"
+            Command="{Binding Designer.PrintWithDataCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Preview">
+                        <ribbon:RibbonButton Content="Print Preview"
+            Command="{Binding Designer.PreviewPrintCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Export">
                         <ribbon:RibbonButton Content="Print"
             Command="{Binding Designer.PrintCommand}">
@@ -129,6 +142,7 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="180"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="220"/>
             </Grid.ColumnDefinitions>
@@ -136,9 +150,44 @@
             <controls:RulerControl Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
                 Viewport="{Binding Designer.Viewport}"/>
 
-            <views:DesignerCanvasView Grid.Column="1"/>
+            <Border Grid.Column="1" Background="#F8F8F8" BorderBrush="#D0D0D0" BorderThickness="0,0,1,0" Padding="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Layers" FontWeight="SemiBold" FontSize="12" Margin="2,4,0,4" Foreground="#444"/>
+                    <ScrollViewer Grid.Row="1">
+                        <ItemsControl Name="LayersList" ItemsSource="{Binding Designer.Layers.Layers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="#333" Margin="0,2,0,0"/>
+                                        <ItemsControl ItemsSource="{Binding Children}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="8,1,0,1" PointerPressed="OnLayerItemClick">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding TypeIcon}" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="11" VerticalAlignment="Center" Foreground="#555"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
 
-            <Border Grid.Column="2" Background="#F8F8F8" BorderBrush="#D0D0D0" BorderThickness="1,0,0,0"
+            <views:DesignerCanvasView Grid.Column="2"/>
+
+            <Border Grid.Column="3" Background="#F8F8F8" BorderBrush="#D0D0D0" BorderThickness="1,0,0,0"
                 Visibility="{Binding Designer.Properties.IsVisible, Converter={StaticResource BoolToVisibility}}">
                 <ScrollViewer Padding="8">
                     <StackPanel Spacing="6">
