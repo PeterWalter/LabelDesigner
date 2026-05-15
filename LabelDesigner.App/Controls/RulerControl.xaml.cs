@@ -1,4 +1,6 @@
 using LabelDesigner.App.ViewModels;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -34,12 +36,6 @@ public sealed partial class RulerControl : UserControl
 
     private void OnViewportPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        InvalidateCanvas();
-    }
-
-    private void InvalidateCanvas()
-    {
-        // The CanvasControl is the only child; invalidate it
         if (Content is CanvasControl canvas)
             canvas.Invalidate();
     }
@@ -57,51 +53,50 @@ public sealed partial class RulerControl : UserControl
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
     {
         var ds = args.DrawingSession;
-        ds.Clear(Colors.White);
+        ds.Clear(Color.FromArgb(255, 240, 240, 240));
 
         double pixelsPerMm = 3.78;
         var vp = Viewport;
-
         double offset = IsVertical ? (vp?.OffsetY ?? 0) : (vp?.OffsetX ?? 0);
         double zoom = vp?.Zoom ?? 1.0;
+        double tickInterval = zoom < 0.5 ? 100 : zoom < 1.0 ? 50 : zoom < 2.0 ? 25 : 10;
+        double labelInterval = 100;
+        float canvasLen = IsVertical ? (float)sender.ActualHeight : (float)sender.ActualWidth;
+        float rulerDim = IsVertical ? (float)sender.ActualWidth : (float)sender.ActualHeight;
 
-        double tickInterval = zoom < 0.5 ? 40 : zoom < 1.5 ? 20 : 10;
-
-        float canvasLength = IsVertical ? (float)sender.ActualHeight : (float)sender.ActualWidth;
-
-        for (double worldPx = 0; worldPx < 5000; worldPx += tickInterval)
+        for (double wp = 0; wp < 5000; wp += Math.Max(tickInterval, 5))
         {
-            // Screen-space position
-            double screenPos = IsVertical
-                ? worldPx * zoom - offset
-                : worldPx * zoom - offset;
+            double sp = wp * zoom - offset;
+            if (sp < -10 || sp > canvasLen + 10) continue;
 
-            if (screenPos < 0 || screenPos > canvasLength) continue;
-
-            bool major = (worldPx % 100) < tickInterval;
-            bool medium = (worldPx % 50) < tickInterval;
-            float tickSize = major ? 15f : medium ? 10f : 5f;
+            bool major = Math.Abs(wp % labelInterval) < Math.Max(tickInterval, 5) * 0.5;
+            bool medium = Math.Abs(wp % 50) < Math.Max(tickInterval, 5) * 0.5 && !major;
+            float ts = major ? 12f : medium ? 8f : 5f;
+            Color tc = major ? Colors.DarkGray : Colors.Gray;
 
             if (IsVertical)
             {
-                ds.DrawLine(0, (float)screenPos, tickSize, (float)screenPos, Colors.Black);
+                ds.DrawLine(rulerDim - ts, (float)sp, rulerDim, (float)sp, tc, 1);
                 if (major)
                 {
-                    var mm = (worldPx / pixelsPerMm).ToString("0");
-                    ds.DrawText(mm, 20, (float)screenPos - 6, Colors.Black);
+                    var mm = (wp / pixelsPerMm).ToString("0");
+                    ds.DrawText(mm, 2, (float)sp - 5.5f, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
                 }
             }
             else
             {
-                ds.DrawLine((float)screenPos, 0, (float)screenPos, tickSize, Colors.Black);
+                ds.DrawLine((float)sp, rulerDim - ts, (float)sp, rulerDim, tc, 1);
                 if (major)
                 {
-                    var mm = (worldPx / pixelsPerMm).ToString("0");
-                    ds.DrawText(mm, (float)screenPos - 6, 15, Colors.Black);
+                    var mm = (wp / pixelsPerMm).ToString("0");
+                    ds.DrawText(mm, (float)sp - 5, rulerDim - 14, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
                 }
             }
         }
 
-        ds.DrawText("mm", 2, 2, Colors.Gray);
+        if (IsVertical)
+            ds.DrawLine(rulerDim - 1, 0, rulerDim - 1, canvasLen, Colors.LightGray, 1);
+        else
+            ds.DrawLine(0, rulerDim - 1, canvasLen, rulerDim - 1, Colors.LightGray, 1);
     }
 }

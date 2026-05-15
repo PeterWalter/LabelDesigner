@@ -12,6 +12,5 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ViewModel = vm;
         RootGrid.DataContext = ViewModel;
-        LeftRuler.IsVertical = true;
     }
 }
