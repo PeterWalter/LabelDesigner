@@ -128,16 +128,24 @@
 
             <ribbon:SfRibbon.ContextualTabGroups>
 
-                <ribbon:RibbonContextualTabGroup
+                    <ribbon:RibbonContextualTabGroup
             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}">
 
                     <ribbon:RibbonContextualTabGroup.Tabs>
-                        <ribbon:RibbonTab Header="Barcode Format">
+                        <ribbon:RibbonTab Header="Barcode">
                             <ribbon:RibbonGroup Header="Text Position">
-                                <ribbon:RibbonButton Content="Top" Command="{Binding Designer.SetTextTopCommand}"/>
-                                <ribbon:RibbonButton Content="Bottom" Command="{Binding Designer.SetTextBottomCommand}"/>
-                                <ribbon:RibbonButton Content="Left" Command="{Binding Designer.SetTextLeftCommand}"/>
-                                <ribbon:RibbonButton Content="Right" Command="{Binding Designer.SetTextRightCommand}"/>
+                                <ribbon:RibbonButton Content="Top"
+            Command="{Binding Designer.SetTextTopCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                                <ribbon:RibbonButton Content="Bottom"
+            Command="{Binding Designer.SetTextBottomCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                                <ribbon:RibbonButton Content="Left"
+            Command="{Binding Designer.SetTextLeftCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                                <ribbon:RibbonButton Content="Right"
+            Command="{Binding Designer.SetTextRightCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
                     </ribbon:RibbonContextualTabGroup.Tabs>
@@ -249,6 +257,21 @@
                             </Rectangle>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="#RRGGBB"/>
                         </Grid>
+                        <TextBlock Text="Palette" FontSize="11" Foreground="#666"/>
+                        <VariableSizedWrapGrid ItemWidth="20" ItemHeight="20" Orientation="Horizontal" Margin="0,0,0,4"
+                            ItemsSource="{Binding Designer.Properties.PaletteColors}">
+                            <VariableSizedWrapGrid.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Width="18" Height="18" Padding="0" Margin="1"
+                                        Command="{Binding ElementName=RootGrid, Path=DataContext.Designer.Properties.SelectColorCommand}"
+                                        CommandParameter="{Binding}">
+                                        <Button.Resources>
+                                            <SolidColorBrush x:Key="ButtonBackgroundColor" Color="{Binding}"/>
+                                        </Button.Resources>
+                                    </Button>
+                                </DataTemplate>
+                            </VariableSizedWrapGrid.ItemTemplate>
+                        </VariableSizedWrapGrid>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

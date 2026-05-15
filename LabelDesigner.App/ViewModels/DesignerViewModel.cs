@@ -479,18 +479,16 @@ public partial class DesignerViewModel : ObservableObject
 
     private static DesignElement DeepCloneWithNewId(DesignElement src)
     {
-        var clone = CloneElement(src);
-        if (clone != null) clone.Id = Guid.NewGuid();
-        return clone ?? src;
+        return CloneElement(src, Guid.NewGuid()) ?? src;
     }
 
-    private static DesignElement? CloneElement(DesignElement source)
+    private static DesignElement? CloneElement(DesignElement source, Guid? id = null)
     {
-        if (source is BarcodeElement b) return new BarcodeElement { Value = b.Value, TextPosition = b.TextPosition, Bounds = b.Bounds };
-        if (source is TextElement t) return new TextElement { Text = t.Text, FontSize = t.FontSize, Bounds = t.Bounds };
-        if (source is ShapeElement s) return new ShapeElement { Type = s.Type, Fill = s.Fill, Stroke = s.Stroke, StrokeWidth = s.StrokeWidth, Bounds = s.Bounds };
-        if (source is LineElement l) return new LineElement { X1 = l.X1, Y1 = l.Y1, X2 = l.X2, Y2 = l.Y2, Stroke = l.Stroke, StrokeWidth = l.StrokeWidth };
-        if (source is ImageElement i) return new ImageElement { SourcePath = i.SourcePath, Stretch = i.Stretch, Bounds = i.Bounds };
+        if (source is BarcodeElement b) return new BarcodeElement { Id = id ?? Guid.NewGuid(), Value = b.Value, TextPosition = b.TextPosition, Bounds = b.Bounds };
+        if (source is TextElement t) return new TextElement { Id = id ?? Guid.NewGuid(), Text = t.Text, FontSize = t.FontSize, Bounds = t.Bounds };
+        if (source is ShapeElement s) return new ShapeElement { Id = id ?? Guid.NewGuid(), Type = s.Type, Fill = s.Fill, Stroke = s.Stroke, StrokeWidth = s.StrokeWidth, Bounds = s.Bounds };
+        if (source is LineElement l) return new LineElement { Id = id ?? Guid.NewGuid(), X1 = l.X1, Y1 = l.Y1, X2 = l.X2, Y2 = l.Y2, Stroke = l.Stroke, StrokeWidth = l.StrokeWidth };
+        if (source is ImageElement i) return new ImageElement { Id = id ?? Guid.NewGuid(), SourcePath = i.SourcePath, Stretch = i.Stretch, Bounds = i.Bounds };
         return null;
     }
 

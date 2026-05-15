@@ -113,7 +113,10 @@ public sealed partial class DesignerCanvasView : UserControl
                     InvalidateCanvas();
                 }
             };
-            popup.ShowAt((UIElement)sender, point);
+            popup.ShowAt((FrameworkElement)sender, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions
+            {
+                Position = point
+            });
         }
         else if (hit is BarcodeElement barEl)
         {
@@ -128,7 +131,10 @@ public sealed partial class DesignerCanvasView : UserControl
                     InvalidateCanvas();
                 }
             };
-            popup.ShowAt((UIElement)sender, point);
+            popup.ShowAt((FrameworkElement)sender, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions
+            {
+                Position = point
+            });
         }
     }
 
