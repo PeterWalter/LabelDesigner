@@ -49,6 +49,14 @@
             Command="{Binding Designer.DeleteSelectedCommand}">
             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Arrange">
+                        <ribbon:RibbonButton Content="Group"
+            Command="{Binding Designer.GroupSelectedCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Ungroup"
+            Command="{Binding Designer.UngroupSelectedCommand}">
+            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon></ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Clipboard">
                         <ribbon:RibbonButton Content="Copy"
             Command="{Binding Designer.CopySelectedCommand}">

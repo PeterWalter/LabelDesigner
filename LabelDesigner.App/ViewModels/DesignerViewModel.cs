@@ -193,6 +193,63 @@ public partial class DesignerViewModel : ObservableObject
         _linePlaceMode = false;
     }
 
+    [RelayCommand]
+    private void GroupSelected()
+    {
+        var ids = _scene.SelectedIds.ToList();
+        if (ids.Count < 2) return;
+        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        if (layerId == null) return;
+
+        double minX = double.MaxValue, minY = double.MaxValue;
+        double maxX = double.MinValue, maxY = double.MinValue;
+        foreach (var id in ids)
+        {
+            var el = _scene.GetElement(id);
+            if (el == null) continue;
+            if (el.Bounds.X < minX) minX = el.Bounds.X;
+            if (el.Bounds.Y < minY) minY = el.Bounds.Y;
+            if (el.Bounds.X + el.Bounds.Width > maxX) maxX = el.Bounds.X + el.Bounds.Width;
+            if (el.Bounds.Y + el.Bounds.Height > maxY) maxY = el.Bounds.Y + el.Bounds.Height;
+        }
+
+        var container = new ContainerElement { Bounds = new RectD(minX, minY, maxX - minX, maxY - minY), Name = "Group" };
+        foreach (var id in ids)
+        {
+            var el = _scene.GetElement(id);
+            if (el == null) continue;
+            el.Bounds = new RectD(el.Bounds.X - minX, el.Bounds.Y - minY, el.Bounds.Width, el.Bounds.Height);
+            container.ChildIds.Add(id);
+            _scene.RemoveElement(id);
+        }
+        _scene.AddElement(container, layerId);
+        _scene.ClearSelection();
+        _scene.Select(container.Id);
+        Selected = container;
+        NotifyElementsChanged(); RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void UngroupSelected()
+    {
+        var container = Selected as ContainerElement;
+        if (container == null) return;
+        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        if (layerId == null) return;
+        foreach (var childId in container.ChildIds.ToList())
+        {
+            var child = _scene.GetElement(childId);
+            if (child == null) continue;
+            child.Bounds = new RectD(child.Bounds.X + container.Bounds.X, child.Bounds.Y + container.Bounds.Y,
+                child.Bounds.Width, child.Bounds.Height);
+            _scene.AddElement(child, layerId);
+        }
+        _scene.RemoveElement(container.Id);
+        _scene.ClearSelection();
+        Selected = null;
+        NotifyElementsChanged(); RequestRedraw?.Invoke();
+    }
+
     private void EnterPlacementMode(DesignElement prototype)
     {
         _pendingElement = prototype;
