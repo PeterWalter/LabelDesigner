@@ -9,7 +9,6 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI;
 using Windows.Graphics.Imaging;
-using System.IO;
 using System.Numerics;
 
 namespace LabelDesigner.Infrastructure.Export;
@@ -57,12 +56,11 @@ public class PrintService : IPrintService
             }
         }
 
-        using var memStream = new System.IO.MemoryStream();
-        await renderTarget.SaveAsync(memStream.AsRandomAccessStream(), CanvasBitmapFileFormat.Bmp);
-        memStream.Position = 0;
+        var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+        await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Bmp);
+        stream.Seek(0);
 
-        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(
-            memStream.AsRandomAccessStream());
+        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(stream);
         return await decoder.GetSoftwareBitmapAsync();
     }
 
