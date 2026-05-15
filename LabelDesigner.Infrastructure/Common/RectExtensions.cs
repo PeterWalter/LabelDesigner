@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using global::LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Core.ValueObjects;
 using Windows.Foundation;
 

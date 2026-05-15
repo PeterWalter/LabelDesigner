@@ -1,72 +1,107 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using LabelDesigner.App.ViewModels;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace LabelDesigner.App.Controls;
 
 public sealed partial class RulerControl : UserControl
 {
-    public bool IsVertical
+    public bool IsVertical { get; set; }
+
+    public CanvasViewport Viewport
     {
-        get; set;
+        get => (CanvasViewport)GetValue(ViewportProperty);
+        set => SetValue(ViewportProperty, value);
     }
+
+    public static readonly DependencyProperty ViewportProperty =
+        DependencyProperty.Register(
+            nameof(Viewport),
+            typeof(CanvasViewport),
+            typeof(RulerControl),
+            new PropertyMetadata(null, OnViewportChanged));
+
+    private static void OnViewportChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is RulerControl control && e.OldValue is CanvasViewport oldVp)
+            oldVp.PropertyChanged -= control.OnViewportPropertyChanged;
+
+        if (d is RulerControl c && e.NewValue is CanvasViewport newVp)
+            newVp.PropertyChanged += c.OnViewportPropertyChanged;
+    }
+
+    private void OnViewportPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvalidateCanvas();
+    }
+
+    private void InvalidateCanvas()
+    {
+        // The CanvasControl is the only child; invalidate it
+        if (Content is CanvasControl canvas)
+            canvas.Invalidate();
+    }
+
     public RulerControl()
     {
         InitializeComponent();
+        Loaded += (_, _) =>
+        {
+            if (Content is CanvasControl canvas)
+                canvas.Invalidate();
+        };
     }
+
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
     {
         var ds = args.DrawingSession;
+        ds.Clear(Colors.White);
 
-        double pixelsPerMm = 3.78;   // 96 DPI
-        int max = 2000;
+        double pixelsPerMm = 3.78;
+        var vp = Viewport;
 
-        for (int i = 0; i < max; i += 5) // small step for smooth ticks
+        double offset = IsVertical ? (vp?.OffsetY ?? 0) : (vp?.OffsetX ?? 0);
+        double zoom = vp?.Zoom ?? 1.0;
+
+        double tickInterval = zoom < 0.5 ? 40 : zoom < 1.5 ? 20 : 10;
+
+        float canvasLength = IsVertical ? (float)sender.ActualHeight : (float)sender.ActualWidth;
+
+        for (double worldPx = 0; worldPx < 5000; worldPx += tickInterval)
         {
-            bool major = (i % 100 == 0);   // every 100px (~26mm)
-            bool medium = (i % 50 == 0);
+            // Screen-space position
+            double screenPos = IsVertical
+                ? worldPx * zoom - offset
+                : worldPx * zoom - offset;
 
-            float tickSize = major ? 15 : medium ? 10 : 5;
+            if (screenPos < 0 || screenPos > canvasLength) continue;
+
+            bool major = (worldPx % 100) < tickInterval;
+            bool medium = (worldPx % 50) < tickInterval;
+            float tickSize = major ? 15f : medium ? 10f : 5f;
 
             if (IsVertical)
             {
-                ds.DrawLine(0, i, tickSize, i, Colors.Black);
-
+                ds.DrawLine(0, (float)screenPos, tickSize, (float)screenPos, Colors.Black);
                 if (major)
                 {
-                    var mm = (i / pixelsPerMm).ToString("0");
-                    ds.DrawText(mm, 20, i - 6, Colors.Black);
+                    var mm = (worldPx / pixelsPerMm).ToString("0");
+                    ds.DrawText(mm, 20, (float)screenPos - 6, Colors.Black);
                 }
             }
             else
             {
-                ds.DrawLine(i, 0, i, tickSize, Colors.Black);
-
+                ds.DrawLine((float)screenPos, 0, (float)screenPos, tickSize, Colors.Black);
                 if (major)
                 {
-                    var mm = (i / pixelsPerMm).ToString("0");
-                    ds.DrawText(mm, i - 6, 15, Colors.Black);
+                    var mm = (worldPx / pixelsPerMm).ToString("0");
+                    ds.DrawText(mm, (float)screenPos - 6, 15, Colors.Black);
                 }
             }
         }
 
-        // unit label
         ds.DrawText("mm", 2, 2, Colors.Gray);
     }
 }

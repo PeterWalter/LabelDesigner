@@ -8,5 +8,6 @@ namespace LabelDesigner.Core.Models;
 
 public class TextElement : DesignElement
 {
-    public string Text { get; set; } = "Sample Text";
+    public string Text { get; set; } = "Sample";
+    public double FontSize { get; set; } = 14; // 🔥 ADD THIS
 }

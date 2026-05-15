@@ -5,131 +5,86 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ribbon="using:Syncfusion.UI.Xaml.Ribbon"
     xmlns:views="using:LabelDesigner.App.Views"
     xmlns:controls="using:LabelDesigner.App.Controls"
+    xmlns:converters="using:LabelDesigner.App.Converters"
+    xmlns:vm="using:LabelDesigner.App.ViewModels"
+   
     mc:Ignorable="d">
 
     <!-- ROOT LAYOUT -->
-    <Grid  x:Name="RootGrid"
-      DataContext="{x:Bind ViewModel}" RowDefinitions="Auto,*">
+    <Grid Name="RootGrid" Background="#F3F3F3">
+
+        <Grid.Resources>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        </Grid.Resources>
+
+        <!-- ROWS -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Ribbon -->
+            <RowDefinition Height="20"/>
+            <!-- Top ruler -->
+            <RowDefinition Height="*"/>
+            <!-- Main content -->
+        </Grid.RowDefinitions>
 
         <!-- ========================= -->
-        <!-- RIBBON / COMMAND BAR     -->
+        <!-- RIBBON -->
         <!-- ========================= -->
-        <Border Background="#F3F3F3" Padding="8">
-            <StackPanel Orientation="Horizontal" Spacing="10">
+        <ribbon:SfRibbon>
 
-                <Button Content="Add Barcode"
-                        Command="{Binding Designer.AddBarcodeCommand}" />
+            <!-- NORMAL TABS -->
+            <ribbon:SfRibbon.Tabs>
+                <ribbon:RibbonTab Header="Home"/>
+            </ribbon:SfRibbon.Tabs>
 
-                <Button Content="Delete"
-                        Command="{Binding Designer.DeleteSelectedCommand}" />
+            <!-- CONTEXTUAL -->
+            <ribbon:SfRibbon.ContextualTabGroups>
 
-                <Border Width="1"
-        Height="24"
-        Background="Gray"
-        Margin="10,0"/>
+                <!-- BARCODE -->
+                <ribbon:RibbonContextualTabGroup
+            Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}">
 
-                <TextBlock Text="Zoom:" VerticalAlignment="Center"/>
-                <Slider Width="150"
-                        Minimum="0.5"
-                        Maximum="2"
-                        Value="1" />
+                    <ribbon:RibbonContextualTabGroup.Tabs>
+                        <ribbon:RibbonTab Header="Barcode Format">
+                            <ribbon:RibbonGroup Header="Barcode">
+                                <ribbon:RibbonButton Content="Rotate"
+                                             Command="{Binding Designer.RotateCommand}"/>
+                            </ribbon:RibbonGroup>
+                        </ribbon:RibbonTab>
+                    </ribbon:RibbonContextualTabGroup.Tabs>
 
-            </StackPanel>
-        </Border>
+                </ribbon:RibbonContextualTabGroup>
+
+            </ribbon:SfRibbon.ContextualTabGroups>
+
+        </ribbon:SfRibbon>
 
         <!-- ========================= -->
-        <!-- MAIN WORK AREA           -->
+        <!-- TOP RULER -->
         <!-- ========================= -->
-        <Grid Grid.Row="1" ColumnDefinitions="220,*,300">
+        <controls:RulerControl Grid.Row="1" />
 
-            <!-- ========================= -->
-            <!-- TOOLBOX (LEFT PANEL)     -->
-            <!-- ========================= -->
-            <Border Background="#FAFAFA" Padding="10">
-                <StackPanel Spacing="8">
+        <!-- ========================= -->
+        <!-- MAIN DESIGN AREA -->
+        <!-- ========================= -->
+        <Grid Grid.Row="2">
 
-                    <TextBlock Text="Toolbox"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
-
-                    <Button Content="Barcode"
-                            Command="{Binding Designer.AddBarcodeCommand}" />
-
-                    <Button Content="Text" />
-
-                    <Button Content="Image" />
-
-                </StackPanel>
-            </Border>
-
-            <!-- ========================= -->
-            <!-- DESIGN SURFACE AREA       -->
-            <!-- ========================= -->
-            <Grid Grid.Column="1"
-      RowDefinitions="20,*"
-      ColumnDefinitions="20,*"
-      Background="White">
-
-                <!-- Top ruler -->
-                <controls:RulerControl Grid.Column="1" Height="20"/>
-
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="20"/>
                 <!-- Left ruler -->
-                <controls:RulerControl Grid.Row="1"
-                           Width="20"
-                           x:Name="LeftRuler"/>
-
+                <ColumnDefinition Width="*"/>
                 <!-- Canvas -->
-                <views:DesignerCanvasView Grid.Row="1"
-                              Grid.Column="1"/>
-            </Grid>
+            </Grid.ColumnDefinitions>
 
-            <!-- ========================= -->
-            <!-- RIGHT PANEL              -->
-            <!-- ========================= -->
-            <Grid Grid.Column="2"
-                  RowDefinitions="*,*"
-                  Background="#F8F8F8">
+            <!-- LEFT RULER -->
+            <controls:RulerControl Grid.Column="0"
+                               x:Name="LeftRuler"/>
 
-                <!-- LAYERS PANEL -->
-                <StackPanel Margin="8">
-
-                    <TextBlock Text="Layers"
-                               FontWeight="Bold"
-                               Margin="0,0,0,8"/>
-
-                    <ListView ItemsSource="{Binding Designer.Elements}"
-                              SelectedItem="{Binding Designer.Selected, Mode=TwoWay}" />
-
-                </StackPanel>
-
-                <!-- PROPERTIES PANEL -->
-                <StackPanel Grid.Row="1" Margin="8">
-
-                    <TextBlock Text="Properties"
-                               FontWeight="Bold"
-                               Margin="0,0,0,8"/>
-
-                    <StackPanel Spacing="6">
-
-                        <TextBlock Text="X"/>
-                        <TextBox Text="{Binding Designer.Selected.Bounds.X, Mode=TwoWay}" />
-
-                        <TextBlock Text="Y"/>
-                        <TextBox Text="{Binding Designer.Selected.Bounds.Y, Mode=TwoWay}" />
-
-                        <TextBlock Text="Width"/>
-                        <TextBox Text="{Binding Designer.Selected.Bounds.Width, Mode=TwoWay}" />
-
-                        <TextBlock Text="Height"/>
-                        <TextBox Text="{Binding Designer.Selected.Bounds.Height, Mode=TwoWay}" />
-
-                    </StackPanel>
-
-                </StackPanel>
-
-            </Grid>
+            <!-- DESIGNER CANVAS -->
+            <views:DesignerCanvasView Grid.Column="1"/>
 
         </Grid>
 
