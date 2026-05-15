@@ -367,7 +367,10 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     public void CopySelected()
     {
-        _clipboard = Selected;
+        if (Selected == null && _scene.SelectedIds.Count == 0) return;
+        var src = Selected ?? _scene.GetElement(_scene.SelectedIds.First());
+        if (src == null) return;
+        _clipboard = CloneElement(src);
     }
 
     [RelayCommand]
@@ -378,13 +381,26 @@ public partial class DesignerViewModel : ObservableObject
         var clone = CloneElement(_clipboard);
         if (clone != null)
         {
+            clone = DeepCloneWithNewId(clone);
             clone.Bounds = new RectD(
-                _clipboard.Bounds.X + 20,
-                _clipboard.Bounds.Y + 20,
-                _clipboard.Bounds.Width,
-                _clipboard.Bounds.Height);
+                clone.Bounds.X + 20,
+                clone.Bounds.Y + 20,
+                clone.Bounds.Width,
+                clone.Bounds.Height);
             _scene.AddElement(clone, layerId);
+            _scene.ClearSelection();
+            _scene.Select(clone.Id);
+            Selected = clone;
+            NotifyElementsChanged();
+            RequestRedraw?.Invoke();
         }
+    }
+
+    private static DesignElement DeepCloneWithNewId(DesignElement src)
+    {
+        var clone = CloneElement(src);
+        if (clone != null) clone.Id = Guid.NewGuid();
+        return clone ?? src;
     }
 
     private static DesignElement? CloneElement(DesignElement source)
@@ -484,12 +500,28 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddImage()
+    private async Task AddImage()
     {
-        EnterPlacementMode(new ImageElement
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        picker.FileTypeFilter.Add(".png");
+        picker.FileTypeFilter.Add(".jpg");
+        picker.FileTypeFilter.Add(".jpeg");
+        picker.FileTypeFilter.Add(".bmp");
+        picker.FileTypeFilter.Add(".gif");
+        picker.FileTypeFilter.Add(".svg");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        var element = new ImageElement
         {
-            Bounds = new RectD(0, 0, 120, 120)
-        });
+            Bounds = new RectD(0, 0, 150, 150),
+            SourcePath = file.Path
+        };
+
+        EnterPlacementMode(element);
     }
 
     [RelayCommand]
