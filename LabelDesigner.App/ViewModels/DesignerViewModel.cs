@@ -31,12 +31,17 @@ public partial class DesignerViewModel : ObservableObject
     private RectD _originalBounds;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CursorText))]
     private int _cursorWorldX;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CursorText))]
     private int _cursorWorldY;
 
     public int ElementCount => _scene.CurrentDocument.AllElements.Count;
+    public string ZoomText => $"Zoom: {Viewport.ZoomPercent}%";
+    public string CursorText => $"Cursor: {CursorWorldX}, {CursorWorldY}";
+    public string ElementsText => $"Elements: {ElementCount}";
 
     public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
@@ -63,6 +68,11 @@ public partial class DesignerViewModel : ObservableObject
         _persistence = persistence;
 
         SetPage(PageSize.A4, false);
+        Viewport.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Viewport.ZoomPercent))
+                OnPropertyChanged(nameof(ZoomText));
+        };
 
         var layer = _scene.AddLayer("Default");
 
@@ -146,11 +156,14 @@ public partial class DesignerViewModel : ObservableObject
         Selected = _scene.SingleSelected;
     }
 
+    private void NotifyElementsChanged() => OnPropertyChanged(nameof(ElementsText));
+
     [RelayCommand]
     private void AddBarcode()
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
         _scene.AddElement(new BarcodeElement { Bounds = new RectD(50, 50, 200, 100) }, layerId);
+        NotifyElementsChanged();
     }
 
     [RelayCommand]
@@ -158,6 +171,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
         _scene.AddElement(new TextElement { Bounds = new RectD(50, 50, 200, 30) }, layerId);
+        NotifyElementsChanged();
     }
 
     [RelayCommand]
@@ -186,6 +200,7 @@ public partial class DesignerViewModel : ObservableObject
             Stroke = "#000000",
             StrokeWidth = 1
         }, layerId);
+        NotifyElementsChanged();
     }
 
     [RelayCommand]
@@ -198,6 +213,7 @@ public partial class DesignerViewModel : ObservableObject
             Stroke = "#000000",
             StrokeWidth = 2
         }, layerId);
+        NotifyElementsChanged();
     }
 
     [RelayCommand]
@@ -205,6 +221,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
         _scene.AddElement(new ImageElement { Bounds = new RectD(50, 50, 120, 120) }, layerId);
+        NotifyElementsChanged();
     }
 
     [RelayCommand]
@@ -215,6 +232,7 @@ public partial class DesignerViewModel : ObservableObject
         else
             foreach (var id in _scene.SelectedIds.ToList())
                 _scene.RemoveElement(id);
+        NotifyElementsChanged();
     }
 
     [RelayCommand]

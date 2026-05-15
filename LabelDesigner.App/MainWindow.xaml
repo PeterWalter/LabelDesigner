@@ -111,21 +111,15 @@
                     FontSize="12" Foreground="#888"/>
 
                 <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#444"
-                    Text="{Binding Designer.Viewport.ZoomPercent, StringFormat='Zoom: {0}%'}"/>
+                    Text="{Binding Designer.ZoomText}"/>
 
                 <TextBlock Grid.Column="4" FontSize="12" VerticalAlignment="Center" Foreground="#444"
-                    Margin="6,0,0,0">
-                    <Run Text="Cursor:"/>
-                    <Run Text="{Binding Designer.CursorWorldX, FallbackValue=0}"/>
-                    <Run Text=","/>
-                    <Run Text="{Binding Designer.CursorWorldY, FallbackValue=0}"/>
-                </TextBlock>
+                    Margin="6,0,0,0"
+                    Text="{Binding Designer.CursorText}"/>
 
                 <TextBlock Grid.Column="5" FontSize="12" VerticalAlignment="Center" Foreground="#444"
-                    Margin="12,0,6,0">
-                    <Run Text="Elements:"/>
-                    <Run Text="{Binding Designer.ElementCount, FallbackValue=0}"/>
-                </TextBlock>
+                    Margin="12,0,6,0"
+                    Text="{Binding Designer.ElementsText}"/>
             </Grid>
         </Border>
 
