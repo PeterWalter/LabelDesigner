@@ -67,11 +67,11 @@ public partial class DesignerViewModel : ObservableObject
 
     public Action? RequestRedraw { get; set; }
 
-    private bool _placeNextClick;
+    private PlacementMode _placementMode = PlacementMode.None;
     private DesignElement? _pendingElement;
-    private bool _linePlaceMode;
 
-    public bool IsInLinePlacementMode => _linePlaceMode;
+    public bool IsInLinePlacementMode => _placementMode == PlacementMode.LineClickDrag;
+    public bool IsInPlacementMode => _placementMode != PlacementMode.None;
 
     public DesignerViewModel(
         ISceneGraphService scene,
@@ -188,9 +188,8 @@ public partial class DesignerViewModel : ObservableObject
 
     public void CancelPlacement()
     {
-        _placeNextClick = false;
+        _placementMode = PlacementMode.None;
         _pendingElement = null;
-        _linePlaceMode = false;
     }
 
     [RelayCommand]
@@ -220,7 +219,12 @@ public partial class DesignerViewModel : ObservableObject
             if (el == null) continue;
             el.Bounds = new RectD(el.Bounds.X - minX, el.Bounds.Y - minY, el.Bounds.Width, el.Bounds.Height);
             container.ChildIds.Add(id);
-            _scene.RemoveElement(id);
+            // Remove from layer's ElementIds but keep in AllElements
+            if (layerId != null && _scene.CurrentDocument.Layers.FirstOrDefault(l => l.Id == layerId.Value) != null)
+            {
+                var layer = _scene.CurrentDocument.Layers.First(l => l.Id == layerId.Value);
+                layer.ElementIds.Remove(id);
+            }
         }
         _scene.AddElement(container, layerId);
         _scene.ClearSelection();
@@ -234,16 +238,26 @@ public partial class DesignerViewModel : ObservableObject
     {
         var container = Selected as ContainerElement;
         if (container == null) return;
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        var layerId = container.ParentId ?? _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
         if (layerId == null) return;
+
+        double offsetX = container.Bounds.X;
+        double offsetY = container.Bounds.Y;
+
         foreach (var childId in container.ChildIds.ToList())
         {
             var child = _scene.GetElement(childId);
             if (child == null) continue;
-            child.Bounds = new RectD(child.Bounds.X + container.Bounds.X, child.Bounds.Y + container.Bounds.Y,
+            child.Bounds = new RectD(child.Bounds.X + offsetX, child.Bounds.Y + offsetY,
                 child.Bounds.Width, child.Bounds.Height);
-            _scene.AddElement(child, layerId);
+            // Add back to layer
+            if (_scene.CurrentDocument.Layers.FirstOrDefault(l => l.Id == layerId.Value) != null)
+            {
+                var layer = _scene.CurrentDocument.Layers.First(l => l.Id == layerId.Value);
+                layer.ElementIds.Add(childId);
+            }
         }
+
         _scene.RemoveElement(container.Id);
         _scene.ClearSelection();
         Selected = null;
@@ -253,7 +267,7 @@ public partial class DesignerViewModel : ObservableObject
     private void EnterPlacementMode(DesignElement prototype)
     {
         _pendingElement = prototype;
-        _placeNextClick = true;
+        _placementMode = PlacementMode.PlaceOnce;
     }
 
     [RelayCommand]
@@ -559,7 +573,7 @@ public partial class DesignerViewModel : ObservableObject
     private void AddLine()
     {
         // Line uses click-drag mode: first click sets start, release sets end
-        _linePlaceMode = true;
+        _placementMode = PlacementMode.LineClickDrag;
     }
 
     [RelayCommand]
@@ -658,7 +672,7 @@ public partial class DesignerViewModel : ObservableObject
         _startPointD = pD;
 
         // Placement mode: place the pending element at cursor
-        if (_placeNextClick && _pendingElement != null)
+        if (_placementMode == PlacementMode.PlaceOnce && _pendingElement != null)
         {
             var page = _scene.CurrentDocument.Page;
             var pw = page.WidthMm * 3.78;
@@ -688,7 +702,7 @@ public partial class DesignerViewModel : ObservableObject
 
             _scene.AddElement(_pendingElement, layerId);
             _pendingElement = null;
-            _placeNextClick = false;
+            _placementMode = PlacementMode.None;
             NotifyElementsChanged();
             RequestRedraw?.Invoke();
             return;

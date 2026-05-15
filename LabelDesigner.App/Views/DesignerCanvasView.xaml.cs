@@ -18,6 +18,7 @@ public sealed partial class DesignerCanvasView : UserControl
     private bool _firstDraw = true;
     private bool _linePlacementFirstClick;
     private PointD _lineStartPoint;
+    private CanvasControl? _canvas;
 
     public DesignerViewModel VM =>
         App.Services.GetRequiredService<DesignerViewModel>();
@@ -39,17 +40,14 @@ public sealed partial class DesignerCanvasView : UserControl
 
     private void OnCanvasLoaded(object sender, RoutedEventArgs e)
     {
-        var canvas = FindName("Canvas") as CanvasControl;
-        if (canvas != null && canvas.ActualWidth > 0) DoZoomToFit(canvas);
+        _canvas = FindName("Canvas") as CanvasControl;
+        if (_canvas != null && _canvas.ActualWidth > 0) DoZoomToFit(_canvas);
     }
 
     private void OnCanvasSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (!_firstDraw)
-        {
-            var canvas = FindName("Canvas") as CanvasControl;
-            if (canvas != null) DoZoomToFit(canvas);
-        }
+        if (!_firstDraw && _canvas != null)
+            DoZoomToFit(_canvas);
     }
 
     private void DoZoomToFit(CanvasControl canvas)
@@ -64,8 +62,7 @@ public sealed partial class DesignerCanvasView : UserControl
 
     public void InvalidateCanvas()
     {
-        var ctrl = FindName("Canvas") as CanvasControl;
-        ctrl?.Invalidate();
+        _canvas?.Invalidate();
     }
 
     private void OnCanvasKeyDown(object sender, KeyRoutedEventArgs e)
