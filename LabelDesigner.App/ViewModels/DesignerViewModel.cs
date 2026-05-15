@@ -15,6 +15,9 @@ public partial class DesignerViewModel : ObservableObject
     private readonly ISceneGraphService _scene;
     private readonly IUndoRedoService _undoRedo;
     private readonly ILabelPersistenceService _persistence;
+    private readonly PropertiesViewModel _properties;
+
+    public PropertiesViewModel Properties => _properties;
 
     public CanvasViewport Viewport { get; } = new();
     public ISceneGraphService Scene => _scene;
@@ -57,15 +60,18 @@ public partial class DesignerViewModel : ObservableObject
     public bool IsTextSelected => Selected is TextElement;
 
     private string? _currentFilePath;
+    private DesignElement? _clipboard;
 
     public DesignerViewModel(
         ISceneGraphService scene,
         IUndoRedoService undoRedo,
-        ILabelPersistenceService persistence)
+        ILabelPersistenceService persistence,
+        PropertiesViewModel properties)
     {
         _scene = scene;
         _undoRedo = undoRedo;
         _persistence = persistence;
+        _properties = properties;
 
         SetPage(PageSize.A4, false);
         Viewport.PropertyChanged += (_, e) =>
@@ -232,11 +238,53 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void CopySelected()
+    {
+        _clipboard = Selected;
+    }
+
+    [RelayCommand]
+    private void PasteElement()
+    {
+        if (_clipboard == null) return;
+        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        var clone = CloneElement(_clipboard);
+        if (clone != null)
+        {
+            clone.Bounds = new RectD(
+                _clipboard.Bounds.X + 20,
+                _clipboard.Bounds.Y + 20,
+                _clipboard.Bounds.Width,
+                _clipboard.Bounds.Height);
+            _scene.AddElement(clone, layerId);
+        }
+    }
+
+    private static DesignElement? CloneElement(DesignElement source)
+    {
+        if (source is BarcodeElement b) return new BarcodeElement { Value = b.Value, TextPosition = b.TextPosition, Bounds = b.Bounds };
+        if (source is TextElement t) return new TextElement { Text = t.Text, FontSize = t.FontSize, Bounds = t.Bounds };
+        if (source is ShapeElement s) return new ShapeElement { Type = s.Type, Fill = s.Fill, Stroke = s.Stroke, StrokeWidth = s.StrokeWidth, Bounds = s.Bounds };
+        if (source is LineElement l) return new LineElement { X1 = l.X1, Y1 = l.Y1, X2 = l.X2, Y2 = l.Y2, Stroke = l.Stroke, StrokeWidth = l.StrokeWidth };
+        if (source is ImageElement i) return new ImageElement { SourcePath = i.SourcePath, Stretch = i.Stretch, Bounds = i.Bounds };
+        return null;
+    }
+
+    [RelayCommand]
     private void RotateElement()
     {
         if (Selected != null && !Selected.Locked)
             _scene.RotateSelected(90);
     }
+
+    [RelayCommand]
+    private void SetPageA4() => SetPage(PageSize.A4, false);
+
+    [RelayCommand]
+    private void SetPageA5() => SetPage(PageSize.A5, false);
+
+    [RelayCommand]
+    private void SetPageA3() => SetPage(PageSize.A3, false);
 
     [RelayCommand]
     private void AddShape()
@@ -361,12 +409,14 @@ public partial class DesignerViewModel : ObservableObject
             _scene.ClearSelection();
             _activeHandle = ResizeHandle.None;
             _isDragging = false;
+            _properties.TrackElement(null);
             return;
         }
 
         _scene.ClearSelection();
         _scene.Select(hit.Id);
         Selected = hit;
+        _properties.TrackElement(hit);
         _activeHandle = GetHoverHandle(pD);
         _originalBounds = hit.Bounds;
     }
