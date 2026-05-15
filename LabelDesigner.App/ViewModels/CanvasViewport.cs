@@ -37,8 +37,8 @@ public partial class CanvasViewport : ObservableObject
         double fitX = (canvasWidth - margin * 2) / pageWidth;
         double fitY = (canvasHeight - margin * 2) / pageHeight;
         Zoom = Math.Min(fitX, fitY);
-        OffsetX = -(pageWidth * Zoom - canvasWidth) / 2;
-        OffsetY = -(pageHeight * Zoom - canvasHeight) / 2;
+        OffsetX = (pageWidth * Zoom - canvasWidth) / 2;
+        OffsetY = (pageHeight * Zoom - canvasHeight) / 2;
     }
 
     public Windows.Foundation.Point ScreenToWorld(Windows.Foundation.Point screen) =>

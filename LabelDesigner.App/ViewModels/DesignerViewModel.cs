@@ -66,6 +66,9 @@ public partial class DesignerViewModel : ObservableObject
 
     public Action? RequestRedraw { get; set; }
 
+    private bool _placeNextClick;
+    private DesignElement? _pendingElement;
+
     public DesignerViewModel(
         ISceneGraphService scene,
         IUndoRedoService undoRedo,
@@ -174,20 +177,31 @@ public partial class DesignerViewModel : ObservableObject
 
     private void NotifyElementsChanged() => OnPropertyChanged(nameof(ElementsText));
 
+    private void EnterPlacementMode(DesignElement prototype)
+    {
+        _pendingElement = prototype;
+        _placeNextClick = true;
+    }
+
     [RelayCommand]
     private void AddBarcode()
     {
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new BarcodeElement { Bounds = new RectD(50, 50, 200, 100) }, layerId);
-        NotifyElementsChanged();
+        EnterPlacementMode(new BarcodeElement
+        {
+            Bounds = new RectD(0, 0, 200, 100),
+            Value = "TYPE HERE",
+            TextPosition = BarcodeTextPosition.Bottom
+        });
     }
 
     [RelayCommand]
     private void AddText()
     {
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new TextElement { Bounds = new RectD(50, 50, 200, 30) }, layerId);
-        NotifyElementsChanged();
+        EnterPlacementMode(new TextElement
+        {
+            Bounds = new RectD(0, 0, 150, 30),
+            Text = "Double-click to edit"
+        });
     }
 
     [RelayCommand]
@@ -346,36 +360,33 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void AddShape()
     {
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new ShapeElement
+        EnterPlacementMode(new ShapeElement
         {
-            Bounds = new RectD(60, 60, 120, 80),
+            Bounds = new RectD(0, 0, 120, 80),
             Fill = "#E0E0E0",
             Stroke = "#000000",
             StrokeWidth = 1
-        }, layerId);
-        NotifyElementsChanged();
+        });
     }
 
     [RelayCommand]
     private void AddLine()
     {
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new LineElement
+        EnterPlacementMode(new LineElement
         {
-            X1 = 50, Y1 = 50, X2 = 200, Y2 = 50,
+            X1 = 0, Y1 = 0, X2 = 150, Y2 = 0,
             Stroke = "#000000",
             StrokeWidth = 2
-        }, layerId);
-        NotifyElementsChanged();
+        });
     }
 
     [RelayCommand]
     private void AddImage()
     {
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new ImageElement { Bounds = new RectD(50, 50, 120, 120) }, layerId);
-        NotifyElementsChanged();
+        EnterPlacementMode(new ImageElement
+        {
+            Bounds = new RectD(0, 0, 120, 120)
+        });
     }
 
     [RelayCommand]
@@ -426,7 +437,11 @@ public partial class DesignerViewModel : ObservableObject
         };
 
         if (landscape) (w, h) = (h, w);
+        _scene.CurrentDocument.Page.WidthMm = w / 3.78;
+        _scene.CurrentDocument.Page.HeightMm = h / 3.78;
+        _scene.CurrentDocument.Page.Dpi = 300;
         PageBounds = new RectD(50, 50, w, h);
+        RequestRedraw?.Invoke();
     }
 
     public void SetShiftState(bool held) => _isShiftHeld = held;
@@ -436,6 +451,44 @@ public partial class DesignerViewModel : ObservableObject
         var p = Viewport.ScreenToWorld(screenPoint);
         var pD = new PointD(p.X, p.Y);
         _startPointD = pD;
+
+        // Placement mode: place the pending element at cursor
+        if (_placeNextClick && _pendingElement != null)
+        {
+            var page = _scene.CurrentDocument.Page;
+            var pw = page.WidthMm * 3.78;
+            var ph = page.HeightMm * 3.78;
+            var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+
+            // Center the element at click position
+            var halfW = _pendingElement is LineElement ? 0 : (_pendingElement.Bounds.Width / 2);
+            var halfH = _pendingElement is LineElement ? 0 : (_pendingElement.Bounds.Height / 2);
+
+            // Clamp within page bounds
+            var x = Math.Max(0, Math.Min(pD.X - halfW, pw - _pendingElement.Bounds.Width));
+            var y = Math.Max(0, Math.Min(pD.Y - halfH, ph - _pendingElement.Bounds.Height));
+
+            if (_pendingElement is LineElement ln)
+            {
+                ln.X1 = x;
+                ln.Y1 = Math.Max(0, Math.Min(pD.Y - 10, ph));
+                ln.X2 = Math.Min(x + 150, pw);
+                ln.Y2 = ln.Y1;
+                _pendingElement.Bounds = new RectD(x, ln.Y1 - 5, Math.Min(x + 150, pw) - x, 10);
+            }
+            else
+            {
+                _pendingElement.Bounds = new RectD(x, y, _pendingElement.Bounds.Width, _pendingElement.Bounds.Height);
+            }
+
+            _scene.AddElement(_pendingElement, layerId);
+            _pendingElement = null;
+            _placeNextClick = false;
+            NotifyElementsChanged();
+            RequestRedraw?.Invoke();
+            return;
+        }
+
         _isDragging = true;
 
         if (Selected != null)
@@ -503,7 +556,17 @@ public partial class DesignerViewModel : ObservableObject
         }
         else if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
         {
-            Selected.Bounds = SnapToGrid(_originalBounds.Translate(dx, dy));
+            var newBounds = SnapToGrid(_originalBounds.Translate(dx, dy));
+            // Constrain to page bounds
+            var pageW = _scene.CurrentDocument.Page.WidthMm * 3.78;
+            var pageH = _scene.CurrentDocument.Page.HeightMm * 3.78;
+            if (newBounds.X < 0) newBounds.X = 0;
+            if (newBounds.Y < 0) newBounds.Y = 0;
+            if (newBounds.X + newBounds.Width > pageW) newBounds.X = pageW - newBounds.Width;
+            if (newBounds.Y + newBounds.Height > pageH) newBounds.Y = pageH - newBounds.Height;
+            if (newBounds.X < 0) newBounds.X = 0;
+            if (newBounds.Y < 0) newBounds.Y = 0;
+            Selected.Bounds = newBounds;
         }
         else
         {
