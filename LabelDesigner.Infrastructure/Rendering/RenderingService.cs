@@ -9,6 +9,7 @@ using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
+using Windows.Foundation;
 using Windows.UI;
 
 namespace LabelDesigner.Infrastructure;
@@ -209,7 +210,7 @@ public class RenderService : IRenderService
         }
         catch { }
         ds.FillRectangle(b, Colors.LightGray);
-        var l = b.Left; var t = b.Top; var r = b.Right; var bo = b.Bottom;
+        var l = (float)b.Left; var t = (float)b.Top; var r = (float)b.Right; var bo = (float)b.Bottom;
         ds.DrawLine(l, t, r, bo, Colors.DarkGray, 1);
         ds.DrawLine(r, t, l, bo, Colors.DarkGray, 1);
     }
