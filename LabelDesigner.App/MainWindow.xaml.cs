@@ -17,6 +17,13 @@ public sealed partial class MainWindow : Window
 
         // Initial layers panel refresh
         ViewModel.Designer.Layers.Refresh();
+
+        // Set default window size (WinUI 3 Window doesn't support Width/Height in XAML)
+        Microsoft.UI.Windowing.AppWindow appWindow = this.AppWindow;
+        if (appWindow != null)
+        {
+            appWindow.Resize(new Windows.Graphics.SizeInt32(1400, 900));
+        }
     }
 
     private void OnLayerItemClick(object sender, PointerRoutedEventArgs e)
