@@ -5,6 +5,7 @@ using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Windows.Foundation;
 
