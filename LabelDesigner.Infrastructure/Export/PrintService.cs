@@ -1,13 +1,16 @@
+using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
+
 using LabelDesigner.Infrastructure.Common;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI;
 using Windows.Graphics.Imaging;
 using System.Numerics;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace LabelDesigner.Infrastructure.Export;
 
@@ -137,8 +140,8 @@ public class PrintService : IPrintService
     private void DrawShapeHighRes(CanvasDrawingSession ds, ShapeElement shape, float scale)
     {
         var b = shape.Bounds.ToWinRect();
-        var fill = Rendering.RenderService.ParseColor(shape.Fill, Colors.LightGray);
-        var stroke = Rendering.RenderService.ParseColor(shape.Stroke, Colors.Black);
+        var fill = RenderService.ParseColor(shape.Fill, Colors.LightGray);
+        var stroke = RenderService.ParseColor(shape.Stroke, Colors.Black);
         float sw = (float)shape.StrokeWidth * scale;
 
         if (shape.Type == ShapeType.Ellipse)

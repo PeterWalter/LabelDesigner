@@ -1,3 +1,4 @@
+using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using Syncfusion.Pdf;
