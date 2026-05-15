@@ -25,6 +25,20 @@ public sealed partial class DesignerCanvasView : UserControl
     {
         InitializeComponent();
         this.PointerWheelChanged += OnPointerWheelChanged;
+        this.KeyDown += OnCanvasKeyDown;
+        this.KeyUp += OnCanvasKeyUp;
+    }
+
+    private void OnCanvasKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Shift)
+            VM?.SetShiftState(true);
+    }
+
+    private void OnCanvasKeyUp(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Shift)
+            VM?.SetShiftState(false);
     }
 
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
@@ -138,6 +152,9 @@ public sealed partial class DesignerCanvasView : UserControl
                 break;
             case ResizeHandle.Move:
                 shape = InputSystemCursorShape.SizeAll;
+                break;
+            case ResizeHandle.Rotate:
+                shape = InputSystemCursorShape.Hand;
                 break;
         }
 

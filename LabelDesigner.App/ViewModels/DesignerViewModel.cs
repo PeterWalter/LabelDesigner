@@ -25,6 +25,7 @@ public partial class DesignerViewModel : ObservableObject
 
     private readonly SnapService _snap = new();
     private bool _isDragging;
+    private bool _isShiftHeld;
     private ResizeHandle _activeHandle = ResizeHandle.None;
     private PointD _startPointD;
     private RectD _originalBounds;
@@ -71,8 +72,6 @@ public partial class DesignerViewModel : ObservableObject
         }, layer.Id);
     }
 
-    // ─── File Commands ──────────────────────────────
-
     [RelayCommand]
     private async Task NewDocument()
     {
@@ -85,11 +84,8 @@ public partial class DesignerViewModel : ObservableObject
     private async Task OpenDocument()
     {
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
-        //var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Host.Services.GetRequiredService<MainWindow>());
-       // WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeFilter.Add(".ldlabel");
         picker.FileTypeFilter.Add(".json");
 
@@ -116,9 +112,8 @@ public partial class DesignerViewModel : ObservableObject
     private async Task SaveAsDocument()
     {
         var picker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
-        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeChoices.Add("LabelDesigner Document", new[] { ".ldlabel" });
         picker.SuggestedFileName = "Untitled.ldlabel";
 
@@ -128,8 +123,6 @@ public partial class DesignerViewModel : ObservableObject
         await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
         _currentFilePath = file.Path;
     }
-
-    // ─── Undo/Redo ──────────────────────────────────
 
     [RelayCommand]
     private void Undo()
@@ -145,26 +138,50 @@ public partial class DesignerViewModel : ObservableObject
         Selected = _scene.SingleSelected;
     }
 
-    // ─── Element Commands ──────────────────────────
-
     [RelayCommand]
     private void AddBarcode()
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new BarcodeElement
-        {
-            Bounds = new RectD(50, 50, 200, 100)
-        }, layerId);
+        _scene.AddElement(new BarcodeElement { Bounds = new RectD(50, 50, 200, 100) }, layerId);
     }
 
     [RelayCommand]
     private void AddText()
     {
         var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
-        _scene.AddElement(new TextElement
+        _scene.AddElement(new TextElement { Bounds = new RectD(50, 50, 200, 30) }, layerId);
+    }
+
+    [RelayCommand]
+    private void AddShape()
+    {
+        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        _scene.AddElement(new ShapeElement
         {
-            Bounds = new RectD(50, 50, 200, 30)
+            Bounds = new RectD(60, 60, 120, 80),
+            Fill = "#E0E0E0",
+            Stroke = "#000000",
+            StrokeWidth = 1
         }, layerId);
+    }
+
+    [RelayCommand]
+    private void AddLine()
+    {
+        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        _scene.AddElement(new LineElement
+        {
+            X1 = 50, Y1 = 50, X2 = 200, Y2 = 50,
+            Stroke = "#000000",
+            StrokeWidth = 2
+        }, layerId);
+    }
+
+    [RelayCommand]
+    private void AddImage()
+    {
+        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        _scene.AddElement(new ImageElement { Bounds = new RectD(50, 50, 120, 120) }, layerId);
     }
 
     [RelayCommand]
@@ -172,9 +189,10 @@ public partial class DesignerViewModel : ObservableObject
     {
         if (Selected != null)
             _scene.RemoveElement(Selected.Id);
+        else
+            foreach (var id in _scene.SelectedIds.ToList())
+                _scene.RemoveElement(id);
     }
-
-    // ─── Barcode Text Position ─────────────────────
 
     [RelayCommand]
     private void SetTextTop() { if (Selected is BarcodeElement b) b.TextPosition = BarcodeTextPosition.Top; }
@@ -194,8 +212,6 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void DecreaseFont() { if (Selected is TextElement t) t.FontSize -= 2; }
 
-    // ─── Page ──────────────────────────────────────
-
     public void ToggleOrientation()
     {
         PageBounds = new RectD(PageBounds.X, PageBounds.Y, PageBounds.Height, PageBounds.Width);
@@ -214,13 +230,11 @@ public partial class DesignerViewModel : ObservableObject
             _ => (595, 842)
         };
 
-        if (landscape)
-            (w, h) = (h, w);
-
+        if (landscape) (w, h) = (h, w);
         PageBounds = new RectD(50, 50, w, h);
     }
 
-    // ─── Pointer Handling ──────────────────────────
+    public void SetShiftState(bool held) => _isShiftHeld = held;
 
     public void PointerPressed(Windows.Foundation.Point screenPoint)
     {
@@ -229,7 +243,27 @@ public partial class DesignerViewModel : ObservableObject
         _startPointD = pD;
         _isDragging = true;
 
+        if (Selected != null)
+        {
+            var rotRect = GetRotationHandleRect(Selected);
+            if (pD.X >= rotRect.X && pD.X <= rotRect.X + rotRect.Width &&
+                pD.Y >= rotRect.Y && pD.Y <= rotRect.Y + rotRect.Height)
+            {
+                _activeHandle = ResizeHandle.Rotate;
+                _originalBounds = Selected.Bounds;
+                return;
+            }
+        }
+
         var hit = _scene.HitTest(pD);
+
+        if (_isShiftHeld && hit != null)
+        {
+            _scene.ToggleSelect(hit.Id);
+            Selected = _scene.SelectedIds.Count == 1 ? _scene.SingleSelected : null;
+            _activeHandle = ResizeHandle.Move;
+            return;
+        }
 
         if (hit == null)
         {
@@ -258,7 +292,12 @@ public partial class DesignerViewModel : ObservableObject
         var dx = pD.X - _startPointD.X;
         var dy = pD.Y - _startPointD.Y;
 
-        if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
+        if (_activeHandle == ResizeHandle.Rotate)
+        {
+            double angle = Math.Atan2(dy, dx) * 180.0 / Math.PI;
+            _scene.RotateSelected(angle - Selected!.Rotation);
+        }
+        else if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
         {
             Selected.Bounds = SnapToGrid(_originalBounds.Translate(dx, dy));
         }
@@ -274,16 +313,13 @@ public partial class DesignerViewModel : ObservableObject
         _activeHandle = ResizeHandle.None;
     }
 
-    // ─── Resize ────────────────────────────────────
-
     private RectD SnapToGrid(RectD rect)
     {
         int grid = 20;
         return new RectD(
             Math.Round(rect.X / grid) * grid,
             Math.Round(rect.Y / grid) * grid,
-            rect.Width,
-            rect.Height);
+            rect.Width, rect.Height);
     }
 
     private void Resize(double dx, double dy)
@@ -293,41 +329,37 @@ public partial class DesignerViewModel : ObservableObject
 
         switch (_activeHandle)
         {
-            case ResizeHandle.TopLeft:
-                b = new RectD(b.X + dx, b.Y + dy, b.Width - dx, b.Height - dy);
-                break;
-            case ResizeHandle.Top:
-                b = new RectD(b.X, b.Y + dy, b.Width, b.Height - dy);
-                break;
-            case ResizeHandle.TopRight:
-                b = new RectD(b.X, b.Y + dy, b.Width + dx, b.Height - dy);
-                break;
-            case ResizeHandle.Right:
-                b = new RectD(b.X, b.Y, b.Width + dx, b.Height);
-                break;
-            case ResizeHandle.BottomRight:
-                b = new RectD(b.X, b.Y, b.Width + dx, b.Height + dy);
-                break;
-            case ResizeHandle.Bottom:
-                b = new RectD(b.X, b.Y, b.Width, b.Height + dy);
-                break;
-            case ResizeHandle.BottomLeft:
-                b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height + dy);
-                break;
-            case ResizeHandle.Left:
-                b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height);
-                break;
+            case ResizeHandle.TopLeft: b = new RectD(b.X + dx, b.Y + dy, b.Width - dx, b.Height - dy); break;
+            case ResizeHandle.Top: b = new RectD(b.X, b.Y + dy, b.Width, b.Height - dy); break;
+            case ResizeHandle.TopRight: b = new RectD(b.X, b.Y + dy, b.Width + dx, b.Height - dy); break;
+            case ResizeHandle.Right: b = new RectD(b.X, b.Y, b.Width + dx, b.Height); break;
+            case ResizeHandle.BottomRight: b = new RectD(b.X, b.Y, b.Width + dx, b.Height + dy); break;
+            case ResizeHandle.Bottom: b = new RectD(b.X, b.Y, b.Width, b.Height + dy); break;
+            case ResizeHandle.BottomLeft: b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height + dy); break;
+            case ResizeHandle.Left: b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height); break;
         }
 
         if (b.Width < minSize) b.Width = minSize;
         if (b.Height < minSize) b.Height = minSize;
-
         Selected!.Bounds = b;
+    }
+
+    private RectD GetRotationHandleRect(DesignElement el)
+    {
+        var b = el.Bounds;
+        float zf = Math.Max((float)Viewport.Zoom, 0.25f);
+        float rotOff = 20f / zf;
+        return new RectD(b.X + b.Width / 2 - 8, b.Y - rotOff - 8, 16, 16);
     }
 
     public ResizeHandle GetHoverHandle(PointD pD)
     {
         if (Selected == null) return ResizeHandle.None;
+
+        var rotRect = GetRotationHandleRect(Selected);
+        if (pD.X >= rotRect.X && pD.X <= rotRect.X + rotRect.Width &&
+            pD.Y >= rotRect.Y && pD.Y <= rotRect.Y + rotRect.Height)
+            return ResizeHandle.Rotate;
 
         var b = Selected.Bounds;
         const double size = 8;
