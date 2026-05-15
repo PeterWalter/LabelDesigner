@@ -23,7 +23,7 @@ public sealed partial class MainWindow : Window
     private void OnLayerItemClick(object sender, PointerRoutedEventArgs e)
     {
         var grid = sender as Grid;
-        if (grid?.DataContext is LayerPanelViewModel.ElementItemViewModel evm)
+        if (grid?.DataContext is ElementItemViewModel evm)
         {
             ViewModel.Designer.Layers.SelectElement(evm.ElementId);
             ViewModel.Designer.RequestRedraw?.Invoke();

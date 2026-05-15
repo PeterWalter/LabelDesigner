@@ -5,7 +5,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	  <ImplicitUsings>enable</ImplicitUsings>
-	  <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
+    <win2d-Platform Condition="'$(Platform)'=='AnyCPU' or '$(Platform)'==''">x64</win2d-Platform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='AnyCPU' or '$(Platform)'==''">
+    <Platform>x64</Platform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='AnyCPU' or '$(Platform)'==''">
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>

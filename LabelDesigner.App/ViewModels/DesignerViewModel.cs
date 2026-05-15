@@ -297,13 +297,13 @@ public partial class DesignerViewModel : ObservableObject
     {
         if (el is BarcodeElement bc)
         {
-            var bound = new BarcodeElement { Bounds = bc.Bounds, Format = bc.Format, TextPosition = bc.TextPosition };
+            var bound = new BarcodeElement { Bounds = bc.Bounds, TextPosition = bc.TextPosition };
             bound.Value = ResolveTemplate(bc.Value, record);
             return bound;
         }
         if (el is TextElement txt)
         {
-            var bound = new TextElement { Bounds = txt.Bounds, FontSize = txt.FontSize, FontFamily = txt.FontFamily };
+            var bound = new TextElement { Bounds = txt.Bounds, FontSize = txt.FontSize };
             bound.Text = ResolveTemplate(txt.Text, record);
             return bound;
         }
