@@ -96,7 +96,7 @@ Key architectural decisions are tracked in [`docs/adr/`](docs/adr/). Domain voca
 
 ## Building
 
-Requires **Visual Studio 2022** (or later) with the **Windows App SDK** workload installed.
+Requires **Visual Studio 2026** (or later) with the **Windows App SDK** workload installed.
 
 ```
 dotnet build LabelDesigner.slnx
