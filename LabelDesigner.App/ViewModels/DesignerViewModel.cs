@@ -5,6 +5,7 @@ using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
+using LabelDesigner.App.Services;
 using Microsoft.UI;
 using Windows.Foundation;
 
@@ -47,7 +48,8 @@ public partial class DesignerViewModel : ObservableObject
 
     public int ElementCount => _scene.CurrentDocument.AllElements.Count;
     public string ZoomText => $"Zoom: {Viewport.ZoomPercent}%";
-    public string CursorText => $"Cursor: {CursorWorldX}, {CursorWorldY}";
+    public string CursorText => $"Cursor: {FormatMeasurement(CursorWorldX)}, {FormatMeasurement(CursorWorldY)}";
+    public string RulerUnitText => $"Unit: {GetUnitSuffix()}";
     public string ElementsText => $"Elements: {ElementCount}";
 
     public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
@@ -113,6 +115,7 @@ public partial class DesignerViewModel : ObservableObject
             if (e.PropertyName == nameof(Selected))
                 _properties.TrackElement(Selected);
         };
+        AppSettingsService.SettingsChanged += OnSettingsChanged;
 
         var layer = _scene.AddLayer("Default");
 
@@ -754,5 +757,33 @@ public partial class DesignerViewModel : ObservableObject
     public ResizeHandle GetHoverHandle(PointD pD)
     {
         return _interaction.GetHoverHandle(Selected, pD, Viewport.Zoom);
+    }
+
+    private void OnSettingsChanged()
+    {
+        OnPropertyChanged(nameof(CursorText));
+        OnPropertyChanged(nameof(RulerUnitText));
+    }
+
+    private static string FormatMeasurement(double pixels)
+    {
+        var mm = pixels / 3.78;
+        return AppSettingsService.RulerUnit switch
+        {
+            MeasurementUnit.Millimeters => $"{mm:0} mm",
+            MeasurementUnit.Centimeters => $"{(mm / 10.0):0.0} cm",
+            MeasurementUnit.Inches => $"{(mm / 25.4):0.00} in",
+            _ => $"{mm:0} mm"
+        };
+    }
+
+    private static string GetUnitSuffix()
+    {
+        return AppSettingsService.RulerUnit switch
+        {
+            MeasurementUnit.Centimeters => "cm",
+            MeasurementUnit.Inches => "in",
+            _ => "mm"
+        };
     }
 }

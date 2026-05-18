@@ -300,7 +300,7 @@
                     <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="A4" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="#555"/>
+                <TextBlock Grid.Column="0" Text="{Binding Designer.RulerUnitText}" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="#555"/>
                 <TextBlock Grid.Column="1" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC"/>
                 <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.ZoomText}"/>
                 <Button Grid.Column="4" Content="-" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14" Command="{Binding Designer.ZoomOutCommand}"/>
