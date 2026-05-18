@@ -89,7 +89,6 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Clipboard">
-                        <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}" ToolTipService.ToolTip="Copy (Ctrl+C)">
                         <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}"
                             AutomationProperties.Name="Copy selected element (Ctrl+C)"
                             ToolTipService.ToolTip="Copy (Ctrl+C)">
@@ -98,7 +97,6 @@
                                 <KeyboardAccelerator Modifiers="Control" Key="C"/>
                             </ribbon:RibbonButton.KeyboardAccelerators>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}" ToolTipService.ToolTip="Paste (Ctrl+V)">
                         <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}"
                             AutomationProperties.Name="Paste element (Ctrl+V)"
                             ToolTipService.ToolTip="Paste (Ctrl+V)">
