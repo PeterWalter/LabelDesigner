@@ -39,4 +39,13 @@ public interface ISceneGraphService
     LayerNode AddLayer(string name);
     void RemoveLayer(Guid id);
     void ReorderLayer(Guid id, int newIndex);
+
+    // Element z-ordering within a layer
+    void BringToFront(Guid id);
+    void SendToBack(Guid id);
+    void BringForward(Guid id);
+    void SendBackward(Guid id);
+
+    // Duplicate selected elements with an offset
+    IReadOnlyList<DesignElement> DuplicateSelected(double offsetX = 10, double offsetY = 10);
 }
