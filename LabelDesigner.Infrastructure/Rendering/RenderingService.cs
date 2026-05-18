@@ -36,7 +36,7 @@ public class RenderService : IRenderService
         IEnumerable<Guid> hoveredIds,
         float zoom,
         RectD viewport,
-        double pixelsPerMm = 3.78,
+        double pixelsPerMm,
         bool showGrid = true)
     {
         ds.Clear(Colors.White);

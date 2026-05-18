@@ -77,9 +77,6 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        // Detect system DPI once at startup (guaranteed UI thread + CoreWindow ready)
-        DpiService.DetectDpi();
-
         m_window = Services!.GetRequiredService<MainWindow>();
         m_window.ExtendsContentIntoTitleBar = true;
         MainWindow = m_window;
@@ -90,5 +87,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         }
 
         MainWindow.Activate();
+
+        if (DpiService.InitializeForWindow(MainWindow))
+        {
+            Services!.GetRequiredService<DesignerViewModel>().RefreshDpiDependentState();
+        }
     }
 }

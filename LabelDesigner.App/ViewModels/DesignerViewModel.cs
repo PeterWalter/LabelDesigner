@@ -535,6 +535,15 @@ public partial class DesignerViewModel : ObservableObject
         RequestRedraw?.Invoke();
     }
 
+    public void RefreshDpiDependentState()
+    {
+        OnPropertyChanged(nameof(PixelsPerMm));
+        OnPropertyChanged(nameof(CursorText));
+        OnPropertyChanged(nameof(RulerUnitText));
+        UpdatePageBounds();
+        RequestRedraw?.Invoke();
+    }
+
     private void SetInteractionState(InteractionState state)
     {
         if (InteractionState == state)

@@ -38,7 +38,7 @@ public sealed partial class RulerControl : UserControl
             nameof(PixelsPerMm),
             typeof(double),
             typeof(RulerControl),
-            new PropertyMetadata(3.78, OnPixelsPerMmChanged));
+            new PropertyMetadata(DpiService.PixelsPerMm, OnPixelsPerMmChanged));
 
     private static void OnPixelsPerMmChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
