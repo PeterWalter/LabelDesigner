@@ -66,6 +66,15 @@ public class PdfExportService : IPdfExportService
         {
             graphics.DrawLine(PdfPens.Black, (float)line.X1, (float)line.Y1, (float)line.X2, (float)line.Y2);
         }
+        else if (el is ImageElement image)
+        {
+            DrawImageToPdf(graphics, image);
+        }
+        else if (el is SvgElement svg)
+        {
+            var stretchEnum = svg.Stretch == "UniformToFill" ? ImageStretch.UniformToFill : ImageStretch.Uniform;
+            DrawImageToPdf(graphics, new ImageElement { SourcePath = svg.SourcePath, Bounds = svg.Bounds, Stretch = stretchEnum });
+        }
         else if (el is ContainerElement container)
         {
             foreach (var childId in container.ChildIds)
@@ -101,6 +110,29 @@ public class PdfExportService : IPdfExportService
             graphics.DrawRectangle(brush, (float)b.X, (float)b.Y, (float)b.Width, (float)b.Height);
             graphics.DrawRectangle(pen, (float)b.X, (float)b.Y, (float)b.Width, (float)b.Height);
         }
+    }
+
+    private void DrawImageToPdf(PdfGraphics graphics, ImageElement image)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(image.SourcePath) && System.IO.File.Exists(image.SourcePath))
+            {
+                var brush = new PdfSolidBrush(Syncfusion.Drawing.Color.White);
+                graphics.DrawRectangle(brush, (float)image.Bounds.X, (float)image.Bounds.Y,
+                    (float)image.Bounds.Width, (float)image.Bounds.Height);
+                 
+                var pen = new PdfPen(Syncfusion.Drawing.Color.LightGray, 1);
+                graphics.DrawRectangle(pen, (float)image.Bounds.X, (float)image.Bounds.Y,
+                    (float)image.Bounds.Width, (float)image.Bounds.Height);
+                 
+                // Draw placeholder text with filename
+                var fileName = System.IO.Path.GetFileName(image.SourcePath);
+                graphics.DrawString(fileName, new PdfStandardFont(PdfFontFamily.Helvetica, 8),
+                    PdfBrushes.Gray, new Syncfusion.Drawing.PointF((float)image.Bounds.X + 2, (float)image.Bounds.Y + 2));
+            }
+        }
+        catch { }
     }
 
     private static float MillimetersToPoints(double mm) => (float)(mm * 2.83465);

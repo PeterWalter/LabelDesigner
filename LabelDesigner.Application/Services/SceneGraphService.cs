@@ -368,6 +368,7 @@ public class SceneGraphService : ISceneGraphService
                 Italic = t.Italic,
                 Underline = t.Underline,
                 IsMultiline = t.IsMultiline,
+                LineSpacing = t.LineSpacing,
                 TextAlignment = t.TextAlignment
             },
             BarcodeElement b => new BarcodeElement
@@ -399,6 +400,12 @@ public class SceneGraphService : ISceneGraphService
             {
                 SourcePath = img.SourcePath,
                 Stretch = img.Stretch
+            },
+            SvgElement svg => new SvgElement
+            {
+                SourcePath = svg.SourcePath,
+                Stretch = svg.Stretch,
+                CachedBitmap = svg.CachedBitmap
             },
             _ => throw new NotSupportedException($"Cannot duplicate element of type {src.GetType().Name}")
         };
