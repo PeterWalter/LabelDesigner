@@ -9,6 +9,7 @@ using LabelDesigner.App.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Dispatching;
 using Windows.Foundation;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -18,26 +19,45 @@ namespace LabelDesigner.App.ViewModels;
 public partial class DesignerViewModel : ObservableObject
 {
     private double? _cachedPixelsPerMm;
+    private readonly object _pixelsPerMmLock = new();
 
     private double GetPixelsPerMm()
     {
+        // Check cache first (fast path)
         if (_cachedPixelsPerMm.HasValue)
             return _cachedPixelsPerMm.Value;
 
-        try
+        lock (_pixelsPerMmLock)
         {
-            // Get system DPI scaling
-            var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
-            double dpiScale = displayInfo.RawPixelsPerViewPixel;
-            // Base 96 DPI / 25.4 mm per inch = 3.78 pixels per mm at 100% scaling
-            double basePpMm = 96.0 / 25.4;
+            // Double-check after acquiring lock
+            if (_cachedPixelsPerMm.HasValue)
+                return _cachedPixelsPerMm.Value;
+
+            const double basePpMm = 96.0 / 25.4; // 3.78 at 100% DPI
+            double dpiScale = 1.0;
+
+            try
+            {
+                // Only attempt DPI detection if we're on the UI thread with a DispatcherQueue
+                var dispatcher = DispatcherQueue.GetForCurrentThread();
+                if (dispatcher != null)
+                {
+                    var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
+                    dpiScale = displayInfo.RawPixelsPerViewPixel;
+                }
+            }
+            catch (COMException)
+            {
+                // GetForCurrentView() failed—either not on UI thread or CoreWindow not ready
+                // Fall through and use dpiScale = 1.0 (base 96 DPI)
+            }
+            catch (Exception)
+            {
+                // Any other exception—also use default
+            }
+
             _cachedPixelsPerMm = basePpMm * dpiScale;
             return _cachedPixelsPerMm.Value;
-        }
-        catch (COMException)
-        {
-            // GetForCurrentView() must be called on UI thread. Use default and try again later.
-            return 96.0 / 25.4;
         }
     }
 
@@ -1921,7 +1941,7 @@ public partial class DesignerViewModel : ObservableObject
             hwnd = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
             return hwnd != IntPtr.Zero;
         }
-        catch (Exception ex)
+        catch
         {
             hwnd = IntPtr.Zero;
             return false;
