@@ -18,7 +18,7 @@ public class BoolToSolidBrushConverter : IValueConverter
         var parts = param.Split('|');
         string hex = b ? (parts.Length > 0 ? parts[0] : "#000000")
                        : (parts.Length > 1 ? parts[1] : "#AAAAAA");
-        return new SolidColorBrush(ParseHex(hex));
+        return ResolveBrush(hex);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
@@ -43,5 +43,17 @@ public class BoolToSolidBrushConverter : IValueConverter
             System.Diagnostics.Debug.WriteLine($"Failed to parse hex color '{hex}': {ex.Message}");
             return Color.FromArgb(255, 170, 170, 170);
         }
+    }
+
+    private static Brush ResolveBrush(string value)
+    {
+        if (value.StartsWith("$", StringComparison.Ordinal) &&
+            Microsoft.UI.Xaml.Application.Current.Resources.TryGetValue(value[1..], out var resource) &&
+            resource is Brush resolvedBrush)
+        {
+            return resolvedBrush;
+        }
+
+        return new SolidColorBrush(ParseHex(value));
     }
 }

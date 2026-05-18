@@ -22,7 +22,7 @@
         <converters:BoolToSolidBrushConverter x:Key="BoolToSelectedTextBrush"/>
     </UserControl.Resources>
 
-    <Border Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+    <Border Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,0">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -31,14 +31,14 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Border Grid.Row="0" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="6,3">
+            <Border Grid.Row="0" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="6,3">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="HeaderText" Grid.Column="0" Text="Layers"
-                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Foreground="#2B2B2B"/>
+                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Foreground="{ThemeResource AppTextBrush}"/>
                     <ToggleButton Grid.Column="1" x:Name="CollapseToggle"
                         Width="28" Height="28" Padding="0" IsChecked="False"
                         Checked="OnCollapseToggleChanged" Unchecked="OnCollapseToggleChanged"
@@ -56,7 +56,7 @@
                         <DataTemplate>
                             <StackPanel>
                                 <!-- Layer header -->
-                                <Border Background="#E4EAF0" Padding="2,3" Margin="0,2,0,0"
+                                <Border Background="{ThemeResource AppPaneItemBrush}" Padding="2,3" Margin="0,2,0,0"
                                     PointerPressed="OnLayerHeaderClick" Tag="{Binding}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -70,7 +70,7 @@
                                         <Button Grid.Column="0" Width="18" Height="18" Padding="0"
                                             Background="Transparent" BorderThickness="0"
                                             Click="OnLayerExpandClick" Tag="{Binding}">
-                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="9" Foreground="#555"
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="9" Foreground="{ThemeResource AppGlyphBrush}"
                                                 Glyph="{Binding IsExpanded, Converter={StaticResource BoolToExpandGlyph}, ConverterParameter='&#xE76C;|&#xE76D;', FallbackValue='&#xE76C;'}"/>
                                         </Button>
 
@@ -80,7 +80,7 @@
                                             ToolTipService.ToolTip="Toggle layer visibility">
                                             <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="11"
                                                 Glyph="{Binding VisibilityGlyph}"
-                                                Foreground="{Binding IsVisible, Converter={StaticResource BoolToActiveBrush}, ConverterParameter='#2B5EA7|#AAAAAA'}"/>
+                                                Foreground="{Binding IsVisible, Converter={StaticResource BoolToActiveBrush}, ConverterParameter='#2B5EA7|$AppMutedTextBrush'}"/>
                                         </Button>
 
                                         <Button Grid.Column="2" Width="22" Height="18" Padding="0"
@@ -89,19 +89,19 @@
                                             ToolTipService.ToolTip="Toggle layer lock">
                                             <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="11"
                                                 Glyph="{Binding LockGlyph}"
-                                                Foreground="{Binding IsLocked, Converter={StaticResource BoolToLockBrush}, ConverterParameter='#CC7700|#AAAAAA'}"/>
+                                                Foreground="{Binding IsLocked, Converter={StaticResource BoolToLockBrush}, ConverterParameter='#CC7700|$AppMutedTextBrush'}"/>
                                         </Button>
 
                                         <TextBox Grid.Column="3"
                                             Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            FontWeight="SemiBold" FontSize="12" Foreground="#1A1A1A"
+                                            FontWeight="SemiBold" FontSize="12" Foreground="{ThemeResource AppTextBrush}"
                                             BorderThickness="0" Background="Transparent" Padding="2,0"
                                             VerticalAlignment="Center" Height="22"/>
 
-                                        <Border Grid.Column="4" Background="#C8D4E0" CornerRadius="8"
+                                        <Border Grid.Column="4" Background="{ThemeResource AppPaneBadgeBrush}" CornerRadius="8"
                                             Padding="5,1" Margin="2,0,3,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding ElementCountText}"
-                                                FontSize="9" Foreground="#445566"/>
+                                                FontSize="9" Foreground="{ThemeResource AppBadgeTextBrush}"/>
                                         </Border>
                                     </Grid>
                                 </Border>
@@ -123,12 +123,12 @@
                                                     <TextBlock Grid.Column="1"
                                                         Text="{Binding TypeGlyph}"
                                                         FontFamily="Segoe MDL2 Assets"
-                                                        FontSize="11" Foreground="#667788"
+                                                        FontSize="11" Foreground="{ThemeResource AppSecondaryGlyphBrush}"
                                                         VerticalAlignment="Center"/>
                                                     <TextBlock Grid.Column="2"
                                                         Text="{Binding Name}"
                                                         FontSize="11" VerticalAlignment="Center"
-                                                        Foreground="{Binding IsSelected, Converter={StaticResource BoolToSelectedTextBrush}, ConverterParameter='#FFFFFF|#444444'}"
+                                                        Foreground="{Binding IsSelected, Converter={StaticResource BoolToSelectedTextBrush}, ConverterParameter='$AppSelectedTextBrush|$AppTextBrush'}"
                                                         TextTrimming="CharacterEllipsis"/>
                                                 </Grid>
                                             </Border>
@@ -143,7 +143,7 @@
 
             <!-- Footer: Add/Delete layer -->
             <Border Grid.Row="2" x:Name="FooterArea"
-                Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,3">
+                Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,3">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <Button FontSize="11" Height="24" Padding="8,0"
                         Command="{Binding Designer.Layers.AddLayerCommand}"

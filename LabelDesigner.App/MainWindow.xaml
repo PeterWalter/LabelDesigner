@@ -12,7 +12,7 @@
     mc:Ignorable="d"
     Title="LabelDesigner">
 
-    <Grid Name="RootGrid" Background="#F0F2F5">
+    <Grid Name="RootGrid" Background="{ThemeResource AppShellBackgroundBrush}">
 
         <Grid.Resources>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
@@ -34,12 +34,12 @@
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
-        <ribbon:SfRibbon Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+        <ribbon:SfRibbon Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1">
 
             <ribbon:SfRibbon.Tabs>
 
-                <ribbon:RibbonTab Header="Home" Background="#FAFAFA">
-                    <ribbon:RibbonGroup Header="Elements" Background="#FAFAFA">
+                <ribbon:RibbonTab Header="Home" Background="{ThemeResource AppSurfaceBrush}">
+                    <ribbon:RibbonGroup Header="Elements" Background="{ThemeResource AppSurfaceBrush}">
                         <ribbon:RibbonButton 
                             Content="Select" 
                             Command="{Binding Designer.SelectToolCommand}" 
@@ -251,7 +251,7 @@
 
         </ribbon:SfRibbon>
 
-        <Border Grid.Row="1" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="8,4">
+        <Border Grid.Row="1" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
                     Padding="6,2"
@@ -306,7 +306,7 @@
             <views:LayersPaneView Grid.Column="0" x:Name="LayersPane"
                 AutomationProperties.Name="Layers panel"/>
 
-            <Border Grid.Column="1" x:Name="SplitterLeft" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"
+            <Border Grid.Column="1" x:Name="SplitterLeft" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 AutomationProperties.Name="Resize Layers panel"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
@@ -323,15 +323,15 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- top-left corner spacer -->
-                <Border Grid.Row="0" Grid.Column="0" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,1"/>
+                <Border Grid.Row="0" Grid.Column="0" Background="{ThemeResource AppSurfaceSubtleBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,1"/>
 
                 <!-- horizontal ruler -->
                 <controls:RulerControl Grid.Row="0" Grid.Column="1"
-                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="#F5F5F5"/>
+                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
 
                 <!-- vertical ruler -->
                 <controls:RulerControl Grid.Row="1" Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
-                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="#F5F5F5"/>
+                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
 
                 <!-- canvas -->
                 <views:DesignerCanvasView Grid.Row="1" Grid.Column="1"
@@ -339,7 +339,7 @@
                     AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
             </Grid>
 
-            <Border Grid.Column="3" x:Name="SplitterRight" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
+            <Border Grid.Column="3" x:Name="SplitterRight" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="1,0,0,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 AutomationProperties.Name="Resize Properties panel"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
@@ -347,7 +347,7 @@
             <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
         </Grid>
 
-        <Border Grid.Row="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0"
+        <Border Grid.Row="3" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
             AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -356,13 +356,13 @@
                     <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Designer.RulerUnitText}" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="#555"
+                <TextBlock Grid.Column="0" Text="{Binding Designer.RulerUnitText}" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource AppStatusTextBrush}"
                     AutomationProperties.Name="Ruler unit"/>
-                <TextBlock Grid.Column="1" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC" IsHitTestVisible="False"/>
-                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.SnapStateText}"
+                <TextBlock Grid.Column="1" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource AppStatusSeparatorBrush}" IsHitTestVisible="False"/>
+                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource AppStatusTextBrush}" Margin="4,0" Text="{Binding Designer.SnapStateText}"
                     AutomationProperties.Name="Snap state"/>
-                <TextBlock Grid.Column="3" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC" IsHitTestVisible="False"/>
-                <TextBlock Grid.Column="4" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.ZoomText}"
+                <TextBlock Grid.Column="3" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource AppStatusSeparatorBrush}" IsHitTestVisible="False"/>
+                <TextBlock Grid.Column="4" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource AppStatusTextBrush}" Margin="4,0" Text="{Binding Designer.ZoomText}"
                     AutomationProperties.Name="Zoom level"/>
                 <Button Grid.Column="6" Content="-" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14"
                     Command="{Binding Designer.ZoomOutCommand}"
@@ -376,9 +376,9 @@
                     Command="{Binding Designer.ZoomToFitCommand}"
                     AutomationProperties.Name="Zoom to fit"
                     ToolTipService.ToolTip="Zoom to fit (Ctrl+0)"/>
-                <TextBlock Grid.Column="9" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="8,0,0,0" Text="{Binding Designer.CursorText}"
+                <TextBlock Grid.Column="9" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource AppStatusTextBrush}" Margin="8,0,0,0" Text="{Binding Designer.CursorText}"
                     AutomationProperties.Name="Cursor position"/>
-                <TextBlock Grid.Column="10" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"
+                <TextBlock Grid.Column="10" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource AppStatusTextBrush}" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"
                     AutomationProperties.Name="Element count"/>
             </Grid>
         </Border>

@@ -21,7 +21,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Border Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0">
+    <Border Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="1,0,0,0">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -29,14 +29,14 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Border Grid.Row="0" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="6,3">
+            <Border Grid.Row="0" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="6,3">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="HeaderText" Grid.Column="0" Text="Properties"
-                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Foreground="#2B2B2B"/>
+                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Foreground="{ThemeResource AppTextBrush}"/>
                     <ToggleButton Grid.Column="1" x:Name="CollapseToggle"
                         Width="28" Height="28" Padding="0" IsChecked="False"
                         Checked="OnCollapseToggleChanged" Unchecked="OnCollapseToggleChanged"
@@ -50,10 +50,10 @@
             <!-- Content -->
             <ScrollViewer Grid.Row="1" x:Name="ContentArea" Padding="8,4">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="Document" FontWeight="SemiBold" FontSize="13" Foreground="#2B2B2B" Margin="0,4,0,0"/>
-                    <TextBlock Text="Page Width (mm)" FontSize="11" Foreground="#888"/>
+                    <TextBlock Text="Document" FontWeight="SemiBold" FontSize="13" Foreground="{ThemeResource AppTextBrush}" Margin="0,4,0,0"/>
+                    <TextBlock Text="Page Width (mm)" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}"/>
                     <TextBox Text="{Binding Designer.PageWidthMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                    <TextBlock Text="Page Height (mm)" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Page Height (mm)" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.PageHeightMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
                     <ToggleSwitch Header="Landscape" IsOn="{Binding Designer.IsLandscape, Mode=TwoWay}" OnContent="On" OffContent="Off"
                         ToolTipService.ToolTip="Swap page width and height"/>
@@ -61,8 +61,8 @@
                         HorizontalAlignment="Left" Padding="8,4" Margin="0,4,0,0"
                         ToolTipService.ToolTip="Save the current label design as a reusable template"/>
 
-                    <TextBlock Text="Template Defaults" FontWeight="SemiBold" FontSize="13" Foreground="#2B2B2B" Margin="0,8,0,0"/>
-                    <TextBlock Text="Barcode Value Position" FontSize="11" Foreground="#888"/>
+                    <TextBlock Text="Template Defaults" FontWeight="SemiBold" FontSize="13" Foreground="{ThemeResource AppTextBrush}" Margin="0,8,0,0"/>
+                    <TextBlock Text="Barcode Value Position" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}"/>
                     <ComboBox SelectedIndex="{Binding Designer.DefaultBarcodeTextPositionIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
                         <ComboBoxItem Content="None"/>
                         <ComboBoxItem Content="Top"/>
@@ -70,17 +70,17 @@
                         <ComboBoxItem Content="Left"/>
                         <ComboBoxItem Content="Right"/>
                     </ComboBox>
-                    <TextBlock Text="Barcode Text Font Family" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Barcode Text Font Family" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultBarcodeTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                    <TextBlock Text="Barcode Text Font Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Barcode Text Font Size" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultBarcodeTextFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                    <TextBlock Text="Barcode Text Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Barcode Text Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultBarcodeTextColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
-                    <TextBlock Text="Text Font Family" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Text Font Family" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                    <TextBlock Text="Text Font Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Text Font Size" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultTextFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                    <TextBlock Text="Text Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Text Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultTextColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                     <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
                         <ToggleButton Content="B" FontWeight="Bold" Width="28" Height="24" Padding="0" FontSize="13"
@@ -92,40 +92,40 @@
                         <CheckBox Content="Multi" IsChecked="{Binding Designer.DefaultTextMultiline, Mode=TwoWay}" FontSize="10" VerticalAlignment="Center"
                             ToolTipService.ToolTip="Default multiline text"/>
                     </StackPanel>
-                    <TextBlock Text="Text Alignment" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Text Alignment" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <ComboBox SelectedIndex="{Binding Designer.DefaultTextAlignmentIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
                         <ComboBoxItem Content="Left"/>
                         <ComboBoxItem Content="Center"/>
                         <ComboBoxItem Content="Right"/>
                     </ComboBox>
-                    <TextBlock Text="Text Line Spacing" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                    <TextBlock Text="Text Line Spacing" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                     <TextBox Text="{Binding Designer.DefaultTextLineSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
 
-                    <TextBlock Text="Selected Element" FontWeight="SemiBold" FontSize="13" Foreground="#2B2B2B" Margin="0,8,0,0"
+                    <TextBlock Text="Selected Element" FontWeight="SemiBold" FontSize="13" Foreground="{ThemeResource AppTextBrush}" Margin="0,8,0,0"
                         Visibility="{Binding Designer.IsElementSelected, Converter={StaticResource BoolToVisibility}}"/>
                     <StackPanel Spacing="5" Visibility="{Binding Designer.IsElementSelected, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="{Binding Designer.Properties.ElementType}" FontWeight="Bold" FontSize="15" Margin="0,4,0,4" Foreground="#2B2B2B"/>
-                        <TextBlock Text="Name" FontSize="11" Foreground="#888"/>
+                        <TextBlock Text="{Binding Designer.Properties.ElementType}" FontWeight="Bold" FontSize="15" Margin="0,4,0,4" Foreground="{ThemeResource AppTextBrush}"/>
+                        <TextBlock Text="Name" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}"/>
                         <TextBox Text="{Binding Designer.Properties.ElementName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                        <TextBlock Text="Position" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBlock Text="Position" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" Text="{Binding Designer.Properties.PosX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="X" Margin="0,0,2,0"/>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.PosY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="Y" Margin="2,0,0,0"/>
                         </Grid>
-                        <TextBlock Text="Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBlock Text="Size" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" Text="{Binding Designer.Properties.Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="W" Margin="0,0,2,0"/>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="H" Margin="2,0,0,0"/>
                         </Grid>
-                        <TextBlock Text="Rotation" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBlock Text="Rotation" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                         <TextBox Text="{Binding Designer.Properties.Rotation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
-                        <TextBlock Text="Font Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Font Size" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Font Family" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Font Family" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
@@ -147,19 +147,19 @@
                         <CheckBox Content="Multi-line" IsChecked="{Binding Designer.Properties.IsMultiline, Mode=TwoWay}" FontSize="10"
                             Margin="0,2,0,2" ToolTipService.ToolTip="Multi-line text"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Text Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Text Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.ForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Text" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Text" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Line Spacing" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Line Spacing" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.LineSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Barcode Value Position" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Barcode Value Position" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <ComboBox SelectedIndex="{Binding Designer.Properties.BarcodeTextPositionIndex, Mode=TwoWay}" HorizontalAlignment="Stretch"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}">
@@ -169,38 +169,38 @@
                             <ComboBoxItem Content="Left"/>
                             <ComboBoxItem Content="Right"/>
                         </ComboBox>
-                        <TextBlock Text="Barcode Value" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Barcode Value" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <!-- Barcode text formatting -->
-                        <TextBlock Text="Text Font Family" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Text Font Family" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Text Font Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Text Font Size" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeTextFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Text Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        <TextBlock Text="Text Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeTextColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="Fill Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBlock Text="Fill Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="3" Margin="0,0,4,0"
+                            <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="{ThemeResource AppBorderBrush}" CornerRadius="3" Margin="0,0,4,0"
                                 Background="{Binding Designer.Properties.FillColorValue, Converter={StaticResource ColorToBrush}}"/>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                         </Grid>
-                        <TextBlock Text="Stroke Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBlock Text="Stroke Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="3" Margin="0,0,4,0"
+                            <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="{ThemeResource AppBorderBrush}" CornerRadius="3" Margin="0,0,4,0"
                                 Background="{Binding Designer.Properties.StrokeColorValue, Converter={StaticResource ColorToBrush}}"/>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                         </Grid>
-                        <TextBlock Text="Palette" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
+                        <TextBlock Text="Palette" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"/>
                         <ItemsControl ItemsSource="{Binding Designer.Properties.PaletteColors}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
