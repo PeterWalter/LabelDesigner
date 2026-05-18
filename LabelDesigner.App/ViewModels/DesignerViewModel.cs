@@ -9,7 +9,6 @@ using LabelDesigner.App.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Dispatching;
 using Windows.Foundation;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -20,10 +19,11 @@ public partial class DesignerViewModel : ObservableObject
 {
     private double? _cachedPixelsPerMm;
     private readonly object _pixelsPerMmLock = new();
+    private const double BASE_PpMm = 96.0 / 25.4; // 3.78 at 100% DPI
 
     private double GetPixelsPerMm()
     {
-        // Check cache first (fast path)
+        // Return cached value immediately (fast path)
         if (_cachedPixelsPerMm.HasValue)
             return _cachedPixelsPerMm.Value;
 
@@ -33,30 +33,29 @@ public partial class DesignerViewModel : ObservableObject
             if (_cachedPixelsPerMm.HasValue)
                 return _cachedPixelsPerMm.Value;
 
-            const double basePpMm = 96.0 / 25.4; // 3.78 at 100% DPI
+            // Start with default; override only if DPI detection succeeds
             double dpiScale = 1.0;
 
             try
             {
-                // Only attempt DPI detection if we're on the UI thread with a DispatcherQueue
-                var dispatcher = DispatcherQueue.GetForCurrentThread();
-                if (dispatcher != null)
+                // WinRT calls must happen on UI thread with CoreWindow
+                // Only attempt if DispatcherQueue is available
+                try
                 {
                     var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
                     dpiScale = displayInfo.RawPixelsPerViewPixel;
                 }
+                catch (COMException)
+                {
+                    // Not on UI thread or CoreWindow not ready—use default
+                }
             }
-            catch (COMException)
+            catch
             {
-                // GetForCurrentView() failed—either not on UI thread or CoreWindow not ready
-                // Fall through and use dpiScale = 1.0 (base 96 DPI)
-            }
-            catch (Exception)
-            {
-                // Any other exception—also use default
+                // Any other error—use default
             }
 
-            _cachedPixelsPerMm = basePpMm * dpiScale;
+            _cachedPixelsPerMm = BASE_PpMm * dpiScale;
             return _cachedPixelsPerMm.Value;
         }
     }

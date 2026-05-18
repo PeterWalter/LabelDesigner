@@ -72,8 +72,9 @@ public sealed partial class DesignerCanvasView : UserControl
     private void DoZoomToFit(CanvasControl canvas)
     {
         if (VM == null) return;
-        double pageW = VM.Scene.CurrentDocument.Page.WidthMm * 3.78;
-        double pageH = VM.Scene.CurrentDocument.Page.HeightMm * 3.78;
+        double pixelsPerMm = VM.PixelsPerMm;
+        double pageW = VM.Scene.CurrentDocument.Page.WidthMm * pixelsPerMm;
+        double pageH = VM.Scene.CurrentDocument.Page.HeightMm * pixelsPerMm;
         if (pageW <= 0 || pageH <= 0 || canvas.ActualWidth <= 0) return;
         VM.Viewport.ZoomToFit(canvas.ActualWidth, canvas.ActualHeight, pageW, pageH);
         _firstDraw = false;
