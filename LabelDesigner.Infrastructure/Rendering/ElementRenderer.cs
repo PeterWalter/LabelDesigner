@@ -103,23 +103,25 @@ internal static class ElementRenderer
             case BarcodeTextPosition.Top:
                 barcodeRect = new(bounds.X, bounds.Y + textHeight + padding,
                     bounds.Width, bounds.Height - textHeight - padding);
-                tx = (float)(bounds.X + bounds.Width / 2); ty = (float)bounds.Y;
+                tx = (float)(bounds.X + bounds.Width / 2);
+                ty = (float)(bounds.Y + textHeight / 2);
                 break;
             case BarcodeTextPosition.Bottom:
                 barcodeRect = new(bounds.X, bounds.Y,
                     bounds.Width, bounds.Height - textHeight - padding);
                 tx = (float)(bounds.X + bounds.Width / 2);
-                ty = (float)(bounds.Y + bounds.Height - textHeight);
+                ty = (float)(bounds.Y + bounds.Height - textHeight / 2);
                 break;
             case BarcodeTextPosition.Left:
                 barcodeRect = new(bounds.X + 60 * scale, bounds.Y,
                     bounds.Width - 60 * scale, bounds.Height);
-                tx = (float)bounds.X; ty = (float)(bounds.Y + bounds.Height / 2);
+                tx = (float)(bounds.X + 30 * scale);
+                ty = (float)(bounds.Y + bounds.Height / 2);
                 break;
             case BarcodeTextPosition.Right:
                 barcodeRect = new(bounds.X, bounds.Y,
                     bounds.Width - 60 * scale, bounds.Height);
-                tx = (float)(bounds.X + bounds.Width - 60 * scale);
+                tx = (float)(bounds.X + bounds.Width - 30 * scale);
                 ty = (float)(bounds.Y + bounds.Height / 2);
                 break;
         }
