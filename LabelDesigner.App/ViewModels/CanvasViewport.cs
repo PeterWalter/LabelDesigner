@@ -44,7 +44,7 @@ public partial class CanvasViewport : ObservableObject
     }
 
     public Windows.Foundation.Point ScreenToWorld(Windows.Foundation.Point screen) =>
-        new((screen.X / Zoom) + OffsetX, (screen.Y / Zoom) + OffsetY);
+        new((screen.X + OffsetX) / Zoom, (screen.Y + OffsetY) / Zoom);
 
     public Windows.Foundation.Point WorldToScreen(Windows.Foundation.Point world) =>
         new((world.X * Zoom) - OffsetX, (world.Y * Zoom) - OffsetY);
