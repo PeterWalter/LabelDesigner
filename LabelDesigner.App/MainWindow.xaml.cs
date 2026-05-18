@@ -83,6 +83,7 @@ public sealed partial class MainWindow : Window
     private void OnLayersPaneToggled(object sender, RoutedEventArgs e)
     {
         if (_suppressToggleSync) return;
+        if (LayersPane is null || LayersToggle is null) return;
         var isCollapsed = LayersToggle.IsChecked != true;
         LayersPane.SetCollapsed(isCollapsed);
         LayerColumn.Width = isCollapsed
@@ -95,6 +96,7 @@ public sealed partial class MainWindow : Window
     private void OnPropertiesPaneToggled(object sender, RoutedEventArgs e)
     {
         if (_suppressToggleSync) return;
+        if (PropertiesPane is null || PropertiesToggle is null) return;
         var isCollapsed = PropertiesToggle.IsChecked != true;
         PropertiesPane.SetCollapsed(isCollapsed);
         PropertiesColumn.Width = isCollapsed
