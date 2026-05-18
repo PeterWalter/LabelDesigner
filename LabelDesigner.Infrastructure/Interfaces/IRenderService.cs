@@ -14,7 +14,8 @@ public interface IRenderService
         float zoom,
         RectD viewport,
         double pixelsPerMm,
-        bool showGrid = true);
+        bool showGrid = true,
+        IEnumerable<GuideLine>? guides = null);
 
     /// <summary>Disposes and clears all cached GPU/CPU bitmaps. Call when a new document is loaded.</summary>
     void ClearBitmapCache();

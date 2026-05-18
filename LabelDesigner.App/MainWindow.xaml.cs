@@ -78,6 +78,9 @@ public sealed partial class MainWindow : Window
 
         ViewModel.Designer.Layers.Refresh(null);
 
+        HorizontalRuler.GuideCreated += (_, pos) => ViewModel.Designer.AddVerticalGuide(pos);
+        LeftRuler.GuideCreated += (_, pos) => ViewModel.Designer.AddHorizontalGuide(pos);
+
         var appWindow = this.AppWindow;
         if (appWindow != null)
             appWindow.Resize(new Windows.Graphics.SizeInt32(1400, 900));

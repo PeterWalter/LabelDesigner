@@ -9,5 +9,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <canvas:CanvasControl Draw="OnDraw"/>
+    <canvas:CanvasControl x:Name="RulerCanvas"
+        Draw="OnDraw"
+        PointerPressed="OnRulerPointerPressed"
+        PointerMoved="OnRulerPointerMoved"
+        PointerReleased="OnRulerPointerReleased"/>
 </UserControl>

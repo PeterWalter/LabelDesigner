@@ -37,7 +37,8 @@ public class RenderService : IRenderService
         float zoom,
         RectD viewport,
         double pixelsPerMm,
-        bool showGrid = true)
+        bool showGrid = true,
+        IEnumerable<GuideLine>? guides = null)
     {
         ds.Clear(Colors.White);
 
@@ -92,6 +93,20 @@ public class RenderService : IRenderService
                 ds.Transform = local;
             }
         }
+
+        if (guides != null)
+        {
+            var guideColor = Color.FromArgb(180, 0, 160, 240);
+            var guideStroke = new CanvasStrokeStyle { DashStyle = CanvasDashStyle.Dash };
+            foreach (var guide in guides)
+            {
+                if (guide.IsHorizontal)
+                    ds.DrawLine(0, (float)guide.Position, pageW, (float)guide.Position, guideColor, 1f / zoom, guideStroke);
+                else
+                    ds.DrawLine((float)guide.Position, 0, (float)guide.Position, pageH, guideColor, 1f / zoom, guideStroke);
+            }
+        }
+
         ds.Transform = originalTransform;
     }
 

@@ -9,26 +9,52 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <canvas:CanvasControl x:Name="Canvas"
-    AutomationProperties.Name="Label design canvas"
-    AutomationProperties.HelpText="Design surface. Use keyboard shortcuts: Ctrl+Z Undo, Ctrl+Y Redo, Ctrl+C Copy, Ctrl+V Paste, Delete Remove, Escape Cancel."
-    IsTabStop="True"
-    Draw="OnDraw"
-    PointerMoved="OnPointerMoved"
-    PointerPressed="OnPointerPressed"
-    PointerExited="OnPointerExited"
-    PointerReleased="OnPointerReleased">
-        <canvas:CanvasControl.ContextFlyout>
-            <MenuFlyout>
-                <MenuFlyoutItem Text="Cut" Command="{Binding Designer.CutSelectedCommand}"/>
-                <MenuFlyoutItem Text="Copy" Command="{Binding Designer.CopySelectedCommand}"/>
-                <MenuFlyoutItem Text="Paste" Command="{Binding Designer.PasteElementCommand}"/>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Delete" Command="{Binding Designer.DeleteSelectedCommand}"/>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Bring to Front" Command="{Binding Designer.BringToFrontCommand}"/>
-                <MenuFlyoutItem Text="Send to Back" Command="{Binding Designer.SendToBackCommand}"/>
-            </MenuFlyout>
-        </canvas:CanvasControl.ContextFlyout>
-    </canvas:CanvasControl>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <canvas:CanvasControl Grid.Row="0" Grid.Column="0"
+            x:Name="Canvas"
+            AutomationProperties.Name="Label design canvas"
+            AutomationProperties.HelpText="Design surface. Use keyboard shortcuts: Ctrl+Z Undo, Ctrl+Y Redo, Ctrl+C Copy, Ctrl+V Paste, Delete Remove, Escape Cancel."
+            IsTabStop="True"
+            Draw="OnDraw"
+            PointerMoved="OnPointerMoved"
+            PointerPressed="OnPointerPressed"
+            PointerExited="OnPointerExited"
+            PointerReleased="OnPointerReleased">
+            <canvas:CanvasControl.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="Cut" Command="{Binding Designer.CutSelectedCommand}"/>
+                    <MenuFlyoutItem Text="Copy" Command="{Binding Designer.CopySelectedCommand}"/>
+                    <MenuFlyoutItem Text="Paste" Command="{Binding Designer.PasteElementCommand}"/>
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem Text="Delete" Command="{Binding Designer.DeleteSelectedCommand}"/>
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem Text="Bring to Front" Command="{Binding Designer.BringToFrontCommand}"/>
+                    <MenuFlyoutItem Text="Send to Back" Command="{Binding Designer.SendToBackCommand}"/>
+                    <MenuFlyoutSeparator />
+                    <MenuFlyoutItem Text="Add H Guide" Click="OnAddHGuide"/>
+                    <MenuFlyoutItem Text="Add V Guide" Click="OnAddVGuide"/>
+                    <MenuFlyoutItem Text="Clear Guides" Command="{Binding Designer.ClearGuidesCommand}"/>
+                </MenuFlyout>
+            </canvas:CanvasControl.ContextFlyout>
+        </canvas:CanvasControl>
+
+        <ScrollBar Grid.Row="0" Grid.Column="1" x:Name="VScrollBar"
+            Orientation="Vertical"
+            ValueChanged="OnVScrollChanged"/>
+
+        <ScrollBar Grid.Row="1" Grid.Column="0" x:Name="HScrollBar"
+            Orientation="Horizontal"
+            ValueChanged="OnHScrollChanged"/>
+
+        <Border Grid.Row="1" Grid.Column="1" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
+    </Grid>
 </UserControl>

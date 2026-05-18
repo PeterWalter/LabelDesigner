@@ -30,10 +30,10 @@ internal static class ElementRenderer
     private static readonly Dictionary<string, CanvasBitmap> _svgCache = new();
 
     private static CanvasBitmap? GetCachedBarcodeBitmap(
-        CanvasDrawingSession ds, IBarcodeService barcode, string value, int width, int height)
+        CanvasDrawingSession ds, IBarcodeService barcode, string value, BarcodeSymbology symbology, int width, int height)
     {
         if (width <= 0 || height <= 0) return null;
-        var key = $"{value}|{width}|{height}";
+        var key = $"{value}|{symbology}|{width}|{height}";
         if (_barcodeCache.TryGetValue(key, out var cached) && cached.Gpu != null)
             return cached.Gpu;
 
@@ -44,7 +44,21 @@ internal static class ElementRenderer
             old.Sw?.Dispose();
         }
 
-        var sw = barcode.Generate(value, ZXing.BarcodeFormat.CODE_128, width, height);
+        var format = symbology switch
+        {
+            BarcodeSymbology.Code39 => ZXing.BarcodeFormat.CODE_39,
+            BarcodeSymbology.QRCode => ZXing.BarcodeFormat.QR_CODE,
+            BarcodeSymbology.EAN13 => ZXing.BarcodeFormat.EAN_13,
+            BarcodeSymbology.EAN8 => ZXing.BarcodeFormat.EAN_8,
+            BarcodeSymbology.UPCA => ZXing.BarcodeFormat.UPC_A,
+            BarcodeSymbology.DataMatrix => ZXing.BarcodeFormat.DATA_MATRIX,
+            BarcodeSymbology.PDF417 => ZXing.BarcodeFormat.PDF_417,
+            BarcodeSymbology.Aztec => ZXing.BarcodeFormat.AZTEC,
+            BarcodeSymbology.ITF => ZXing.BarcodeFormat.ITF,
+            _ => ZXing.BarcodeFormat.CODE_128
+        };
+
+        var sw = barcode.Generate(value, format, width, height);
         CanvasBitmap? gpu = sw != null ? CanvasBitmap.CreateFromSoftwareBitmap(ds.Device, sw) : null;
         _barcodeCache[key] = (sw, gpu);
         return gpu;
@@ -126,7 +140,7 @@ internal static class ElementRenderer
                 break;
         }
 
-        var bmp = GetCachedBarcodeBitmap(ds, barcode, b.Value, (int)barcodeRect.Width, (int)barcodeRect.Height);
+        var bmp = GetCachedBarcodeBitmap(ds, barcode, b.Value, b.Symbology, (int)barcodeRect.Width, (int)barcodeRect.Height);
         if (bmp != null)
         {
             ds.DrawImage(bmp, barcodeRect.ToWinRect());

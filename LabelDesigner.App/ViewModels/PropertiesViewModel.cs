@@ -79,6 +79,9 @@ public partial class PropertiesViewModel : ObservableObject
     public partial int BarcodeTextPositionIndex { get; set; }
 
     [ObservableProperty]
+    public partial int BarcodeSymbologyIndex { get; set; }
+
+    [ObservableProperty]
     public partial string BarcodeTextFontFamily { get; set; } = "Segoe UI";
 
     [ObservableProperty]
@@ -216,6 +219,7 @@ public partial class PropertiesViewModel : ObservableObject
         {
             BarcodeValue = bc.Value;
             BarcodeTextPositionIndex = (int)bc.TextPosition;
+            BarcodeSymbologyIndex = (int)bc.Symbology;
             BarcodeTextFontFamily = bc.TextFontFamily;
             BarcodeTextFontSize = bc.TextFontSize;
             BarcodeTextColor = bc.TextColor;
@@ -324,6 +328,18 @@ public partial class PropertiesViewModel : ObservableObject
                 (_, v) => bc.TextPosition = (BarcodeTextPosition)v,
                 value,
                 "Change barcode value position");
+        }
+    }
+
+    partial void OnBarcodeSymbologyIndexChanged(int value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+        {
+            ApplyPropertyChange(
+                _ => (int)bc.Symbology,
+                (_, v) => bc.Symbology = (BarcodeSymbology)v,
+                value,
+                "Change barcode type");
         }
     }
 

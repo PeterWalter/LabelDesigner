@@ -2,12 +2,14 @@ using LabelDesigner.App.ViewModels;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Input;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Infrastructure.Common;
+using Windows.Foundation;
 using Windows.UI;
 
 namespace LabelDesigner.App.Views;
@@ -20,6 +22,8 @@ public sealed partial class DesignerCanvasView : UserControl
     private PointD _lineStartPoint;
     private CanvasControl? _canvas;
     private DesignerViewModel? _wiredVm;
+    private System.ComponentModel.PropertyChangedEventHandler? _viewportPropertyChangedHandler;
+    private bool _scrollBarSyncing;
 
     private DesignerViewModel? VM => DataContext switch
     {
@@ -45,7 +49,9 @@ public sealed partial class DesignerCanvasView : UserControl
     {
         WireViewModel();
         _canvas = FindName("Canvas") as CanvasControl;
-        if (_canvas != null && _canvas.ActualWidth > 0) DoZoomToFit(_canvas);
+        if (_canvas != null && _canvas.ActualWidth > 0)
+            DoZoomToFit(_canvas);
+        UpdateScrollBars();
     }
 
     private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -56,11 +62,19 @@ public sealed partial class DesignerCanvasView : UserControl
     private void WireViewModel()
     {
         if (_wiredVm != null)
+        {
             _wiredVm.RequestRedraw = null;
+            if (_viewportPropertyChangedHandler != null)
+                _wiredVm.Viewport.PropertyChanged -= _viewportPropertyChangedHandler;
+        }
 
         _wiredVm = VM;
         if (_wiredVm != null)
+        {
             _wiredVm.RequestRedraw = InvalidateCanvas;
+            _viewportPropertyChangedHandler = (_, _) => UpdateScrollBars();
+            _wiredVm.Viewport.PropertyChanged += _viewportPropertyChangedHandler;
+        }
     }
 
     private void OnCanvasSizeChanged(object sender, SizeChangedEventArgs e)
@@ -78,12 +92,14 @@ public sealed partial class DesignerCanvasView : UserControl
         if (pageW <= 0 || pageH <= 0 || canvas.ActualWidth <= 0) return;
         VM.Viewport.ZoomToFit(canvas.ActualWidth, canvas.ActualHeight, pageW, pageH);
         _firstDraw = false;
+        UpdateScrollBars();
         canvas.Invalidate();
     }
 
     public void InvalidateCanvas()
     {
         _canvas?.Invalidate();
+        UpdateScrollBars();
     }
 
     private void OnCanvasKeyDown(object sender, KeyRoutedEventArgs e)
@@ -182,7 +198,8 @@ public sealed partial class DesignerCanvasView : UserControl
         VM.RenderService.RenderScene(
             ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
             _hoveredIds, (float)VM.Viewport.Zoom, viewport,
-            pixelsPerMm, LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid);
+            pixelsPerMm, LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid,
+            VM.Guides);
 
         if (VM.InteractionState == InteractionState.MarqueeSelection && VM.MarqueeSelectionRect.HasValue)
         {
@@ -190,6 +207,8 @@ public sealed partial class DesignerCanvasView : UserControl
             ds.FillRectangle(marquee, Color.FromArgb(40, 0, 120, 215));
             ds.DrawRectangle(marquee, Color.FromArgb(220, 0, 120, 215), 1);
         }
+
+        UpdateScrollBars();
     }
 
     private readonly HashSet<Guid> _hoveredIds = new();
@@ -317,6 +336,72 @@ public sealed partial class DesignerCanvasView : UserControl
             vm.Viewport.OffsetY -= delta / 2.0;
         }
         _canvas?.Invalidate();
+    }
+
+    private void OnVScrollChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_scrollBarSyncing || VM == null)
+            return;
+
+        VM.Viewport.OffsetY = e.NewValue;
+        _canvas?.Invalidate();
+    }
+
+    private void OnHScrollChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_scrollBarSyncing || VM == null)
+            return;
+
+        VM.Viewport.OffsetX = e.NewValue;
+        _canvas?.Invalidate();
+    }
+
+    private void OnAddHGuide(object sender, RoutedEventArgs e)
+    {
+        if (VM == null || _canvas == null)
+            return;
+
+        var world = VM.Viewport.ScreenToWorld(new Point(_canvas.ActualWidth / 2, _canvas.ActualHeight / 2));
+        VM.AddHorizontalGuide(world.Y);
+    }
+
+    private void OnAddVGuide(object sender, RoutedEventArgs e)
+    {
+        if (VM == null || _canvas == null)
+            return;
+
+        var world = VM.Viewport.ScreenToWorld(new Point(_canvas.ActualWidth / 2, _canvas.ActualHeight / 2));
+        VM.AddVerticalGuide(world.X);
+    }
+
+    private void UpdateScrollBars()
+    {
+        if (VM == null || _canvas == null)
+            return;
+
+        _scrollBarSyncing = true;
+        double zoom = Math.Max(VM.Viewport.Zoom, 0.01);
+        double canvasW = _canvas.ActualWidth;
+        double canvasH = _canvas.ActualHeight;
+        double pageW = VM.Scene.CurrentDocument.Page.WidthMm * VM.PixelsPerMm;
+        double pageH = VM.Scene.CurrentDocument.Page.HeightMm * VM.PixelsPerMm;
+        double padding = 100;
+
+        HScrollBar.Minimum = -padding;
+        HScrollBar.Maximum = Math.Max(-padding, pageW + padding);
+        HScrollBar.ViewportSize = canvasW / zoom;
+        HScrollBar.SmallChange = 10 / zoom;
+        HScrollBar.LargeChange = Math.Max(10, canvasW / zoom / 2);
+        HScrollBar.Value = Math.Clamp(VM.Viewport.OffsetX, HScrollBar.Minimum, HScrollBar.Maximum);
+
+        VScrollBar.Minimum = -padding;
+        VScrollBar.Maximum = Math.Max(-padding, pageH + padding);
+        VScrollBar.ViewportSize = canvasH / zoom;
+        VScrollBar.SmallChange = 10 / zoom;
+        VScrollBar.LargeChange = Math.Max(10, canvasH / zoom / 2);
+        VScrollBar.Value = Math.Clamp(VM.Viewport.OffsetY, VScrollBar.Minimum, VScrollBar.Maximum);
+
+        _scrollBarSyncing = false;
     }
 
     private void UpdateCursor(ResizeHandle handle)

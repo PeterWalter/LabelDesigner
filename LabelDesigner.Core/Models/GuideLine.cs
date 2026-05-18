@@ -1,25 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace LabelDesigner.Core.Models;
 
-namespace LabelDesigner.Core.Models;
-
+/// <summary>A guide line placed on the canvas. Position is in world pixels.</summary>
 public class GuideLine
 {
-    public double X1
-    {
-        get; set;
-    }
-    public double Y1
-    {
-        get; set;
-    }
-    public double X2
-    {
-        get; set;
-    }
-    public double Y2
-    {
-        get; set;
-    }
+    public Guid Id { get; init; } = Guid.NewGuid();
+
+    /// <summary>true = horizontal line (fixed Y), false = vertical line (fixed X)</summary>
+    public bool IsHorizontal { get; set; }
+
+    /// <summary>Position in world pixels (Y for horizontal guides, X for vertical guides)</summary>
+    public double Position { get; set; }
 }

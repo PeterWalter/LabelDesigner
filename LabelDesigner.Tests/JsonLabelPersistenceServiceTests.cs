@@ -45,6 +45,7 @@ public class SceneDocumentTemplateTests
         {
             Bounds = new RectD(10, 20, 120, 50),
             Value = "ABC123",
+            Symbology = BarcodeSymbology.QRCode,
             TextPosition = BarcodeTextPosition.Top,
             TextFontFamily = "Segoe UI",
             TextFontSize = 12,
@@ -95,6 +96,7 @@ public class SceneDocumentTemplateTests
 
         var loadedBarcode = loaded.AllElements.OfType<BarcodeElement>().Single();
         loadedBarcode.TextPosition.Should().Be(BarcodeTextPosition.Top);
+        loadedBarcode.Symbology.Should().Be(BarcodeSymbology.QRCode);
         loadedBarcode.Value.Should().Be("ABC123");
 
         var loadedText = loaded.AllElements.OfType<TextElement>().Single();

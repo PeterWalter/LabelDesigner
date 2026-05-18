@@ -36,10 +36,8 @@ public class SnapService
 
                 guides.Add(new GuideLine
                 {
-                    X1 = o.X,
-                    Y1 = 0,
-                    X2 = o.X,
-                    Y2 = 5000
+                    IsHorizontal = false,
+                    Position = o.X
                 });
             }
 
@@ -50,10 +48,8 @@ public class SnapService
 
                 guides.Add(new GuideLine
                 {
-                    X1 = o.X + o.Width,
-                    Y1 = 0,
-                    X2 = o.X + o.Width,
-                    Y2 = 5000
+                    IsHorizontal = false,
+                    Position = o.X + o.Width
                 });
             }
 
@@ -67,10 +63,8 @@ public class SnapService
 
                 guides.Add(new GuideLine
                 {
-                    X1 = ocx,
-                    Y1 = 0,
-                    X2 = ocx,
-                    Y2 = 5000
+                    IsHorizontal = false,
+                    Position = ocx
                 });
             }
 
@@ -81,10 +75,8 @@ public class SnapService
 
                 guides.Add(new GuideLine
                 {
-                    X1 = 0,
-                    Y1 = o.Y,
-                    X2 = 5000,
-                    Y2 = o.Y
+                    IsHorizontal = true,
+                    Position = o.Y
                 });
             }
 
@@ -95,10 +87,8 @@ public class SnapService
 
                 guides.Add(new GuideLine
                 {
-                    X1 = 0,
-                    Y1 = o.Y + o.Height,
-                    X2 = 5000,
-                    Y2 = o.Y + o.Height
+                    IsHorizontal = true,
+                    Position = o.Y + o.Height
                 });
             }
 
@@ -112,10 +102,8 @@ public class SnapService
 
                 guides.Add(new GuideLine
                 {
-                    X1 = 0,
-                    Y1 = ocy,
-                    X2 = 5000,
-                    Y2 = ocy
+                    IsHorizontal = true,
+                    Position = ocy
                 });
             }
         }

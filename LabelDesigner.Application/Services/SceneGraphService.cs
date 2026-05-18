@@ -376,6 +376,7 @@ public class SceneGraphService : ISceneGraphService
             BarcodeElement b => new BarcodeElement
             {
                 Value = b.Value,
+                Symbology = b.Symbology,
                 TextPosition = b.TextPosition,
                 TextColor = b.TextColor,
                 TextFontFamily = b.TextFontFamily,

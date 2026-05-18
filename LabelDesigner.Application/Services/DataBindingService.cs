@@ -87,6 +87,7 @@ public class DataBindingService : IDataBindingService
                 {
                     Id = barcode.Id,
                     Value = ResolveTemplate(barcode.Value, record),
+                    Symbology = barcode.Symbology,
                     TextPosition = barcode.TextPosition
                 }),
             TextElement text => CloneElement(

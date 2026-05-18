@@ -10,6 +10,8 @@ public class BarcodeElement : DesignElement
 {
     public string Value { get; set; } = "123456789";
 
+    public BarcodeSymbology Symbology { get; set; } = BarcodeSymbology.Code128;
+
     public BarcodeTextPosition TextPosition { get; set; } = BarcodeTextPosition.Bottom;
 
     public string DisplayText => Value;

@@ -9,7 +9,9 @@ using LabelDesigner.App.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
@@ -121,6 +123,72 @@ public partial class DesignerViewModel : ObservableObject
             UpdatePageBounds();
         }
     }
+
+    public double MarginTop
+    {
+        get => _scene.CurrentDocument.Page.Margins.Top;
+        set
+        {
+            var normalized = Math.Max(0, value);
+            if (Math.Abs(_scene.CurrentDocument.Page.Margins.Top - normalized) < 0.001)
+                return;
+
+            _scene.CurrentDocument.Page.Margins = _scene.CurrentDocument.Page.Margins with { Top = normalized };
+            OnPropertyChanged(nameof(MarginTop));
+            RequestRedraw?.Invoke();
+        }
+    }
+
+    public double MarginRight
+    {
+        get => _scene.CurrentDocument.Page.Margins.Right;
+        set
+        {
+            var normalized = Math.Max(0, value);
+            if (Math.Abs(_scene.CurrentDocument.Page.Margins.Right - normalized) < 0.001)
+                return;
+
+            _scene.CurrentDocument.Page.Margins = _scene.CurrentDocument.Page.Margins with { Right = normalized };
+            OnPropertyChanged(nameof(MarginRight));
+            RequestRedraw?.Invoke();
+        }
+    }
+
+    public double MarginBottom
+    {
+        get => _scene.CurrentDocument.Page.Margins.Bottom;
+        set
+        {
+            var normalized = Math.Max(0, value);
+            if (Math.Abs(_scene.CurrentDocument.Page.Margins.Bottom - normalized) < 0.001)
+                return;
+
+            _scene.CurrentDocument.Page.Margins = _scene.CurrentDocument.Page.Margins with { Bottom = normalized };
+            OnPropertyChanged(nameof(MarginBottom));
+            RequestRedraw?.Invoke();
+        }
+    }
+
+    public double MarginLeft
+    {
+        get => _scene.CurrentDocument.Page.Margins.Left;
+        set
+        {
+            var normalized = Math.Max(0, value);
+            if (Math.Abs(_scene.CurrentDocument.Page.Margins.Left - normalized) < 0.001)
+                return;
+
+            _scene.CurrentDocument.Page.Margins = _scene.CurrentDocument.Page.Margins with { Left = normalized };
+            OnPropertyChanged(nameof(MarginLeft));
+            RequestRedraw?.Invoke();
+        }
+    }
+
+    [ObservableProperty]
+    public partial ObservableCollection<string> AvailablePrinters { get; set; } = new();
+
+    [ObservableProperty]
+    public partial string? SelectedPrinter { get; set; }
 
     public int DefaultBarcodeTextPositionIndex
     {
@@ -309,6 +377,27 @@ public partial class DesignerViewModel : ObservableObject
     public bool IsBarcodeSelected => Selected is BarcodeElement;
     public bool IsTextSelected => Selected is TextElement;
 
+    [RelayCommand]
+    public void AddHorizontalGuide(double positionPx)
+    {
+        Guides.Add(new GuideLine { IsHorizontal = true, Position = positionPx });
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void AddVerticalGuide(double positionPx)
+    {
+        Guides.Add(new GuideLine { IsHorizontal = false, Position = positionPx });
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void ClearGuides()
+    {
+        Guides.Clear();
+        RequestRedraw?.Invoke();
+    }
+
     private string? _currentFilePath;
     private DesignElement? _clipboard;
 
@@ -397,6 +486,30 @@ public partial class DesignerViewModel : ObservableObject
             Bounds = new RectD(200, 300, 200, 50),
             Text = "Hello World"
         }, layer.Id);
+
+        _ = LoadAvailablePrintersAsync();
+    }
+
+    private async Task LoadAvailablePrintersAsync()
+    {
+        try
+        {
+            const string printerSelector = "System.Devices.InterfaceClassGuid:=\"{0ecef634-6ef0-472a-8085-5ad023ecbccd}\"";
+            var devices = await DeviceInformation.FindAllAsync(printerSelector);
+            AvailablePrinters.Clear();
+            foreach (var device in devices)
+            {
+                if (!string.IsNullOrWhiteSpace(device.Name))
+                    AvailablePrinters.Add(device.Name);
+            }
+
+            if (AvailablePrinters.Count > 0)
+                SelectedPrinter = AvailablePrinters[0];
+        }
+        catch
+        {
+            AvailablePrinters.Clear();
+        }
     }
 
     partial void OnSelectedLabelStockPresetIdChanged(string? value)
@@ -537,6 +650,10 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(PageWidthMm));
         OnPropertyChanged(nameof(PageHeightMm));
         OnPropertyChanged(nameof(IsLandscape));
+        OnPropertyChanged(nameof(MarginTop));
+        OnPropertyChanged(nameof(MarginRight));
+        OnPropertyChanged(nameof(MarginBottom));
+        OnPropertyChanged(nameof(MarginLeft));
         RequestRedraw?.Invoke();
     }
 
@@ -615,6 +732,7 @@ public partial class DesignerViewModel : ObservableObject
         Selected = null;
         _properties.TrackElement(null);
         Layers.Refresh(null);
+        Guides.Clear();
         OnPropertyChanged(nameof(ElementCount));
         OnPropertyChanged(nameof(ElementsText));
         OnPropertyChanged(nameof(ZoomText));
@@ -1040,6 +1158,7 @@ public partial class DesignerViewModel : ObservableObject
             { 
                 Id = newId, 
                 Value = b.Value, 
+                Symbology = b.Symbology,
                 TextPosition = b.TextPosition, 
                 TextFontFamily = b.TextFontFamily,
                 TextFontSize = b.TextFontSize,
