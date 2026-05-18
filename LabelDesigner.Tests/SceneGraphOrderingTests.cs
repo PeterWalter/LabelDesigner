@@ -128,6 +128,23 @@ public class SceneGraphOrderingTests
     }
 
     [Fact]
+    public void BringToFront_updates_zindex_to_match_layer_order()
+    {
+        var (svc, a, b, c) = BuildLayerABC();
+        a.ZIndex = 100;
+        b.ZIndex = 5;
+        c.ZIndex = 50;
+
+        svc.BringToFront(b.Id);
+
+        var layer = svc.CurrentDocument.Layers[0];
+        var zByLayerOrder = layer.ElementIds
+            .Select(id => svc.GetElement(id)!.ZIndex)
+            .ToList();
+        Assert.Equal(new[] { 0, 1, 2 }, zByLayerOrder);
+    }
+
+    [Fact]
     public void DuplicateSelected_creates_offset_clone_and_selects_it()
     {
         var svc = CreateService();
@@ -159,10 +176,12 @@ public class SceneGraphOrderingTests
         svc.AddElement(el, layer.Id);
         svc.Select(el.Id);
 
-        svc.DuplicateSelected();
+        var duplicateId = svc.DuplicateSelected().Single().Id;
         Assert.Equal(2, svc.CurrentDocument.AllElements.Count);
 
         svc.UndoRedo.Undo();
         Assert.Single(svc.CurrentDocument.AllElements);
+        Assert.DoesNotContain(duplicateId, svc.SelectedIds);
+        Assert.All(svc.SelectedIds, selectedId => Assert.NotNull(svc.GetElement(selectedId)));
     }
 }

@@ -64,7 +64,7 @@ public class SceneGraphService : ISceneGraphService
     public void RemoveElement(Guid id)
     {
         if (!_elements.TryGetValue(id, out var element)) return;
-        _undoRedo.Execute(new RemoveElementCommand(this, element, element.ParentId));
+        _undoRedo.Execute(new RemoveElementCommand(this, element, element.ParentId, _selectedIds.Contains(id)));
     }
 
     public void MoveElement(Guid id, Guid newParentLayerId)
@@ -239,7 +239,7 @@ public class SceneGraphService : ISceneGraphService
         var ids = layer.ElementIds;
         int idx = ids.IndexOf(id);
         if (idx < 0 || idx == ids.Count - 1) return;
-        _undoRedo.Execute(new ReorderWithinLayerCommand(layer, id, idx, ids.Count - 1));
+        _undoRedo.Execute(new ReorderWithinLayerCommand(this, layer, id, idx, ids.Count - 1, CaptureLayerZIndices(layer)));
     }
 
     public void SendToBack(Guid id)
@@ -249,7 +249,7 @@ public class SceneGraphService : ISceneGraphService
         var ids = layer.ElementIds;
         int idx = ids.IndexOf(id);
         if (idx <= 0) return;
-        _undoRedo.Execute(new ReorderWithinLayerCommand(layer, id, idx, 0));
+        _undoRedo.Execute(new ReorderWithinLayerCommand(this, layer, id, idx, 0, CaptureLayerZIndices(layer)));
     }
 
     public void BringForward(Guid id)
@@ -259,7 +259,7 @@ public class SceneGraphService : ISceneGraphService
         var ids = layer.ElementIds;
         int idx = ids.IndexOf(id);
         if (idx < 0 || idx == ids.Count - 1) return;
-        _undoRedo.Execute(new ReorderWithinLayerCommand(layer, id, idx, idx + 1));
+        _undoRedo.Execute(new ReorderWithinLayerCommand(this, layer, id, idx, idx + 1, CaptureLayerZIndices(layer)));
     }
 
     public void SendBackward(Guid id)
@@ -269,7 +269,7 @@ public class SceneGraphService : ISceneGraphService
         var ids = layer.ElementIds;
         int idx = ids.IndexOf(id);
         if (idx <= 0) return;
-        _undoRedo.Execute(new ReorderWithinLayerCommand(layer, id, idx, idx - 1));
+        _undoRedo.Execute(new ReorderWithinLayerCommand(this, layer, id, idx, idx - 1, CaptureLayerZIndices(layer)));
     }
 
     public IReadOnlyList<DesignElement> DuplicateSelected(double offsetX = 10, double offsetY = 10)
@@ -296,6 +296,28 @@ public class SceneGraphService : ISceneGraphService
                 return layer;
         }
         return null;
+    }
+
+    private Dictionary<Guid, int> CaptureLayerZIndices(LayerNode layer)
+    {
+        var snapshot = new Dictionary<Guid, int>();
+        foreach (var elementId in layer.ElementIds)
+        {
+            if (_elements.TryGetValue(elementId, out var element))
+                snapshot[elementId] = element.ZIndex;
+        }
+
+        return snapshot;
+    }
+
+    private void NormalizeLayerZIndices(LayerNode layer)
+    {
+        for (var index = 0; index < layer.ElementIds.Count; index++)
+        {
+            var elementId = layer.ElementIds[index];
+            if (_elements.TryGetValue(elementId, out var element))
+                element.ZIndex = index;
+        }
     }
 
     private static DesignElement CloneElement(DesignElement src, double offsetX, double offsetY)
@@ -388,10 +410,11 @@ public class SceneGraphService : ISceneGraphService
             Owner._elements.Remove(Element.Id);
             if (Owner._layers.TryGetValue(LayerId, out var l)) l.ElementIds.Remove(Element.Id);
             Owner.CurrentDocument.AllElements.Remove(Element);
+            Owner._selectedIds.Remove(Element.Id);
         }
     }
 
-    private record RemoveElementCommand(SceneGraphService Owner, DesignElement Element, Guid? LayerId) : IUndoableCommand
+    private record RemoveElementCommand(SceneGraphService Owner, DesignElement Element, Guid? LayerId, bool WasSelected) : IUndoableCommand
     {
         public string Description => $"Remove {Element.GetType().Name} '{Element.Name}'";
         public void Execute()
@@ -399,12 +422,15 @@ public class SceneGraphService : ISceneGraphService
             Owner._elements.Remove(Element.Id);
             if (LayerId.HasValue && Owner._layers.TryGetValue(LayerId.Value, out var l)) l.ElementIds.Remove(Element.Id);
             Owner.CurrentDocument.AllElements.Remove(Element);
+            Owner._selectedIds.Remove(Element.Id);
         }
         public void Undo()
         {
             Owner._elements[Element.Id] = Element;
             if (LayerId.HasValue && Owner._layers.TryGetValue(LayerId.Value, out var l)) l.ElementIds.Add(Element.Id);
             Owner.CurrentDocument.AllElements.Add(Element);
+            if (WasSelected)
+                Owner._selectedIds.Add(Element.Id);
         }
     }
 
@@ -446,7 +472,13 @@ public class SceneGraphService : ISceneGraphService
         public void Undo() { if (Owner._elements.TryGetValue(Id, out var el)) el.ZIndex = OldZ; }
     }
 
-    private record ReorderWithinLayerCommand(LayerNode Layer, Guid Id, int OldIndex, int NewIndex) : IUndoableCommand
+    private record ReorderWithinLayerCommand(
+        SceneGraphService Owner,
+        LayerNode Layer,
+        Guid Id,
+        int OldIndex,
+        int NewIndex,
+        IReadOnlyDictionary<Guid, int> PreviousZIndices) : IUndoableCommand
     {
         public string Description => "Reorder element in layer";
         public void Execute()
@@ -455,6 +487,7 @@ public class SceneGraphService : ISceneGraphService
             if (!ids.Remove(Id)) return;
             int target = Math.Clamp(NewIndex, 0, ids.Count);
             ids.Insert(target, Id);
+            Owner.NormalizeLayerZIndices(Layer);
         }
         public void Undo()
         {
@@ -462,6 +495,11 @@ public class SceneGraphService : ISceneGraphService
             if (!ids.Remove(Id)) return;
             int target = Math.Clamp(OldIndex, 0, ids.Count);
             ids.Insert(target, Id);
+            foreach (var pair in PreviousZIndices)
+            {
+                if (Owner._elements.TryGetValue(pair.Key, out var element))
+                    element.ZIndex = pair.Value;
+            }
         }
     }
 
