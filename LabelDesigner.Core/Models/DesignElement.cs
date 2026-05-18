@@ -65,21 +65,21 @@ public abstract class DesignElement
             Matrix3x2.CreateTranslation(cx, cy) *
             Matrix3x2.CreateRotation(radians) *
             Matrix3x2.CreateScale(sx, sy) *
-            Matrix3x2.CreateTranslation(-w / 2f, -h / 2f);
+            Matrix3x2.CreateTranslation(-cx, -cy);
     }
 
     public virtual bool HitTest(PointD worldPoint)
     {
         var local = WorldToObjectLocal(worldPoint);
-        return local.X >= 0 && local.X <= (float)Bounds.Width &&
-               local.Y >= 0 && local.Y <= (float)Bounds.Height;
+        return local.X >= (float)Bounds.X && local.X <= (float)(Bounds.X + Bounds.Width) &&
+               local.Y >= (float)Bounds.Y && local.Y <= (float)(Bounds.Y + Bounds.Height);
     }
 
     public virtual bool HitTestMargin(PointD worldPoint, double margin)
     {
         var local = WorldToObjectLocal(worldPoint);
-        return local.X >= -(float)margin && local.X <= (float)(Bounds.Width + margin) &&
-               local.Y >= -(float)margin && local.Y <= (float)(Bounds.Height + margin);
+        return local.X >= (float)(Bounds.X - margin) && local.X <= (float)(Bounds.X + Bounds.Width + margin) &&
+               local.Y >= (float)(Bounds.Y - margin) && local.Y <= (float)(Bounds.Y + Bounds.Height + margin);
     }
 
     public PointD WorldToObjectLocal(PointD worldPoint)
