@@ -331,11 +331,11 @@
 
                 <!-- horizontal ruler -->
                 <controls:RulerControl Grid.Row="0" Grid.Column="1"
-                    Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
+                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="#F5F5F5"/>
 
                 <!-- vertical ruler -->
                 <controls:RulerControl Grid.Row="1" Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
-                    Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
+                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="#F5F5F5"/>
 
                 <!-- canvas -->
                 <views:DesignerCanvasView Grid.Row="1" Grid.Column="1"

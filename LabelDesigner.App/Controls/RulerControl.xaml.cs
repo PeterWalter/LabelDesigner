@@ -27,6 +27,25 @@ public sealed partial class RulerControl : UserControl
             typeof(RulerControl),
             new PropertyMetadata(null, OnViewportChanged));
 
+    public double PixelsPerMm
+    {
+        get => (double)GetValue(PixelsPerMmProperty);
+        set => SetValue(PixelsPerMmProperty, value);
+    }
+
+    public static readonly DependencyProperty PixelsPerMmProperty =
+        DependencyProperty.Register(
+            nameof(PixelsPerMm),
+            typeof(double),
+            typeof(RulerControl),
+            new PropertyMetadata(3.78, OnPixelsPerMmChanged));
+
+    private static void OnPixelsPerMmChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is RulerControl control && control.Content is CanvasControl canvas)
+            canvas.Invalidate();
+    }
+
     private static void OnViewportChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is RulerControl control && e.OldValue is CanvasViewport oldVp)
@@ -65,7 +84,7 @@ public sealed partial class RulerControl : UserControl
         var ds = args.DrawingSession;
         ds.Clear(Color.FromArgb(255, 240, 240, 240));
 
-        double pixelsPerMm = 3.78;
+        double pixelsPerMm = PixelsPerMm;
         var vp = Viewport;
         double offset = IsVertical ? (vp?.OffsetY ?? 0) : (vp?.OffsetX ?? 0);
         double zoom = vp?.Zoom ?? 1.0;
