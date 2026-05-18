@@ -43,6 +43,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<IUndoRedoService, LabelDesigner.Application.Commands.UndoRedoService>();
         services.AddSingleton<ILabelPersistenceService, JsonLabelPersistenceService>();
         services.AddSingleton<ISceneGraphService, LabelDesigner.Application.Services.SceneGraphService>();
+        services.AddSingleton<ISnapService, LabelDesigner.Application.Services.SnapService>();
 
         // Infrastructure services
         services.AddSingleton<IBarcodeService, BarcodeService>();

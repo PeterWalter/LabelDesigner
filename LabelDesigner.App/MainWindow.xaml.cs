@@ -20,16 +20,6 @@ public sealed partial class MainWindow : Window
 
         ViewModel.Designer.Layers.Refresh();
 
-        // Splitter cursor: use PointerEntered/Exited to change window cursor
-        SplitterLeft.PointerEntered += (_, _) =>
-            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
-        SplitterLeft.PointerExited += (_, _) =>
-            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
-        SplitterRight.PointerEntered += (_, _) =>
-            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
-        SplitterRight.PointerExited += (_, _) =>
-            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
-
         var appWindow = this.AppWindow;
         if (appWindow != null)
             appWindow.Resize(new Windows.Graphics.SizeInt32(1400, 900));
@@ -48,7 +38,7 @@ public sealed partial class MainWindow : Window
     private void OnSplitterPressed(object sender, PointerRoutedEventArgs e)
     {
         _isDraggingSplitter = true;
-        _isLeftSplitter = sender == SplitterLeft;
+        _isLeftSplitter = ReferenceEquals(sender, SplitterLeft);
         _startPointerX = e.GetCurrentPoint(RootGrid).Position.X;
         (sender as UIElement)?.CapturePointer(e.Pointer);
     }

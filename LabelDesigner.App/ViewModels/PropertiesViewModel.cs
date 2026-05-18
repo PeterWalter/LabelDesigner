@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LabelDesigner.Core.Enums;
+using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 
@@ -8,7 +9,16 @@ namespace LabelDesigner.App.ViewModels;
 
 public partial class PropertiesViewModel : ObservableObject
 {
+    private readonly IUndoRedoService _undoRedo;
     private DesignElement? _trackedElement;
+    private bool _isTrackingUpdate;
+
+    public Action? RequestRedraw { get; set; }
+
+    public PropertiesViewModel(IUndoRedoService undoRedo)
+    {
+        _undoRedo = undoRedo;
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsVisible))]
@@ -124,8 +134,14 @@ public partial class PropertiesViewModel : ObservableObject
 
     public void TrackElement(DesignElement? el)
     {
+        _isTrackingUpdate = true;
         _trackedElement = el;
-        if (el == null) { ElementType = ""; return; }
+        if (el == null)
+        {
+            ElementType = "";
+            _isTrackingUpdate = false;
+            return;
+        }
 
         ElementType = el.GetType().Name.Replace("Element", "");
         ElementName = el.Name;
@@ -139,20 +155,135 @@ public partial class PropertiesViewModel : ObservableObject
         if (el is BarcodeElement bc) { BarcodeValue = bc.Value; }
         if (el is ShapeElement sh) { FillColor = sh.Fill; StrokeColor = sh.Stroke; }
         if (el is LineElement ln) { StrokeColor = ln.Stroke; }
+        _isTrackingUpdate = false;
     }
 
-    partial void OnElementNameChanged(string value) { if (_trackedElement != null) _trackedElement.Name = value; }
-    partial void OnPosXChanged(double value) { if (_trackedElement != null) _trackedElement.Bounds = new RectD(value, _trackedElement.Bounds.Y, _trackedElement.Bounds.Width, _trackedElement.Bounds.Height); }
-    partial void OnPosYChanged(double value) { if (_trackedElement != null) _trackedElement.Bounds = new RectD(_trackedElement.Bounds.X, value, _trackedElement.Bounds.Width, _trackedElement.Bounds.Height); }
-    partial void OnWidthChanged(double value) { if (_trackedElement != null) _trackedElement.Bounds = new RectD(_trackedElement.Bounds.X, _trackedElement.Bounds.Y, value, _trackedElement.Bounds.Height); }
-    partial void OnHeightChanged(double value) { if (_trackedElement != null) _trackedElement.Bounds = new RectD(_trackedElement.Bounds.X, _trackedElement.Bounds.Y, _trackedElement.Bounds.Width, value); }
-    partial void OnRotationChanged(double value) { if (_trackedElement != null) _trackedElement.Rotation = value; }
-    partial void OnTextChanged(string value) { if (_trackedElement is TextElement txt) txt.Text = value; }
-    partial void OnFontSizeChanged(double value) { if (_trackedElement is TextElement txt) txt.FontSize = value; }
-    partial void OnBarcodeValueChanged(string value) { if (_trackedElement is BarcodeElement bc) bc.Value = value; }
-    partial void OnFillColorChanged(string value) { if (_trackedElement is ShapeElement sh) sh.Fill = value; }
-    partial void OnStrokeColorChanged(string value) {
-        if (_trackedElement is ShapeElement sh) sh.Stroke = value;
-        if (_trackedElement is LineElement ln) ln.Stroke = value;
+    partial void OnElementNameChanged(string value)
+        => ApplyPropertyChange(e => e.Name, (e, v) => e.Name = v, value, "Rename element");
+
+    partial void OnPosXChanged(double value)
+        => ApplyPropertyChange(e => e.Bounds.X, (e, v) => e.Bounds = new RectD(v, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height), value, "Move element X");
+
+    partial void OnPosYChanged(double value)
+        => ApplyPropertyChange(e => e.Bounds.Y, (e, v) => e.Bounds = new RectD(e.Bounds.X, v, e.Bounds.Width, e.Bounds.Height), value, "Move element Y");
+
+    partial void OnWidthChanged(double value)
+        => ApplyPropertyChange(e => e.Bounds.Width, (e, v) => e.Bounds = new RectD(e.Bounds.X, e.Bounds.Y, v, e.Bounds.Height), value, "Resize element width");
+
+    partial void OnHeightChanged(double value)
+        => ApplyPropertyChange(e => e.Bounds.Height, (e, v) => e.Bounds = new RectD(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, v), value, "Resize element height");
+
+    partial void OnRotationChanged(double value)
+        => ApplyPropertyChange(e => e.Rotation, (e, v) => e.Rotation = v, value, "Rotate element");
+
+    partial void OnTextChanged(string value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+        {
+            ApplyPropertyChange(_ => txt.Text, (_, v) => txt.Text = v, value, "Edit text");
+        }
+    }
+
+    partial void OnFontSizeChanged(double value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+        {
+            ApplyPropertyChange(_ => txt.FontSize, (_, v) => txt.FontSize = v, value, "Change text size");
+        }
+    }
+
+    partial void OnBarcodeValueChanged(string value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+        {
+            ApplyPropertyChange(_ => bc.Value, (_, v) => bc.Value = v, value, "Edit barcode value");
+        }
+    }
+
+    partial void OnFillColorChanged(string value)
+    {
+        if (_trackedElement is ShapeElement sh && !_isTrackingUpdate)
+        {
+            ApplyPropertyChange(_ => sh.Fill, (_, v) => sh.Fill = v, value, "Change fill color");
+        }
+    }
+
+    partial void OnStrokeColorChanged(string value)
+    {
+        if (_isTrackingUpdate) return;
+
+        if (_trackedElement is ShapeElement sh)
+        {
+            ApplyPropertyChange(_ => sh.Stroke, (_, v) => sh.Stroke = v, value, "Change stroke color");
+        }
+        else if (_trackedElement is LineElement ln)
+        {
+            ApplyPropertyChange(_ => ln.Stroke, (_, v) => ln.Stroke = v, value, "Change stroke color");
+        }
+    }
+
+    private void ApplyPropertyChange<T>(
+        Func<DesignElement, T> getCurrent,
+        Action<DesignElement, T> setValue,
+        T newValue,
+        string description)
+    {
+        if (_trackedElement == null || _isTrackingUpdate)
+        {
+            return;
+        }
+
+        var oldValue = getCurrent(_trackedElement);
+        if (EqualityComparer<T>.Default.Equals(oldValue, newValue))
+        {
+            return;
+        }
+
+        _undoRedo.Execute(new PropertyEditCommand<T>(
+            _trackedElement,
+            setValue,
+            oldValue,
+            newValue,
+            description,
+            RequestRedraw));
+    }
+
+    private sealed class PropertyEditCommand<T> : IUndoableCommand
+    {
+        private readonly DesignElement _element;
+        private readonly Action<DesignElement, T> _setValue;
+        private readonly T _oldValue;
+        private readonly T _newValue;
+        private readonly Action? _onChanged;
+
+        public PropertyEditCommand(
+            DesignElement element,
+            Action<DesignElement, T> setValue,
+            T oldValue,
+            T newValue,
+            string description,
+            Action? onChanged)
+        {
+            _element = element;
+            _setValue = setValue;
+            _oldValue = oldValue;
+            _newValue = newValue;
+            Description = description;
+            _onChanged = onChanged;
+        }
+
+        public string Description { get; }
+
+        public void Execute()
+        {
+            _setValue(_element, _newValue);
+            _onChanged?.Invoke();
+        }
+
+        public void Undo()
+        {
+            _setValue(_element, _oldValue);
+            _onChanged?.Invoke();
+        }
     }
 }

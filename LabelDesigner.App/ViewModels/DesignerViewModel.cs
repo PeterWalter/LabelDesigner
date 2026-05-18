@@ -4,7 +4,6 @@ using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
-using LabelDesigner.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Windows.Foundation;
@@ -28,7 +27,7 @@ public partial class DesignerViewModel : ObservableObject
     public PageSize CurrentPageSize { get; private set; } = PageSize.A4;
     public bool IsLandscape { get; private set; } = false;
 
-    private readonly SnapService _snap = new();
+    private readonly ISnapService _snap;
     private bool _isDragging;
     private bool _isShiftHeld;
     private ResizeHandle _activeHandle = ResizeHandle.None;
@@ -77,12 +76,15 @@ public partial class DesignerViewModel : ObservableObject
         ISceneGraphService scene,
         IUndoRedoService undoRedo,
         ILabelPersistenceService persistence,
-        PropertiesViewModel properties)
+        PropertiesViewModel properties,
+        ISnapService snap)
     {
         _scene = scene;
         _undoRedo = undoRedo;
         _persistence = persistence;
         _properties = properties;
+        _properties.RequestRedraw = () => RequestRedraw?.Invoke();
+        _snap = snap;
         Layers = new LayerPanelViewModel(scene);
 
         SetPage(PageSize.A4, false);
@@ -667,6 +669,7 @@ public partial class DesignerViewModel : ObservableObject
 
     public void PointerPressed(Windows.Foundation.Point screenPoint)
     {
+        Guides.Clear();
         var p = Viewport.ScreenToWorld(screenPoint);
         var pD = new PointD(p.X, p.Y);
         _startPointD = pD;
@@ -775,20 +778,20 @@ public partial class DesignerViewModel : ObservableObject
         }
         else if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
         {
-            var newBounds = SnapToGrid(_originalBounds.Translate(dx, dy));
-            // Constrain to page bounds
-            var pageW = _scene.CurrentDocument.Page.WidthMm * 3.78;
-            var pageH = _scene.CurrentDocument.Page.HeightMm * 3.78;
-            if (newBounds.X < 0) newBounds.X = 0;
-            if (newBounds.Y < 0) newBounds.Y = 0;
-            if (newBounds.X + newBounds.Width > pageW) newBounds.X = pageW - newBounds.Width;
-            if (newBounds.Y + newBounds.Height > pageH) newBounds.Y = pageH - newBounds.Height;
-            if (newBounds.X < 0) newBounds.X = 0;
-            if (newBounds.Y < 0) newBounds.Y = 0;
-            Selected.Bounds = newBounds;
+            var otherBounds = _scene.CurrentDocument.AllElements
+                .Where(e => e.Id != Selected.Id)
+                .Select(e => e.Bounds);
+
+            var snappedBounds = _snap.Snap(_originalBounds.Translate(dx, dy), otherBounds, out var guides);
+            var clampedBounds = snappedBounds.ClampToBounds(GetPageRect());
+
+            Guides.Clear();
+            Guides.AddRange(guides);
+            Selected.Bounds = clampedBounds;
         }
         else
         {
+            Guides.Clear();
             Resize(dx, dy);
         }
     }
@@ -797,15 +800,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         _isDragging = false;
         _activeHandle = ResizeHandle.None;
-    }
-
-    private RectD SnapToGrid(RectD rect)
-    {
-        int grid = 20;
-        return new RectD(
-            Math.Round(rect.X / grid) * grid,
-            Math.Round(rect.Y / grid) * grid,
-            rect.Width, rect.Height);
+        Guides.Clear();
     }
 
     private void Resize(double dx, double dy)
@@ -825,17 +820,17 @@ public partial class DesignerViewModel : ObservableObject
             case ResizeHandle.Left: b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height); break;
         }
 
-        if (b.Width < minSize) b.Width = minSize;
-        if (b.Height < minSize) b.Height = minSize;
-
-        // Clamp to page bounds
-        var pageW2 = _scene.CurrentDocument.Page.WidthMm * 3.78;
-        var pageH2 = _scene.CurrentDocument.Page.HeightMm * 3.78;
-        if (b.X < 0) b.X = 0;
-        if (b.Y < 0) b.Y = 0;
-        if (b.X + b.Width > pageW2) { if (b.Width >= pageW2) { b.X = 0; b.Width = pageW2; } else b.X = pageW2 - b.Width; }
-        if (b.Y + b.Height > pageH2) { if (b.Height >= pageH2) { b.Y = 0; b.Height = pageH2; } else b.Y = pageH2 - b.Height; }
+        b = b
+            .EnsureMinimumSize(minSize, minSize)
+            .ClampToBounds(GetPageRect());
         Selected!.Bounds = b;
+    }
+
+    private RectD GetPageRect()
+    {
+        return new RectD(0, 0,
+            _scene.CurrentDocument.Page.WidthMm * 3.78,
+            _scene.CurrentDocument.Page.HeightMm * 3.78);
     }
 
     private RectD GetRotationHandleRect(DesignElement el)
