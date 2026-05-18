@@ -27,12 +27,14 @@ public class RenderService : IRenderService
         CanvasDrawingSession ds,
         SceneDocument document,
         IEnumerable<Guid> selectedIds,
+        IEnumerable<Guid> hoveredIds,
         float zoom,
         RectD viewport)
     {
         ds.Clear(Colors.White);
 
         var selectedSet = new HashSet<Guid>(selectedIds);
+        var hoveredSet = new HashSet<Guid>(hoveredIds);
         var originalTransform = ds.Transform;
         ds.Transform = Matrix3x2.CreateTranslation(-(float)viewport.X, -(float)viewport.Y)
                      * Matrix3x2.CreateScale(zoom);
@@ -77,6 +79,8 @@ public class RenderService : IRenderService
                 DrawElement(ds, el, lookup);
                 if (selectedSet.Contains(el.Id))
                     DrawSelectionHandles(ds, el, zoom);
+                else if (hoveredSet.Contains(el.Id) && !selectedSet.Contains(el.Id))
+                    DrawHoverOutline(ds, el, zoom);
                 ds.Transform = local;
             }
         }
@@ -268,6 +272,22 @@ public class RenderService : IRenderService
 
         // Dashed outline
         ds.DrawRectangle(rect, Colors.Blue, 1, new CanvasStrokeStyle { DashStyle = CanvasDashStyle.Dash });
+    }
+
+    private static void DrawHoverOutline(CanvasDrawingSession ds, DesignElement el, float zoom)
+    {
+        var rect = el.Bounds.ToWinRect();
+        ds.DrawRectangle(rect, Color.FromArgb(180, 128, 200, 255), 1.5f);
+        float dot = 3f / Math.Max(zoom, 0.25f);
+        foreach (var p in new[] {
+            new Vector2((float)rect.Left, (float)rect.Top),
+            new Vector2((float)rect.Right, (float)rect.Top),
+            new Vector2((float)rect.Right, (float)rect.Bottom),
+            new Vector2((float)rect.Left, (float)rect.Bottom),
+        })
+        {
+            ds.FillEllipse(p, dot, dot, Color.FromArgb(160, 128, 200, 255));
+        }
     }
 
     internal static Color ParseColor(string hex, Color fallback)

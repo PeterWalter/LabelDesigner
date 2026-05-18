@@ -156,8 +156,10 @@ public sealed partial class DesignerCanvasView : UserControl
             sender.ActualWidth, sender.ActualHeight);
         _renderer.RenderScene(
             ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
-            (float)VM.Viewport.Zoom, viewport);
+            _hoveredIds, (float)VM.Viewport.Zoom, viewport);
     }
+
+    private readonly HashSet<Guid> _hoveredIds = new();
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
@@ -218,6 +220,16 @@ public sealed partial class DesignerCanvasView : UserControl
         var handle = VM?.GetHoverHandle(pD) ?? ResizeHandle.None;
         UpdateCursor(handle);
         VM?.PointerMoved(point);
+
+        // Update hover highlight
+        _hoveredIds.Clear();
+        if (handle == ResizeHandle.None && VM != null)
+        {
+            var hit = VM.Scene.HitTest(pD);
+            if (hit != null && !VM.Scene.SelectedIds.Contains(hit.Id))
+                _hoveredIds.Add(hit.Id);
+        }
+
         (sender as CanvasControl)?.Invalidate();
     }
 

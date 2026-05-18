@@ -115,8 +115,7 @@ public class SceneGraphService : ISceneGraphService
             {
                 if (_elements.TryGetValue(id, out var el) && el.Visible && !el.Locked)
                 {
-                    var b = el.Bounds;
-                    if (p.X >= b.X && p.X <= b.X + b.Width && p.Y >= b.Y && p.Y <= b.Y + b.Height)
+                    if (el.HitTestMargin(p, 5))
                         return el;
                 }
             }

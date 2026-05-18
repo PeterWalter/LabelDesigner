@@ -10,6 +10,7 @@ public interface IRenderService
         CanvasDrawingSession ds,
         SceneDocument document,
         IEnumerable<Guid> selectedIds,
+        IEnumerable<Guid> hoveredIds,
         float zoom,
         RectD viewport);
 }
