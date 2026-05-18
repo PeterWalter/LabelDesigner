@@ -23,6 +23,8 @@ public sealed partial class MainWindow : Window
         ViewModel = vm;
         RootGrid.DataContext = ViewModel;
         ApplyLocalization();
+        ApplyThemeFromSettings();
+        AppSettingsService.SettingsChanged += ApplyThemeFromSettings;
 
         RulerUnitComboBox.SelectedIndex = AppSettingsService.RulerUnit switch
         {
@@ -208,5 +210,11 @@ public sealed partial class MainWindow : Window
         if (RecentFilesLabel != null) RecentFilesLabel.Text = LocalizationService.Get("RecentFilesLabel");
         if (OpenRecentButton != null) OpenRecentButton.Content = LocalizationService.Get("OpenRecentButton");
         if (StockPresetLabel != null) StockPresetLabel.Text = LocalizationService.Get("StockPresetLabel");
+    }
+
+    private void ApplyThemeFromSettings()
+    {
+        if (Content is FrameworkElement root)
+            root.RequestedTheme = AppSettingsService.AppTheme;
     }
 }

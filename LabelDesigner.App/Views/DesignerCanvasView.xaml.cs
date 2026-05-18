@@ -17,8 +17,14 @@ public sealed partial class DesignerCanvasView : UserControl
     private bool _linePlacementFirstClick;
     private PointD _lineStartPoint;
     private CanvasControl? _canvas;
+    private DesignerViewModel? _wiredVm;
 
-    private DesignerViewModel? VM => (DataContext as MainViewModel)?.Designer;
+    private DesignerViewModel? VM => DataContext switch
+    {
+        MainViewModel main => main.Designer,
+        DesignerViewModel designer => designer,
+        _ => null
+    };
 
     public DesignerCanvasView()
     {
@@ -27,6 +33,7 @@ public sealed partial class DesignerCanvasView : UserControl
         this.KeyDown += OnCanvasKeyDown;
         this.KeyUp += OnCanvasKeyUp;
         this.DoubleTapped += OnCanvasDoubleTapped;
+        DataContextChanged += OnDataContextChanged;
 
         Loaded += OnCanvasLoaded;
         SizeChanged += OnCanvasSizeChanged;
@@ -34,8 +41,24 @@ public sealed partial class DesignerCanvasView : UserControl
 
     private void OnCanvasLoaded(object sender, RoutedEventArgs e)
     {
+        WireViewModel();
         _canvas = FindName("Canvas") as CanvasControl;
         if (_canvas != null && _canvas.ActualWidth > 0) DoZoomToFit(_canvas);
+    }
+
+    private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+    {
+        WireViewModel();
+    }
+
+    private void WireViewModel()
+    {
+        if (_wiredVm != null)
+            _wiredVm.RequestRedraw = null;
+
+        _wiredVm = VM;
+        if (_wiredVm != null)
+            _wiredVm.RequestRedraw = InvalidateCanvas;
     }
 
     private void OnCanvasSizeChanged(object sender, SizeChangedEventArgs e)
@@ -244,6 +267,9 @@ public sealed partial class DesignerCanvasView : UserControl
 
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
+        var vm = VM;
+        if (vm == null) return;
+
         var props = e.GetCurrentPoint((UIElement)sender).Properties;
         int delta = props.MouseWheelDelta;
         bool ctrlHeld = InputKeyboardSource.GetKeyStateForCurrentThread(
@@ -252,19 +278,19 @@ public sealed partial class DesignerCanvasView : UserControl
         if (ctrlHeld)
         {
             var cursorPos = e.GetCurrentPoint((UIElement)sender).Position;
-            var worldBefore = VM.Viewport.ScreenToWorld(cursorPos);
-            double newZoom = VM.Viewport.Zoom + (delta > 0 ? 0.1 : -0.1);
+            var worldBefore = vm.Viewport.ScreenToWorld(cursorPos);
+            double newZoom = vm.Viewport.Zoom + (delta > 0 ? 0.1 : -0.1);
             newZoom = Math.Clamp(newZoom, CanvasViewport.MinZoom, CanvasViewport.MaxZoom);
-            VM.Viewport.Zoom = newZoom;
-            var worldAfter = VM.Viewport.ScreenToWorld(cursorPos);
-            VM.Viewport.OffsetX += (worldAfter.X - worldBefore.X) * VM.Viewport.Zoom;
-            VM.Viewport.OffsetY += (worldAfter.Y - worldBefore.Y) * VM.Viewport.Zoom;
+            vm.Viewport.Zoom = newZoom;
+            var worldAfter = vm.Viewport.ScreenToWorld(cursorPos);
+            vm.Viewport.OffsetX += (worldAfter.X - worldBefore.X) * vm.Viewport.Zoom;
+            vm.Viewport.OffsetY += (worldAfter.Y - worldBefore.Y) * vm.Viewport.Zoom;
         }
         else
         {
-            VM.Viewport.OffsetY -= delta / 2;
+            vm.Viewport.OffsetY -= delta / 2;
         }
-        (sender as CanvasControl)?.Invalidate();
+        _canvas?.Invalidate();
     }
 
     private void UpdateCursor(ResizeHandle handle)

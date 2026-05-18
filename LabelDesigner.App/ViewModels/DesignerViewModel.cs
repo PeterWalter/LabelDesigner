@@ -7,6 +7,8 @@ using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
 using LabelDesigner.App.Services;
 using Microsoft.UI;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
 
 namespace LabelDesigner.App.ViewModels;
@@ -424,7 +426,30 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task PreviewPrint()
     {
-        await _printService.ShowPrintPreviewAsync(_scene.CurrentDocument);
+        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 150);
+        var source = new SoftwareBitmapSource();
+        await source.SetBitmapAsync(bitmap);
+
+        var image = new Image
+        {
+            Source = source,
+            Stretch = Microsoft.UI.Xaml.Media.Stretch.Uniform,
+            MaxWidth = 900,
+            MaxHeight = 700
+        };
+
+        var xamlRoot = App.MainWindow?.Content.XamlRoot;
+        if (xamlRoot == null)
+            return;
+
+        var dialog = new ContentDialog
+        {
+            Title = "Print Preview",
+            Content = new ScrollViewer { Content = image },
+            CloseButtonText = "Close",
+            XamlRoot = xamlRoot
+        };
+        await dialog.ShowAsync();
     }
 
     [RelayCommand]
@@ -783,22 +808,64 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SetTextTop() { if (Selected is BarcodeElement b) b.TextPosition = BarcodeTextPosition.Top; }
+    private void SetTextTop()
+    {
+        if (Selected is BarcodeElement b)
+        {
+            b.TextPosition = BarcodeTextPosition.Top;
+            RequestRedraw?.Invoke();
+        }
+    }
 
     [RelayCommand]
-    private void SetTextBottom() { if (Selected is BarcodeElement b) b.TextPosition = BarcodeTextPosition.Bottom; }
+    private void SetTextBottom()
+    {
+        if (Selected is BarcodeElement b)
+        {
+            b.TextPosition = BarcodeTextPosition.Bottom;
+            RequestRedraw?.Invoke();
+        }
+    }
 
     [RelayCommand]
-    private void SetTextLeft() { if (Selected is BarcodeElement b) b.TextPosition = BarcodeTextPosition.Left; }
+    private void SetTextLeft()
+    {
+        if (Selected is BarcodeElement b)
+        {
+            b.TextPosition = BarcodeTextPosition.Left;
+            RequestRedraw?.Invoke();
+        }
+    }
 
     [RelayCommand]
-    private void SetTextRight() { if (Selected is BarcodeElement b) b.TextPosition = BarcodeTextPosition.Right; }
+    private void SetTextRight()
+    {
+        if (Selected is BarcodeElement b)
+        {
+            b.TextPosition = BarcodeTextPosition.Right;
+            RequestRedraw?.Invoke();
+        }
+    }
 
     [RelayCommand]
-    private void IncreaseFont() { if (Selected is TextElement t) t.FontSize += 2; }
+    private void IncreaseFont()
+    {
+        if (Selected is TextElement t)
+        {
+            t.FontSize += 2;
+            RequestRedraw?.Invoke();
+        }
+    }
 
     [RelayCommand]
-    private void DecreaseFont() { if (Selected is TextElement t) t.FontSize -= 2; }
+    private void DecreaseFont()
+    {
+        if (Selected is TextElement t)
+        {
+            t.FontSize -= 2;
+            RequestRedraw?.Invoke();
+        }
+    }
 
     [RelayCommand]
     public void ToggleOrientation()
