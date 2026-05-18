@@ -28,7 +28,6 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="20"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
@@ -198,11 +197,8 @@
 
         </ribbon:SfRibbon>
 
-        <controls:RulerControl Grid.Row="1" Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
-
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="20"/>
                 <ColumnDefinition x:Name="LayerColumn" Width="180"/>
                 <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*"/>
@@ -210,30 +206,51 @@
                 <ColumnDefinition x:Name="PropertiesColumn" Width="220"/>
             </Grid.ColumnDefinitions>
 
-            <controls:RulerControl Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
-                Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
+            <views:LayersPaneView Grid.Column="0" x:Name="LayersPane"
+                AutomationProperties.Name="Layers panel"/>
 
-            <Border Grid.Column="2" x:Name="SplitterLeft" Width="6" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"
+            <Border Grid.Column="1" x:Name="SplitterLeft" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 AutomationProperties.Name="Resize Layers panel"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-            <views:LayersPaneView Grid.Column="1" x:Name="LayersPane"
-                AutomationProperties.Name="Layers panel"/>
+            <!-- Canvas zone: rulers wrap the canvas -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <views:DesignerCanvasView Grid.Column="3"
-                AutomationProperties.Name="Label design canvas"
-                AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
+                <!-- top-left corner spacer -->
+                <Border Grid.Row="0" Grid.Column="0" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,1"/>
 
-            <Border Grid.Column="4" x:Name="SplitterRight" Width="6" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
+                <!-- horizontal ruler -->
+                <controls:RulerControl Grid.Row="0" Grid.Column="1"
+                    Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
+
+                <!-- vertical ruler -->
+                <controls:RulerControl Grid.Row="1" Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
+                    Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
+
+                <!-- canvas -->
+                <views:DesignerCanvasView Grid.Row="1" Grid.Column="1"
+                    AutomationProperties.Name="Label design canvas"
+                    AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
+            </Grid>
+
+            <Border Grid.Column="3" x:Name="SplitterRight" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 AutomationProperties.Name="Resize Properties panel"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-            <views:PropertiesPaneView Grid.Column="5" x:Name="PropertiesPane"/>
+            <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
         </Grid>
 
-        <Border Grid.Row="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0"
+        <Border Grid.Row="2" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0"
             AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>
