@@ -73,6 +73,15 @@ public partial class PropertiesViewModel : ObservableObject
     private string _barcodeValue = "";
 
     [ObservableProperty]
+    private string _barcodeTextFontFamily = "Segoe UI";
+
+    [ObservableProperty]
+    private double _barcodeTextFontSize = 12;
+
+    [ObservableProperty]
+    private string _barcodeTextColor = "#000000";
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FillColorValue))]
     private string _fillColor = "#CCCCCC";
 
@@ -184,7 +193,13 @@ public partial class PropertiesViewModel : ObservableObject
             IsMultiline = txt.IsMultiline;
             ForeColor = txt.ForeColor;
         }
-        if (el is BarcodeElement bc) { BarcodeValue = bc.Value; }
+        if (el is BarcodeElement bc)
+        {
+            BarcodeValue = bc.Value;
+            BarcodeTextFontFamily = bc.TextFontFamily;
+            BarcodeTextFontSize = bc.TextFontSize;
+            BarcodeTextColor = bc.TextColor;
+        }
         if (el is ShapeElement sh) { FillColor = sh.Fill; StrokeColor = sh.Stroke; }
         if (el is LineElement ln) { StrokeColor = ln.Stroke; }
         _isTrackingUpdate = false;
@@ -272,6 +287,24 @@ public partial class PropertiesViewModel : ObservableObject
         {
             ApplyPropertyChange(_ => bc.Value, (_, v) => bc.Value = v, value, "Edit barcode value");
         }
+    }
+
+    partial void OnBarcodeTextFontFamilyChanged(string value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => bc.TextFontFamily, (_, v) => bc.TextFontFamily = v, value, "Change barcode text font");
+    }
+
+    partial void OnBarcodeTextFontSizeChanged(double value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => bc.TextFontSize, (_, v) => bc.TextFontSize = v, value, "Change barcode text size");
+    }
+
+    partial void OnBarcodeTextColorChanged(string value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => bc.TextColor, (_, v) => bc.TextColor = v, value, "Change barcode text color");
     }
 
     partial void OnFillColorChanged(string value)

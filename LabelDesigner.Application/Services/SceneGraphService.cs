@@ -221,7 +221,7 @@ public class SceneGraphService : ISceneGraphService
     private LayerNode GetDefaultLayer()
     {
         if (CurrentDocument.Layers.Count == 0)
-            AddLayer("Default");
+            AddLayer("Layer 1");
         return CurrentDocument.Layers[0];
     }
 

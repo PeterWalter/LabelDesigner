@@ -107,6 +107,19 @@
                         Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                     <TextBox Text="{Binding Designer.Properties.BarcodeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                         Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <!-- Barcode text formatting -->
+                    <TextBlock Text="Text Font Family" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBox Text="{Binding Designer.Properties.BarcodeTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
+                        Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBlock Text="Text Font Size" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBox Text="{Binding Designer.Properties.BarcodeTextFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
+                        Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBlock Text="Text Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"
+                        Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBox Text="{Binding Designer.Properties.BarcodeTextColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"
+                        Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                     <TextBlock Text="Fill Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

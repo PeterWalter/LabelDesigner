@@ -12,7 +12,18 @@ public enum MeasurementUnit
 
 public static class AppSettingsService
 {
-    public static ElementTheme AppTheme => ElementTheme.Default;
+    private static ElementTheme _appTheme = ElementTheme.Default;
+
+    public static ElementTheme AppTheme
+    {
+        get => _appTheme;
+        set
+        {
+            if (_appTheme == value) return;
+            _appTheme = value;
+            SettingsChanged?.Invoke();
+        }
+    }
 
     private static MeasurementUnit _rulerUnit = MeasurementUnit.Millimeters;
     private static bool _showSnapGrid = true;
@@ -105,7 +116,8 @@ public static class AppSettingsService
                 _layersPaneWidth,
                 _propertiesPaneWidth,
                 _layersPaneCollapsed,
-                _propertiesPaneCollapsed);
+                _propertiesPaneCollapsed,
+                _appTheme.ToString());
 
             var dir = Path.GetDirectoryName(SettingsFilePath)!;
             Directory.CreateDirectory(dir);
@@ -134,6 +146,12 @@ public static class AppSettingsService
             _propertiesPaneWidth = data.PropertiesPaneWidth > 60 ? data.PropertiesPaneWidth : 220;
             _layersPaneCollapsed = data.LayersPaneCollapsed;
             _propertiesPaneCollapsed = data.PropertiesPaneCollapsed;
+            _appTheme = data.AppTheme switch
+            {
+                "Light" => ElementTheme.Light,
+                "Dark" => ElementTheme.Dark,
+                _ => ElementTheme.Default
+            };
         }
         catch { /* Ignore load errors */ }
     }
@@ -144,5 +162,6 @@ public static class AppSettingsService
         double LayersPaneWidth,
         double PropertiesPaneWidth,
         bool LayersPaneCollapsed,
-        bool PropertiesPaneCollapsed);
+        bool PropertiesPaneCollapsed,
+        string AppTheme = "Default");
 }

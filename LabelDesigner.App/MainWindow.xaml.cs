@@ -73,7 +73,7 @@ public sealed partial class MainWindow : Window
             AppSettingsService.Save();
         };
 
-        ViewModel.Designer.Layers.Refresh();
+        ViewModel.Designer.Layers.Refresh(null);
 
         var appWindow = this.AppWindow;
         if (appWindow != null)
@@ -192,5 +192,12 @@ public sealed partial class MainWindow : Window
     {
         if (sender is ToggleButton tb)
             AppSettingsService.ShowSnapGrid = tb.IsChecked == true;
+    }
+
+    private async void OnSettingsClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Views.SettingsDialog();
+        dialog.XamlRoot = this.Content.XamlRoot;
+        await dialog.ShowAsync();
     }
 }

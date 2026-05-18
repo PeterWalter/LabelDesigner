@@ -99,6 +99,9 @@
                             <Button Content="Reset Layout" Click="OnResetLayout"
                                 Margin="0,2,0,0" Padding="6,2" FontSize="11"
                                 ToolTipService.ToolTip="Restore default panel layout"/>
+                            <Button Content="Settings" Click="OnSettingsClicked"
+                                Margin="0,2,0,0" Padding="6,2" FontSize="11"
+                                ToolTipService.ToolTip="Application Settings"/>
                         </StackPanel>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Settings">

@@ -86,6 +86,9 @@
     <Page Update="Views\PropertiesPaneView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Update="Views\SettingsDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Resources\Styles.xaml">

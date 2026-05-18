@@ -78,13 +78,14 @@ public sealed partial class RulerControl : UserControl
         double worldStart = offset / zoom;
         double worldEnd = (offset + canvasLen) / zoom;
         double alignedStart = Math.Floor(worldStart / tickInterval) * tickInterval;
+        double pageOrigin = IsVertical ? (vp?.PageOriginY ?? 0) : (vp?.PageOriginX ?? 0);
 
         for (double wp = alignedStart; wp <= worldEnd + tickInterval; wp += Math.Max(tickInterval, 5))
         {
             double sp = wp * zoom - offset;
             if (sp < -10 || sp > canvasLen + 10) continue;
 
-            // Labels show measurement relative to page origin (page is at world 0)
+            // Labels show measurement relative to page corner (page top-left = 0)
             bool major = Math.Abs(wp % labelInterval) < Math.Max(tickInterval, 5) * 0.5;
             bool medium = Math.Abs(wp % 50) < Math.Max(tickInterval, 5) * 0.5 && !major;
             float ts = major ? 12f : medium ? 8f : 5f;
@@ -95,7 +96,7 @@ public sealed partial class RulerControl : UserControl
                 ds.DrawLine(rulerDim - ts, (float)sp, rulerDim, (float)sp, tc, 1);
                 if (major)
                 {
-                    var label = FormatMeasurementLabel(wp / pixelsPerMm);
+                    var label = FormatMeasurementLabel((wp - pageOrigin) / pixelsPerMm);
                     ds.DrawText(label, 2, (float)sp - 5.5f, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
                 }
             }
@@ -104,7 +105,7 @@ public sealed partial class RulerControl : UserControl
                 ds.DrawLine((float)sp, rulerDim - ts, (float)sp, rulerDim, tc, 1);
                 if (major)
                 {
-                    var label = FormatMeasurementLabel(wp / pixelsPerMm);
+                    var label = FormatMeasurementLabel((wp - pageOrigin) / pixelsPerMm);
                     ds.DrawText(label, (float)sp - 5, rulerDim - 14, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
                 }
             }

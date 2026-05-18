@@ -14,9 +14,6 @@ public sealed partial class LayersPaneView : UserControl
         InitializeComponent();
     }
 
-    /// <summary>
-    /// Sets the collapsed state without raising <see cref="CollapseChanged"/>.
-    /// </summary>
     public void SetCollapsed(bool collapsed)
     {
         CollapseToggle.Checked -= OnCollapseToggleChanged;
@@ -30,12 +27,28 @@ public sealed partial class LayersPaneView : UserControl
 
     private void OnLayerItemClick(object sender, PointerRoutedEventArgs e)
     {
-        if (sender is Grid grid && grid.DataContext is ElementItemViewModel evm)
+        if (sender is FrameworkElement fe && fe.DataContext is ElementItemViewModel evm)
         {
             var vm = DataContext as MainViewModel;
             vm?.Designer.Layers.SelectElement(evm.ElementId);
             vm?.Designer.RequestRedraw?.Invoke();
         }
+    }
+
+    private void OnLayerHeaderClick(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.Tag is LayerItemViewModel lvm)
+        {
+            var panel = (DataContext as MainViewModel)?.Designer.Layers;
+            if (panel != null)
+                panel.SelectedLayer = lvm;
+        }
+    }
+
+    private void OnLayerExpandClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is LayerItemViewModel lvm)
+            lvm.IsExpanded = !lvm.IsExpanded;
     }
 
     private void OnCollapseToggleChanged(object sender, RoutedEventArgs e)
@@ -49,6 +62,7 @@ public sealed partial class LayersPaneView : UserControl
     {
         ContentArea.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
         HeaderText.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
+        FooterArea.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
         CollapseIcon.Glyph = collapsed ? "\uE76C" : "\uE76B";
     }
 }

@@ -49,4 +49,10 @@ public partial class CanvasViewport : ObservableObject
 
     public PointD WorldToScreenD(PointD world) =>
         new(world.X * Zoom - OffsetX, world.Y * Zoom - OffsetY);
+
+    [ObservableProperty]
+    private double _pageOriginX = 50;
+
+    [ObservableProperty]
+    private double _pageOriginY = 50;
 }

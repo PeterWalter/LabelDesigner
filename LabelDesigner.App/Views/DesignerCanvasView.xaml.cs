@@ -156,6 +156,7 @@ public sealed partial class DesignerCanvasView : UserControl
     }
 
     private readonly HashSet<Guid> _hoveredIds = new();
+    private Guid _lastHoverId = Guid.Empty;
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
@@ -226,7 +227,13 @@ public sealed partial class DesignerCanvasView : UserControl
                 _hoveredIds.Add(hit.Id);
         }
 
-        (sender as CanvasControl)?.Invalidate();
+        // Only redraw when hover changed or drag is active
+        var newHoverId = _hoveredIds.Count > 0 ? _hoveredIds.First() : Guid.Empty;
+        bool hoverChanged = newHoverId != _lastHoverId;
+        _lastHoverId = newHoverId;
+
+        if (hoverChanged || (VM?.IsDragging == true))
+            (sender as CanvasControl)?.Invalidate();
     }
 
     private void OnPointerExited(object sender, PointerRoutedEventArgs e)

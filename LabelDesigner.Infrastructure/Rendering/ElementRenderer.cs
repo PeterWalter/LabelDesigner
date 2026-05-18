@@ -20,6 +20,20 @@ namespace LabelDesigner.Infrastructure.Rendering;
 /// </summary>
 internal static class ElementRenderer
 {
+    private static readonly Dictionary<string, Windows.Graphics.Imaging.SoftwareBitmap?> _barcodeCache = new();
+
+    private static Windows.Graphics.Imaging.SoftwareBitmap? GetCachedBarcode(
+        IBarcodeService barcode, string value, int width, int height)
+    {
+        var key = $"{value}|{width}|{height}";
+        if (!_barcodeCache.TryGetValue(key, out var cached))
+        {
+            cached = barcode.Generate(value, ZXing.BarcodeFormat.CODE_128, width, height);
+            _barcodeCache[key] = cached;
+        }
+        return cached;
+    }
+
     internal static void DrawElement(
         CanvasDrawingSession ds,
         DesignElement el,
@@ -77,19 +91,20 @@ internal static class ElementRenderer
                 break;
         }
 
-        var bmp = barcode.Generate(b.Value, ZXing.BarcodeFormat.CODE_128,
-            (int)barcodeRect.Width, (int)barcodeRect.Height);
+        var bmp = GetCachedBarcode(barcode, b.Value, (int)barcodeRect.Width, (int)barcodeRect.Height);
         if (bmp != null)
         {
             var img = CanvasBitmap.CreateFromSoftwareBitmap(ds.Device, bmp);
             ds.DrawImage(img, barcodeRect.ToWinRect());
         }
 
-        ds.DrawText(text, new Vector2(tx, ty), Colors.Black, new CanvasTextFormat
+        var textColor = ParseColor(b.TextColor, Colors.Black);
+        ds.DrawText(text, new Vector2(tx, ty), textColor, new CanvasTextFormat
         {
             HorizontalAlignment = CanvasHorizontalAlignment.Center,
             VerticalAlignment = CanvasVerticalAlignment.Center,
-            FontSize = 14 * scale
+            FontSize = (float)b.TextFontSize * scale,
+            FontFamily = string.IsNullOrEmpty(b.TextFontFamily) ? "Segoe UI" : b.TextFontFamily
         });
     }
 
