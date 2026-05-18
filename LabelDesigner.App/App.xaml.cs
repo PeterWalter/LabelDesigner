@@ -66,6 +66,11 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         // Build the provider
         Services = services.BuildServiceProvider();
+
+        // Flush GPU/CPU barcode bitmap cache whenever a new document is loaded or the scene is cleared.
+        var scene = Services.GetRequiredService<ISceneGraphService>();
+        var render = Services.GetRequiredService<IRenderService>();
+        scene.DocumentReset += render.ClearBitmapCache;
     }
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

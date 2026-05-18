@@ -20,18 +20,41 @@ namespace LabelDesigner.Infrastructure.Rendering;
 /// </summary>
 internal static class ElementRenderer
 {
-    private static readonly Dictionary<string, Windows.Graphics.Imaging.SoftwareBitmap?> _barcodeCache = new();
+    // Caches both CPU (SoftwareBitmap) and GPU (CanvasBitmap) resources.
+    // CanvasBitmap holds a Direct3D texture — must be cached to avoid per-frame GPU allocation.
+    // SoftwareBitmap is IDisposable — disposed when entries are evicted.
+    private static readonly Dictionary<string, (Windows.Graphics.Imaging.SoftwareBitmap? Sw, CanvasBitmap? Gpu)> _barcodeCache = new();
 
-    private static Windows.Graphics.Imaging.SoftwareBitmap? GetCachedBarcode(
-        IBarcodeService barcode, string value, int width, int height)
+    private static CanvasBitmap? GetCachedBarcodeBitmap(
+        CanvasDrawingSession ds, IBarcodeService barcode, string value, int width, int height)
     {
+        if (width <= 0 || height <= 0) return null;
         var key = $"{value}|{width}|{height}";
-        if (!_barcodeCache.TryGetValue(key, out var cached))
+        if (_barcodeCache.TryGetValue(key, out var cached) && cached.Gpu != null)
+            return cached.Gpu;
+
+        // Dispose old entries for the same key before replacing.
+        if (_barcodeCache.TryGetValue(key, out var old))
         {
-            cached = barcode.Generate(value, ZXing.BarcodeFormat.CODE_128, width, height);
-            _barcodeCache[key] = cached;
+            old.Gpu?.Dispose();
+            old.Sw?.Dispose();
         }
-        return cached;
+
+        var sw = barcode.Generate(value, ZXing.BarcodeFormat.CODE_128, width, height);
+        CanvasBitmap? gpu = sw != null ? CanvasBitmap.CreateFromSoftwareBitmap(ds.Device, sw) : null;
+        _barcodeCache[key] = (sw, gpu);
+        return gpu;
+    }
+
+    /// <summary>Disposes all cached bitmaps and clears the cache. Call when a document is closed or cleared.</summary>
+    internal static void ClearBarcodeCache()
+    {
+        foreach (var (sw, gpu) in _barcodeCache.Values)
+        {
+            gpu?.Dispose();
+            sw?.Dispose();
+        }
+        _barcodeCache.Clear();
     }
 
     internal static void DrawElement(
@@ -91,11 +114,10 @@ internal static class ElementRenderer
                 break;
         }
 
-        var bmp = GetCachedBarcode(barcode, b.Value, (int)barcodeRect.Width, (int)barcodeRect.Height);
+        var bmp = GetCachedBarcodeBitmap(ds, barcode, b.Value, (int)barcodeRect.Width, (int)barcodeRect.Height);
         if (bmp != null)
         {
-            var img = CanvasBitmap.CreateFromSoftwareBitmap(ds.Device, bmp);
-            ds.DrawImage(img, barcodeRect.ToWinRect());
+            ds.DrawImage(bmp, barcodeRect.ToWinRect());
         }
 
         var textColor = ParseColor(b.TextColor, Colors.Black);

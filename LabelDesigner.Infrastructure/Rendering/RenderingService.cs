@@ -24,6 +24,8 @@ public class RenderService : IRenderService
         _barcode = barcode;
     }
 
+    public void ClearBitmapCache() => ElementRenderer.ClearBarcodeCache();
+
     public void RenderScene(
         CanvasDrawingSession ds,
         SceneDocument document,
