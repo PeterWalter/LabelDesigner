@@ -13,18 +13,64 @@ public sealed partial class MainWindow : Window
     private bool _isDraggingSplitter;
     private bool _isLeftSplitter;
     private double _startPointerX;
+    private bool _suppressToggleSync;
 
     public MainWindow(MainViewModel vm)
     {
+        AppSettingsService.Load();
+
         InitializeComponent();
         ViewModel = vm;
         RootGrid.DataContext = ViewModel;
+
         RulerUnitComboBox.SelectedIndex = AppSettingsService.RulerUnit switch
         {
             MeasurementUnit.Millimeters => 0,
             MeasurementUnit.Centimeters => 1,
             MeasurementUnit.Inches => 2,
             _ => 0
+        };
+
+        // Restore layout
+        LayerColumn.Width = AppSettingsService.LayersPaneCollapsed
+            ? new GridLength(32)
+            : new GridLength(AppSettingsService.LayersPaneWidth);
+
+        PropertiesColumn.Width = AppSettingsService.PropertiesPaneCollapsed
+            ? new GridLength(32)
+            : new GridLength(AppSettingsService.PropertiesPaneWidth);
+
+        LayersPane.SetCollapsed(AppSettingsService.LayersPaneCollapsed);
+        PropertiesPane.SetCollapsed(AppSettingsService.PropertiesPaneCollapsed);
+
+        _suppressToggleSync = true;
+        LayersToggle.IsChecked = !AppSettingsService.LayersPaneCollapsed;
+        PropertiesToggle.IsChecked = !AppSettingsService.PropertiesPaneCollapsed;
+        _suppressToggleSync = false;
+
+        // Sync ribbon toggles when pane collapse buttons are clicked
+        LayersPane.CollapseChanged += (s, isCollapsed) =>
+        {
+            LayerColumn.Width = isCollapsed
+                ? new GridLength(32)
+                : new GridLength(AppSettingsService.LayersPaneWidth);
+            AppSettingsService.LayersPaneCollapsed = isCollapsed;
+            _suppressToggleSync = true;
+            LayersToggle.IsChecked = !isCollapsed;
+            _suppressToggleSync = false;
+            AppSettingsService.Save();
+        };
+
+        PropertiesPane.CollapseChanged += (s, isCollapsed) =>
+        {
+            PropertiesColumn.Width = isCollapsed
+                ? new GridLength(32)
+                : new GridLength(AppSettingsService.PropertiesPaneWidth);
+            AppSettingsService.PropertiesPaneCollapsed = isCollapsed;
+            _suppressToggleSync = true;
+            PropertiesToggle.IsChecked = !isCollapsed;
+            _suppressToggleSync = false;
+            AppSettingsService.Save();
         };
 
         ViewModel.Designer.Layers.Refresh();
@@ -34,14 +80,49 @@ public sealed partial class MainWindow : Window
             appWindow.Resize(new Windows.Graphics.SizeInt32(1400, 900));
     }
 
-    private void OnLayerItemClick(object sender, PointerRoutedEventArgs e)
+    private void OnLayersPaneToggled(object sender, RoutedEventArgs e)
     {
-        var grid = sender as Grid;
-        if (grid?.DataContext is ElementItemViewModel evm)
-        {
-            ViewModel.Designer.Layers.SelectElement(evm.ElementId);
-            ViewModel.Designer.RequestRedraw?.Invoke();
-        }
+        if (_suppressToggleSync) return;
+        var isCollapsed = LayersToggle.IsChecked != true;
+        LayersPane.SetCollapsed(isCollapsed);
+        LayerColumn.Width = isCollapsed
+            ? new GridLength(32)
+            : new GridLength(AppSettingsService.LayersPaneWidth);
+        AppSettingsService.LayersPaneCollapsed = isCollapsed;
+        AppSettingsService.Save();
+    }
+
+    private void OnPropertiesPaneToggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressToggleSync) return;
+        var isCollapsed = PropertiesToggle.IsChecked != true;
+        PropertiesPane.SetCollapsed(isCollapsed);
+        PropertiesColumn.Width = isCollapsed
+            ? new GridLength(32)
+            : new GridLength(AppSettingsService.PropertiesPaneWidth);
+        AppSettingsService.PropertiesPaneCollapsed = isCollapsed;
+        AppSettingsService.Save();
+    }
+
+    private void OnResetLayout(object sender, RoutedEventArgs e)
+    {
+        AppSettingsService.LayersPaneWidth = 180;
+        AppSettingsService.PropertiesPaneWidth = 220;
+        AppSettingsService.LayersPaneCollapsed = false;
+        AppSettingsService.PropertiesPaneCollapsed = false;
+
+        LayerColumn.Width = new GridLength(180);
+        PropertiesColumn.Width = new GridLength(220);
+
+        LayersPane.SetCollapsed(false);
+        PropertiesPane.SetCollapsed(false);
+
+        _suppressToggleSync = true;
+        LayersToggle.IsChecked = true;
+        PropertiesToggle.IsChecked = true;
+        _suppressToggleSync = false;
+
+        AppSettingsService.Save();
     }
 
     private void OnSplitterPressed(object sender, PointerRoutedEventArgs e)
@@ -82,14 +163,20 @@ public sealed partial class MainWindow : Window
     {
         _isDraggingSplitter = false;
         (sender as UIElement)?.ReleasePointerCapture(e.Pointer);
+
+        // Persist new widths (only when pane is expanded)
+        if (_isLeftSplitter && !AppSettingsService.LayersPaneCollapsed)
+            AppSettingsService.LayersPaneWidth = LayerColumn.Width.Value;
+        else if (!_isLeftSplitter && !AppSettingsService.PropertiesPaneCollapsed)
+            AppSettingsService.PropertiesPaneWidth = PropertiesColumn.Width.Value;
+
+        AppSettingsService.Save();
     }
 
     private void OnRulerUnitChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem selectedItem)
-        {
             return;
-        }
 
         AppSettingsService.RulerUnit = selectedItem.Tag?.ToString() switch
         {
