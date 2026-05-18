@@ -110,4 +110,4 @@ dotnet test  LabelDesigner.Tests
 - Label Stock Presets (Avery, Dymo, Zebra standard sheets)
 - Dark theme polish
 - Accessibility (Narrator / keyboard-first navigation)
-- Localization (.resx)
+- Additional localization coverage across all ribbon/pane labels

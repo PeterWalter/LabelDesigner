@@ -22,6 +22,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ViewModel = vm;
         RootGrid.DataContext = ViewModel;
+        ApplyLocalization();
 
         RulerUnitComboBox.SelectedIndex = AppSettingsService.RulerUnit switch
         {
@@ -199,5 +200,13 @@ public sealed partial class MainWindow : Window
         var dialog = new Views.SettingsDialog();
         dialog.XamlRoot = this.Content.XamlRoot;
         await dialog.ShowAsync();
+    }
+
+    private void ApplyLocalization()
+    {
+        Title = LocalizationService.Get("WindowTitle");
+        if (RecentFilesLabel != null) RecentFilesLabel.Text = LocalizationService.Get("RecentFilesLabel");
+        if (OpenRecentButton != null) OpenRecentButton.Content = LocalizationService.Get("OpenRecentButton");
+        if (StockPresetLabel != null) StockPresetLabel.Text = LocalizationService.Get("StockPresetLabel");
     }
 }

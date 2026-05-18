@@ -128,11 +128,11 @@
                             <Button Content="Settings" Click="OnSettingsClicked"
                                 Margin="0,2,0,0" Padding="6,2" FontSize="11"
                                 ToolTipService.ToolTip="Application Settings"/>
-                            <TextBlock Text="Recent Files" FontSize="11" Margin="0,6,0,4"/>
+                            <TextBlock x:Name="RecentFilesLabel" Text="Recent Files" FontSize="11" Margin="0,6,0,4"/>
                             <ComboBox Width="220"
                                 ItemsSource="{Binding Designer.RecentFiles}"
                                 SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}" />
-                            <Button Content="Open Recent"
+                            <Button x:Name="OpenRecentButton" Content="Open Recent"
                                 Command="{Binding Designer.OpenSelectedRecentCommand}"
                                 Margin="0,2,0,0" Padding="6,2" FontSize="11"
                                 ToolTipService.ToolTip="Open the selected recent file"/>
@@ -146,7 +146,7 @@
                                 <ComboBoxItem Content="cm" Tag="Centimeters"/>
                                 <ComboBoxItem Content="in" Tag="Inches"/>
                             </ComboBox>
-                            <TextBlock Text="Stock Preset" FontSize="11" Margin="0,6,0,4"/>
+                            <TextBlock x:Name="StockPresetLabel" Text="Stock Preset" FontSize="11" Margin="0,6,0,4"/>
                             <ComboBox Width="220"
                                 DisplayMemberPath="DisplayName"
                                 SelectedValuePath="Id"
