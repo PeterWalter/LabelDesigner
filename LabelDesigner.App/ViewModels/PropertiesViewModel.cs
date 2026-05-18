@@ -49,6 +49,27 @@ public partial class PropertiesViewModel : ObservableObject
     private double _fontSize = 14;
 
     [ObservableProperty]
+    private string _fontFamily = "Segoe UI";
+
+    [ObservableProperty]
+    private bool _isBold;
+
+    [ObservableProperty]
+    private bool _isItalic;
+
+    [ObservableProperty]
+    private bool _isUnderline;
+
+    [ObservableProperty]
+    private int _textAlignmentIndex; // 0=Left, 1=Center, 2=Right
+
+    [ObservableProperty]
+    private bool _isMultiline;
+
+    [ObservableProperty]
+    private string _foreColor = "#000000";
+
+    [ObservableProperty]
     private string _barcodeValue = "";
 
     [ObservableProperty]
@@ -151,7 +172,18 @@ public partial class PropertiesViewModel : ObservableObject
         Height = el.Bounds.Height;
         Rotation = el.Rotation;
 
-        if (el is TextElement txt) { Text = txt.Text; FontSize = txt.FontSize; }
+        if (el is TextElement txt)
+        {
+            Text = txt.Text;
+            FontSize = txt.FontSize;
+            FontFamily = txt.FontFamily;
+            IsBold = txt.Bold;
+            IsItalic = txt.Italic;
+            IsUnderline = txt.Underline;
+            TextAlignmentIndex = (int)txt.TextAlignment;
+            IsMultiline = txt.IsMultiline;
+            ForeColor = txt.ForeColor;
+        }
         if (el is BarcodeElement bc) { BarcodeValue = bc.Value; }
         if (el is ShapeElement sh) { FillColor = sh.Fill; StrokeColor = sh.Stroke; }
         if (el is LineElement ln) { StrokeColor = ln.Stroke; }
@@ -190,6 +222,48 @@ public partial class PropertiesViewModel : ObservableObject
         {
             ApplyPropertyChange(_ => txt.FontSize, (_, v) => txt.FontSize = v, value, "Change text size");
         }
+    }
+
+    partial void OnFontFamilyChanged(string value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.FontFamily, (_, v) => txt.FontFamily = v, value, "Change font family");
+    }
+
+    partial void OnIsBoldChanged(bool value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.Bold, (_, v) => txt.Bold = v, value, "Toggle bold");
+    }
+
+    partial void OnIsItalicChanged(bool value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.Italic, (_, v) => txt.Italic = v, value, "Toggle italic");
+    }
+
+    partial void OnIsUnderlineChanged(bool value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.Underline, (_, v) => txt.Underline = v, value, "Toggle underline");
+    }
+
+    partial void OnTextAlignmentIndexChanged(int value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => (int)txt.TextAlignment, (_, v) => txt.TextAlignment = (LabelDesigner.Core.Models.TextAlignmentType)v, value, "Change text alignment");
+    }
+
+    partial void OnIsMultilineChanged(bool value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.IsMultiline, (_, v) => txt.IsMultiline = v, value, "Toggle multiline");
+    }
+
+    partial void OnForeColorChanged(string value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.ForeColor, (_, v) => txt.ForeColor = v, value, "Change text color");
     }
 
     partial void OnBarcodeValueChanged(string value)

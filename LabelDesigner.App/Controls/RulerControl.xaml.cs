@@ -74,11 +74,17 @@ public sealed partial class RulerControl : UserControl
         float canvasLen = IsVertical ? (float)sender.ActualHeight : (float)sender.ActualWidth;
         float rulerDim = IsVertical ? (float)sender.ActualWidth : (float)sender.ActualHeight;
 
-        for (double wp = 0; wp < 5000; wp += Math.Max(tickInterval, 5))
+        // Compute the visible world range so the loop only covers what's on screen
+        double worldStart = offset / zoom;
+        double worldEnd = (offset + canvasLen) / zoom;
+        double alignedStart = Math.Floor(worldStart / tickInterval) * tickInterval;
+
+        for (double wp = alignedStart; wp <= worldEnd + tickInterval; wp += Math.Max(tickInterval, 5))
         {
             double sp = wp * zoom - offset;
             if (sp < -10 || sp > canvasLen + 10) continue;
 
+            // Labels show measurement relative to page origin (page is at world 0)
             bool major = Math.Abs(wp % labelInterval) < Math.Max(tickInterval, 5) * 0.5;
             bool medium = Math.Abs(wp % 50) < Math.Max(tickInterval, 5) * 0.5 && !major;
             float ts = major ? 12f : medium ? 8f : 5f;

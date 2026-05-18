@@ -29,7 +29,8 @@ public class RenderService : IRenderService
         IEnumerable<Guid> selectedIds,
         IEnumerable<Guid> hoveredIds,
         float zoom,
-        RectD viewport)
+        RectD viewport,
+        bool showGrid = true)
     {
         ds.Clear(Colors.White);
 
@@ -43,7 +44,7 @@ public class RenderService : IRenderService
         float pageH = (float)document.Page.HeightMm * 3.78f;
         ds.FillRectangle(0, 0, pageW, pageH, Colors.White);
 
-        if (zoom > 0.5f)
+        if (showGrid && zoom > 0.5f)
         {
             int gridSize = 20;
             for (float x = 0; x < pageW; x += gridSize)
@@ -143,8 +144,44 @@ public class RenderService : IRenderService
 
     private void DrawText(CanvasDrawingSession ds, TextElement txt)
     {
-        var format = new CanvasTextFormat { FontSize = (float)txt.FontSize };
-        ds.DrawText(txt.Text, (float)txt.Bounds.X, (float)txt.Bounds.Y, Colors.Black, format);
+        var alignment = txt.TextAlignment switch
+        {
+            TextAlignmentType.Center => CanvasHorizontalAlignment.Center,
+            TextAlignmentType.Right => CanvasHorizontalAlignment.Right,
+            _ => CanvasHorizontalAlignment.Left
+        };
+
+        var fontStyle = txt.Italic
+            ? Windows.UI.Text.FontStyle.Italic
+            : Windows.UI.Text.FontStyle.Normal;
+
+        var fontWeight = txt.Bold
+            ? Microsoft.UI.Text.FontWeights.Bold
+            : Microsoft.UI.Text.FontWeights.Normal;
+
+        var format = new CanvasTextFormat
+        {
+            FontSize = (float)txt.FontSize,
+            FontFamily = string.IsNullOrEmpty(txt.FontFamily) ? "Segoe UI" : txt.FontFamily,
+            FontStyle = fontStyle,
+            FontWeight = fontWeight,
+            HorizontalAlignment = alignment,
+            WordWrapping = txt.IsMultiline ? CanvasWordWrapping.Wrap : CanvasWordWrapping.NoWrap
+        };
+
+        var color = ParseColor(txt.ForeColor, Colors.Black);
+        var rect = txt.Bounds.ToWinRect();
+
+        if (txt.IsMultiline)
+            ds.DrawText(txt.Text, rect, color, format);
+        else
+            ds.DrawText(txt.Text, (float)rect.X, (float)rect.Y, color, format);
+
+        if (txt.Underline)
+        {
+            float y = (float)(txt.Bounds.Y + txt.FontSize + 2);
+            ds.DrawLine((float)txt.Bounds.X, y, (float)(txt.Bounds.X + txt.Bounds.Width), y, color, 1);
+        }
     }
 
     private void DrawShape(CanvasDrawingSession ds, ShapeElement shape)

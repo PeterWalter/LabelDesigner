@@ -2,6 +2,7 @@ using LabelDesigner.App.Services;
 using LabelDesigner.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 
 namespace LabelDesigner.App;
@@ -96,5 +97,11 @@ public sealed partial class MainWindow : Window
             "Inches" => MeasurementUnit.Inches,
             _ => MeasurementUnit.Millimeters
         };
+    }
+
+    private void OnSnapGridToggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleButton tb)
+            AppSettingsService.ShowSnapGrid = tb.IsChecked == true;
     }
 }

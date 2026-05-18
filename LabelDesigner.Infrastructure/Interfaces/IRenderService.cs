@@ -12,5 +12,6 @@ public interface IRenderService
         IEnumerable<Guid> selectedIds,
         IEnumerable<Guid> hoveredIds,
         float zoom,
-        RectD viewport);
+        RectD viewport,
+        bool showGrid = true);
 }

@@ -151,7 +151,8 @@ public sealed partial class DesignerCanvasView : UserControl
             sender.ActualWidth, sender.ActualHeight);
         VM.RenderService.RenderScene(
             ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
-            _hoveredIds, (float)VM.Viewport.Zoom, viewport);
+            _hoveredIds, (float)VM.Viewport.Zoom, viewport,
+            LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid);
     }
 
     private readonly HashSet<Guid> _hoveredIds = new();

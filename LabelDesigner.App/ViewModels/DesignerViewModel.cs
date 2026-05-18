@@ -763,6 +763,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(CursorText));
         OnPropertyChanged(nameof(RulerUnitText));
+        RequestRedraw?.Invoke();
     }
 
     private static string FormatMeasurement(double pixels)
