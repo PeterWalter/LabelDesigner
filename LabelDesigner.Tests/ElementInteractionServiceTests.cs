@@ -2,6 +2,7 @@ using LabelDesigner.Application.Services;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
+using System.Numerics;
 
 namespace LabelDesigner.Tests;
 
@@ -115,5 +116,21 @@ public class ElementInteractionServiceTests
 
         Assert.True(update.Rotation.HasValue);
         Assert.Equal(90, update.Rotation.Value, precision: 0);
+    }
+
+    [Fact]
+    public void GetLocalTransform_rotates_around_element_center()
+    {
+        var selected = new TextElement
+        {
+            Bounds = new RectD(10, 10, 100, 40),
+            Rotation = 90
+        };
+
+        var transform = selected.GetLocalTransform();
+        var point = Vector2.Transform(new Vector2(10, 10), transform);
+
+        Assert.Equal(80, point.X, precision: 3);
+        Assert.Equal(-20, point.Y, precision: 3);
     }
 }

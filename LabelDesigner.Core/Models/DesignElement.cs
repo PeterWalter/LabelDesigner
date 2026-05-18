@@ -62,10 +62,10 @@ public abstract class DesignElement
         float sy = (float)(Math.Abs(ScaleY) < 0.001 ? 0.001 : ScaleY);
 
         return
-            Matrix3x2.CreateTranslation(cx, cy) *
-            Matrix3x2.CreateRotation(radians) *
+            Matrix3x2.CreateTranslation(-cx, -cy) *
             Matrix3x2.CreateScale(sx, sy) *
-            Matrix3x2.CreateTranslation(-cx, -cy);
+            Matrix3x2.CreateRotation(radians) *
+            Matrix3x2.CreateTranslation(cx, cy);
     }
 
     public virtual bool HitTest(PointD worldPoint)
