@@ -31,6 +31,7 @@ public static class AppSettingsService
     private static double _propertiesPaneWidth = 220;
     private static bool _layersPaneCollapsed = false;
     private static bool _propertiesPaneCollapsed = false;
+    private static readonly List<string> _recentFiles = new();
 
     public static event Action? SettingsChanged;
     public static event Action? LayoutChanged;
@@ -101,6 +102,34 @@ public static class AppSettingsService
         }
     }
 
+    public static IReadOnlyList<string> RecentFiles => _recentFiles.AsReadOnly();
+
+    public static void AddRecentFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        _recentFiles.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        _recentFiles.Insert(0, path);
+        if (_recentFiles.Count > 20)
+            _recentFiles.RemoveRange(20, _recentFiles.Count - 20);
+
+        SettingsChanged?.Invoke();
+        Save();
+    }
+
+    public static void RemoveRecentFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        if (_recentFiles.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase)) > 0)
+        {
+            SettingsChanged?.Invoke();
+            Save();
+        }
+    }
+
     private static string SettingsFilePath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -117,7 +146,8 @@ public static class AppSettingsService
                 _propertiesPaneWidth,
                 _layersPaneCollapsed,
                 _propertiesPaneCollapsed,
-                _appTheme.ToString());
+                _appTheme.ToString(),
+                _recentFiles.ToList());
 
             var dir = Path.GetDirectoryName(SettingsFilePath)!;
             Directory.CreateDirectory(dir);
@@ -152,6 +182,9 @@ public static class AppSettingsService
                 "Dark" => ElementTheme.Dark,
                 _ => ElementTheme.Default
             };
+            _recentFiles.Clear();
+            if (data.RecentFiles is { Count: > 0 })
+                _recentFiles.AddRange(data.RecentFiles.Where(path => !string.IsNullOrWhiteSpace(path)));
         }
         catch { /* Ignore load errors */ }
     }
@@ -163,5 +196,6 @@ public static class AppSettingsService
         double PropertiesPaneWidth,
         bool LayersPaneCollapsed,
         bool PropertiesPaneCollapsed,
-        string AppTheme = "Default");
+        string AppTheme = "Default",
+        List<string>? RecentFiles = null);
 }

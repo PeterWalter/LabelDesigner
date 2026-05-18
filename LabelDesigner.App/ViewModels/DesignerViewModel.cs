@@ -54,6 +54,7 @@ public partial class DesignerViewModel : ObservableObject
     public string RulerUnitText => $"Unit: {GetUnitSuffix()}";
     public string ElementsText => $"Elements: {ElementCount}";
     public string SnapStateText => AppSettingsService.ShowSnapGrid ? "Snap: ON" : "Snap: OFF";
+    public IReadOnlyList<string> RecentFiles => AppSettingsService.RecentFiles;
 
     public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
@@ -66,6 +67,9 @@ public partial class DesignerViewModel : ObservableObject
 
     [ObservableProperty]
     private string? selectedLabelStockPresetId;
+
+    [ObservableProperty]
+    private string? selectedRecentFile;
 
     public bool IsElementSelected => Selected != null;
     public bool IsBarcodeSelected => Selected is BarcodeElement;
@@ -184,9 +188,7 @@ public partial class DesignerViewModel : ObservableObject
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;
 
-        var doc = await _persistence.LoadAsync(file.Path);
-        _scene.Load(doc);
-        _currentFilePath = file.Path;
+        await OpenDocumentFromPath(file.Path);
     }
 
     [RelayCommand]
@@ -198,6 +200,7 @@ public partial class DesignerViewModel : ObservableObject
             return;
         }
         await _persistence.SaveAsync(_scene.CurrentDocument, _currentFilePath);
+        AppSettingsService.AddRecentFile(_currentFilePath);
     }
 
     [RelayCommand]
@@ -214,6 +217,23 @@ public partial class DesignerViewModel : ObservableObject
 
         await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
         _currentFilePath = file.Path;
+        AppSettingsService.AddRecentFile(file.Path);
+    }
+
+    [RelayCommand]
+    private async Task OpenSelectedRecent()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedRecentFile))
+            return;
+
+        if (!File.Exists(SelectedRecentFile))
+        {
+            AppSettingsService.RemoveRecentFile(SelectedRecentFile);
+            SelectedRecentFile = null;
+            return;
+        }
+
+        await OpenDocumentFromPath(SelectedRecentFile);
     }
 
     [RelayCommand]
@@ -959,7 +979,17 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(CursorText));
         OnPropertyChanged(nameof(RulerUnitText));
         OnPropertyChanged(nameof(SnapStateText));
+        OnPropertyChanged(nameof(RecentFiles));
         RequestRedraw?.Invoke();
+    }
+
+    private async Task OpenDocumentFromPath(string filePath)
+    {
+        var doc = await _persistence.LoadAsync(filePath);
+        _scene.Load(doc);
+        _currentFilePath = filePath;
+        AppSettingsService.AddRecentFile(filePath);
+        SelectedRecentFile = filePath;
     }
 
     private static string FormatMeasurement(double pixels)

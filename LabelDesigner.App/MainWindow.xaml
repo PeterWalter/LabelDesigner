@@ -128,6 +128,14 @@
                             <Button Content="Settings" Click="OnSettingsClicked"
                                 Margin="0,2,0,0" Padding="6,2" FontSize="11"
                                 ToolTipService.ToolTip="Application Settings"/>
+                            <TextBlock Text="Recent Files" FontSize="11" Margin="0,6,0,4"/>
+                            <ComboBox Width="220"
+                                ItemsSource="{Binding Designer.RecentFiles}"
+                                SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}" />
+                            <Button Content="Open Recent"
+                                Command="{Binding Designer.OpenSelectedRecentCommand}"
+                                Margin="0,2,0,0" Padding="6,2" FontSize="11"
+                                ToolTipService.ToolTip="Open the selected recent file"/>
                         </StackPanel>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Settings">
