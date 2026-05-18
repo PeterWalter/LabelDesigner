@@ -55,6 +55,7 @@ internal class DesignElementConverter : JsonConverter<DesignElement>
             "BarcodeElement" => JsonSerializer.Deserialize<BarcodeElement>(root.GetRawText(), options),
             "TextElement" => JsonSerializer.Deserialize<TextElement>(root.GetRawText(), options),
             "ImageElement" => JsonSerializer.Deserialize<ImageElement>(root.GetRawText(), options),
+            "SvgElement" => JsonSerializer.Deserialize<SvgElement>(root.GetRawText(), options),
             "ShapeElement" => JsonSerializer.Deserialize<ShapeElement>(root.GetRawText(), options),
             "LineElement" => JsonSerializer.Deserialize<LineElement>(root.GetRawText(), options),
             "ContainerElement" => JsonSerializer.Deserialize<ContainerElement>(root.GetRawText(), options),

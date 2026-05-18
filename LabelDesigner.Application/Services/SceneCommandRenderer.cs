@@ -72,6 +72,13 @@ public class SceneCommandRenderer : ISceneCommandRenderer
                     image.SourcePath ?? string.Empty));
                 break;
 
+            case SvgElement svg:
+                commands.Add(new DrawImageCommand(
+                    svg.Bounds.X, svg.Bounds.Y,
+                    svg.Bounds.Width, svg.Bounds.Height,
+                    svg.SourcePath ?? string.Empty));
+                break;
+
             case BarcodeElement barcode:
                 // Represent the barcode placeholder as a rect with text overlay.
                 commands.Add(new DrawRectCommand(

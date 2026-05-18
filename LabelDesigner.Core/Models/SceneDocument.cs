@@ -4,8 +4,9 @@ public class SceneDocument
 {
     public string Version { get; set; } = "1.0";
     public PageNode Page { get; set; } = new();
-    public List<LayerNode> Layers { get; } = new();
-    public List<DesignElement> AllElements { get; } = new();
+    public DocumentDefaults Defaults { get; set; } = new();
+    public List<LayerNode> Layers { get; set; } = new();
+    public List<DesignElement> AllElements { get; set; } = new();
     public DataSourceConfig? DataSource { get; set; }
 }
 
@@ -23,7 +24,7 @@ public class LayerNode
     public string Name { get; set; } = "Layer";
     public bool Visible { get; set; } = true;
     public bool Locked { get; set; }
-    public List<Guid> ElementIds { get; } = new();
+    public List<Guid> ElementIds { get; set; } = new();
 }
 
 public record Margins(double Left = 2, double Top = 2, double Right = 2, double Bottom = 2);

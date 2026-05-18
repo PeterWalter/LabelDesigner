@@ -51,8 +51,8 @@ public partial class CanvasViewport : ObservableObject
         new(world.X * Zoom - OffsetX, world.Y * Zoom - OffsetY);
 
     [ObservableProperty]
-    private double _pageOriginX = 50;
+    private double _pageOriginX = 0;
 
     [ObservableProperty]
-    private double _pageOriginY = 50;
+    private double _pageOriginY = 0;
 }

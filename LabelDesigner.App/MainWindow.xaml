@@ -38,6 +38,9 @@
 
                 <ribbon:RibbonTab Header="Home" Background="#FAFAFA">
                     <ribbon:RibbonGroup Header="Elements" Background="#FAFAFA">
+                        <ribbon:RibbonButton Content="Select" Command="{Binding Designer.SelectToolCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8B6;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Barcode" Command="{Binding Designer.AddBarcodeCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
@@ -56,7 +59,7 @@
                         <ribbon:RibbonButton Content="SVG" Command="{Binding Designer.AddSvgCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB8C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}">
+                        <ribbon:RibbonButton Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}" AllowedSizeModes="Large">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
@@ -66,6 +69,28 @@
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Ungroup" Command="{Binding Designer.UngroupSelectedCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Move">
+                        <ribbon:RibbonButton Content="Left" Command="{Binding Designer.MoveLeftCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Right" Command="{Binding Designer.MoveRightCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72A;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Up" Command="{Binding Designer.MoveUpCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE70E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Down" Command="{Binding Designer.MoveDownCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE70D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Scale">
+                        <ribbon:RibbonButton Content="Larger" Command="{Binding Designer.ScaleUpCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Smaller" Command="{Binding Designer.ScaleDownCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE71E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Align">
@@ -111,7 +136,13 @@
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="View">
                         <StackPanel>
-                            <ribbon:RibbonButton Content="Fit" Command="{Binding Designer.ZoomToFitCommand}">
+                            <ribbon:RibbonButton Content="Zoom In" Command="{Binding Designer.ZoomInCommand}" AllowedSizeModes="Large">
+                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            </ribbon:RibbonButton>
+                            <ribbon:RibbonButton Content="Zoom Out" Command="{Binding Designer.ZoomOutCommand}" AllowedSizeModes="Large">
+                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE71E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            </ribbon:RibbonButton>
+                            <ribbon:RibbonButton Content="Fit" Command="{Binding Designer.ZoomToFitCommand}" AllowedSizeModes="Large">
                                 <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                             </ribbon:RibbonButton>
                             <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
@@ -152,10 +183,14 @@
                                 SelectedValuePath="Id"
                                 ItemsSource="{Binding Designer.LabelStockPresets}"
                                 SelectedValue="{Binding Designer.SelectedLabelStockPresetId, Mode=TwoWay}" />
-                            <ToggleButton x:Name="SnapGridToggle" Content="Grid" IsChecked="True"
-                                Margin="0,4,0,0" Padding="6,2" FontSize="11"
+                            <ribbon:RibbonToggleButton x:Name="SnapGridToggle" Content="Grid" IsChecked="True"
+                                Margin="0,4,0,0" Padding="6,2" FontSize="11" AllowedSizeModes="Large"
                                 Checked="OnSnapGridToggled" Unchecked="OnSnapGridToggled"
-                                ToolTipService.ToolTip="Show snap grid on canvas"/>
+                                ToolTipService.ToolTip="Show snap grid on canvas">
+                                <ribbon:RibbonToggleButton.Icon>
+                                    <FontIcon Glyph="&#xE73E;" FontFamily="Segoe MDL2 Assets"/>
+                                </ribbon:RibbonToggleButton.Icon>
+                            </ribbon:RibbonToggleButton>
                         </StackPanel>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Page">
@@ -182,7 +217,7 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Rotate">
-                        <ribbon:RibbonButton Content="Rot 90" Command="{Binding Designer.RotateElementCommand}">
+                        <ribbon:RibbonButton Content="Rot 90" Command="{Binding Designer.RotateElementCommand}" AllowedSizeModes="Large">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>

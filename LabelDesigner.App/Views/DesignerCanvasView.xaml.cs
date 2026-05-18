@@ -7,6 +7,8 @@ using Microsoft.UI.Input;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Core.Models;
+using LabelDesigner.Infrastructure.Common;
+using Windows.UI;
 
 namespace LabelDesigner.App.Views;
 
@@ -117,6 +119,8 @@ public sealed partial class DesignerCanvasView : UserControl
         var pD = new PointD(worldPoint.X, worldPoint.Y);
         var hit = VM?.Scene.HitTest(pD);
 
+        VM?.SelectElementAt(pD);
+
         if (hit is TextElement textEl)
         {
             // Simple inline editing: prompt for new text
@@ -176,6 +180,13 @@ public sealed partial class DesignerCanvasView : UserControl
             ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
             _hoveredIds, (float)VM.Viewport.Zoom, viewport,
             LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid);
+
+        if (VM.InteractionState == InteractionState.MarqueeSelection && VM.MarqueeSelectionRect.HasValue)
+        {
+            var marquee = VM.MarqueeSelectionRect.Value.ToWinRect();
+            ds.FillRectangle(marquee, Color.FromArgb(40, 0, 120, 215));
+            ds.DrawRectangle(marquee, Color.FromArgb(220, 0, 120, 215), 1);
+        }
     }
 
     private readonly HashSet<Guid> _hoveredIds = new();
@@ -237,13 +248,15 @@ public sealed partial class DesignerCanvasView : UserControl
         var point = e.GetCurrentPoint((UIElement)sender).Position;
         var worldPoint = VM?.Viewport.ScreenToWorld(point) ?? point;
         var pD = new PointD(worldPoint.X, worldPoint.Y);
-        var handle = VM?.GetHoverHandle(pD) ?? ResizeHandle.None;
+        var handle = VM?.InteractionState == InteractionState.MarqueeSelection
+            ? ResizeHandle.None
+            : VM?.GetHoverHandle(pD) ?? ResizeHandle.None;
         UpdateCursor(handle);
         VM?.PointerMoved(point);
 
         // Update hover highlight
         _hoveredIds.Clear();
-        if (handle == ResizeHandle.None && VM != null)
+        if (VM != null && VM.InteractionState != InteractionState.MarqueeSelection && VM.IsDragging != true && handle == ResizeHandle.None)
         {
             var hit = VM.Scene.HitTest(pD);
             if (hit != null && !VM.Scene.SelectedIds.Contains(hit.Id))

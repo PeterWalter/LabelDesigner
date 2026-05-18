@@ -67,10 +67,16 @@ public partial class PropertiesViewModel : ObservableObject
     private bool _isMultiline;
 
     [ObservableProperty]
+    private double _lineSpacing;
+
+    [ObservableProperty]
     private string _foreColor = "#000000";
 
     [ObservableProperty]
     private string _barcodeValue = "";
+
+    [ObservableProperty]
+    private int _barcodeTextPositionIndex;
 
     [ObservableProperty]
     private string _barcodeTextFontFamily = "Segoe UI";
@@ -153,11 +159,23 @@ public partial class PropertiesViewModel : ObservableObject
     [RelayCommand]
     private void SelectColor(Windows.UI.Color color)
     {
-        if (_trackedElement is ShapeElement sh) sh.Fill = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-        if (_trackedElement is ShapeElement sh2) sh2.Stroke = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-        if (_trackedElement is LineElement ln) ln.Stroke = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-        FillColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-        StrokeColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        var hex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+
+        if (_trackedElement is TextElement txt)
+            txt.ForeColor = hex;
+        else if (_trackedElement is BarcodeElement bc)
+            bc.TextColor = hex;
+        else if (_trackedElement is ShapeElement sh)
+        {
+            sh.Fill = hex;
+            sh.Stroke = hex;
+        }
+        else if (_trackedElement is LineElement ln)
+        {
+            ln.Stroke = hex;
+        }
+        FillColor = hex;
+        StrokeColor = hex;
     }
 
     public bool IsVisible => !string.IsNullOrEmpty(ElementType);
@@ -191,11 +209,13 @@ public partial class PropertiesViewModel : ObservableObject
             IsUnderline = txt.Underline;
             TextAlignmentIndex = (int)txt.TextAlignment;
             IsMultiline = txt.IsMultiline;
+            LineSpacing = txt.LineSpacing;
             ForeColor = txt.ForeColor;
         }
         if (el is BarcodeElement bc)
         {
             BarcodeValue = bc.Value;
+            BarcodeTextPositionIndex = (int)bc.TextPosition;
             BarcodeTextFontFamily = bc.TextFontFamily;
             BarcodeTextFontSize = bc.TextFontSize;
             BarcodeTextColor = bc.TextColor;
@@ -275,6 +295,12 @@ public partial class PropertiesViewModel : ObservableObject
             ApplyPropertyChange(_ => txt.IsMultiline, (_, v) => txt.IsMultiline = v, value, "Toggle multiline");
     }
 
+    partial void OnLineSpacingChanged(double value)
+    {
+        if (_trackedElement is TextElement txt && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => txt.LineSpacing, (_, v) => txt.LineSpacing = v, value, "Change line spacing");
+    }
+
     partial void OnForeColorChanged(string value)
     {
         if (_trackedElement is TextElement txt && !_isTrackingUpdate)
@@ -286,6 +312,18 @@ public partial class PropertiesViewModel : ObservableObject
         if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
         {
             ApplyPropertyChange(_ => bc.Value, (_, v) => bc.Value = v, value, "Edit barcode value");
+        }
+    }
+
+    partial void OnBarcodeTextPositionIndexChanged(int value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+        {
+            ApplyPropertyChange(
+                _ => (int)bc.TextPosition,
+                (_, v) => bc.TextPosition = (BarcodeTextPosition)v,
+                value,
+                "Change barcode value position");
         }
     }
 

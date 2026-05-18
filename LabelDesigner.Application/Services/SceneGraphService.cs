@@ -36,7 +36,10 @@ public class SceneGraphService : ISceneGraphService
         _selectedIds.Clear();
 
         foreach (var el in doc.AllElements)
+        {
+            el.IsSelected = false;
             _elements[el.Id] = el;
+        }
 
         foreach (var layer in doc.Layers)
             _layers[layer.Id] = layer;
@@ -46,6 +49,8 @@ public class SceneGraphService : ISceneGraphService
 
     public void Clear()
     {
+        foreach (var element in _elements.Values)
+            element.IsSelected = false;
         CurrentDocument = new SceneDocument();
         _elements.Clear();
         _layers.Clear();
@@ -58,12 +63,14 @@ public class SceneGraphService : ISceneGraphService
     {
         var layerId = parentLayerId ?? GetDefaultLayer().Id;
         element.ParentId = layerId;
+        element.IsSelected = false;
         _undoRedo.Execute(new AddElementCommand(this, element, layerId));
     }
 
     public void RemoveElement(Guid id)
     {
         if (!_elements.TryGetValue(id, out var element)) return;
+        element.IsSelected = false;
         _undoRedo.Execute(new RemoveElementCommand(this, element, element.ParentId, _selectedIds.Contains(id)));
     }
 
@@ -120,7 +127,7 @@ public class SceneGraphService : ISceneGraphService
             {
                 if (_elements.TryGetValue(id, out var el) && el.Visible && !el.Locked)
                 {
-                    if (el.HitTestMargin(p, 5))
+                    if (el.HitTest(p))
                         return el;
                 }
             }
@@ -159,18 +166,46 @@ public class SceneGraphService : ISceneGraphService
             el.Bounds.Y <= rect.Y + rect.Height);
     }
 
-    public void Select(Guid id) => _selectedIds.Add(id);
-    public void Deselect(Guid id) => _selectedIds.Remove(id);
+    public void Select(Guid id)
+    {
+        if (_selectedIds.Add(id) && _elements.TryGetValue(id, out var element))
+            element.IsSelected = true;
+    }
+
+    public void Deselect(Guid id)
+    {
+        if (_selectedIds.Remove(id) && _elements.TryGetValue(id, out var element))
+            element.IsSelected = false;
+    }
     public void ToggleSelect(Guid id)
     {
-        if (!_selectedIds.Remove(id)) _selectedIds.Add(id);
+        if (_selectedIds.Remove(id))
+        {
+            if (_elements.TryGetValue(id, out var deselected))
+                deselected.IsSelected = false;
+        }
+        else
+        {
+            _selectedIds.Add(id);
+            if (_elements.TryGetValue(id, out var selected))
+                selected.IsSelected = true;
+        }
     }
     public void SelectAll()
     {
         _selectedIds.Clear();
-        foreach (var id in _elements.Keys) _selectedIds.Add(id);
+        foreach (var element in _elements.Values)
+        {
+            element.IsSelected = true;
+            _selectedIds.Add(element.Id);
+        }
     }
-    public void ClearSelection() => _selectedIds.Clear();
+    public void ClearSelection()
+    {
+        foreach (var element in _elements.Values)
+            element.IsSelected = false;
+        _selectedIds.Clear();
+    }
 
     public void MoveSelected(double dx, double dy)
     {

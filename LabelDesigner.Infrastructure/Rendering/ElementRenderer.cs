@@ -78,6 +78,7 @@ internal static class ElementRenderer
         else if (el is ShapeElement shape) DrawShape(ds, shape, scale);
         else if (el is LineElement line) DrawLine(ds, line, scale);
         else if (el is ImageElement image) DrawImage(ds, image, svg);
+        else if (el is SvgElement svgEl) DrawSvg(ds, svgEl, svg);
         else if (el is ContainerElement container)
         {
             foreach (var childId in container.ChildIds)
@@ -283,6 +284,47 @@ internal static class ElementRenderer
                 ds.DrawImage(bitmap, dstRect, srcRect, 1.0f, CanvasImageInterpolation.HighQualityCubic);
                 if (!Path.GetExtension(image.SourcePath).Equals(".svg", StringComparison.OrdinalIgnoreCase))
                     bitmap.Dispose();
+                return;
+            }
+        }
+        catch { }
+
+        ds.FillRectangle(b, Colors.LightGray);
+        ds.DrawLine((float)b.Left, (float)b.Top, (float)b.Right, (float)b.Bottom, Colors.DarkGray, 1);
+        ds.DrawLine((float)b.Right, (float)b.Top, (float)b.Left, (float)b.Bottom, Colors.DarkGray, 1);
+    }
+
+    private static void DrawSvg(CanvasDrawingSession ds, SvgElement svg, ISvgService svgService)
+    {
+        var b = svg.Bounds.ToWinRect();
+        try
+        {
+            if (!string.IsNullOrEmpty(svg.SourcePath) && System.IO.File.Exists(svg.SourcePath))
+            {
+                var bitmap = GetCachedSvgBitmap(ds, svgService, svg.SourcePath, Math.Max(1, (int)b.Width), Math.Max(1, (int)b.Height));
+
+                if (bitmap == null)
+                    return;
+
+                var srcRect = new Rect(0, 0, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height);
+                var dstRect = b;
+
+                if (svg.Stretch == "Uniform")
+                {
+                    float s = Math.Min((float)(b.Width / bitmap.Size.Width),
+                                       (float)(b.Height / bitmap.Size.Height));
+                    float dw = (float)(bitmap.Size.Width * s), dh = (float)(bitmap.Size.Height * s);
+                    dstRect = new Rect(b.X + (b.Width - dw) / 2, b.Y + (b.Height - dh) / 2, dw, dh);
+                }
+                else if (svg.Stretch == "UniformToFill")
+                {
+                    float s = Math.Max((float)(b.Width / bitmap.Size.Width),
+                                       (float)(b.Height / bitmap.Size.Height));
+                    float dw = (float)(bitmap.Size.Width * s), dh = (float)(bitmap.Size.Height * s);
+                    dstRect = new Rect(b.X + (b.Width - dw) / 2, b.Y + (b.Height - dh) / 2, dw, dh);
+                }
+
+                ds.DrawImage(bitmap, dstRect, srcRect, 1.0f, CanvasImageInterpolation.HighQualityCubic);
                 return;
             }
         }

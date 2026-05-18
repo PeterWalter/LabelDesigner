@@ -15,6 +15,8 @@ namespace LabelDesigner.App.ViewModels;
 
 public partial class DesignerViewModel : ObservableObject
 {
+    private const double PixelsPerMm = 3.78;
+
     private readonly ISceneGraphService _scene;
     private readonly IUndoRedoService _undoRedo;
     private readonly ILabelPersistenceService _persistence;
@@ -38,7 +40,6 @@ public partial class DesignerViewModel : ObservableObject
 
     public double Margin = 40;
     public PageSize CurrentPageSize { get; private set; } = PageSize.A4;
-    public bool IsLandscape { get; private set; } = false;
 
     private bool _isShiftHeld;
 
@@ -58,8 +59,227 @@ public partial class DesignerViewModel : ObservableObject
     public string SnapStateText => AppSettingsService.ShowSnapGrid ? "Snap: ON" : "Snap: OFF";
     public IReadOnlyList<string> RecentFiles => AppSettingsService.RecentFiles;
 
-    public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
+    public RectD PageBounds { get; set; } = new(0, 0, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
+    public InteractionState InteractionState { get; private set; } = InteractionState.Idle;
+    public RectD? MarqueeSelectionRect { get; private set; }
+
+    private DocumentDefaults Defaults => _scene.CurrentDocument.Defaults;
+    private PointD? _marqueeStartPoint;
+    private ResizeHandle _activeHandle = ResizeHandle.None;
+
+    public double PageWidthMm
+    {
+        get => _scene.CurrentDocument.Page.WidthMm;
+        set
+        {
+            var normalized = Math.Max(1, value);
+            if (Math.Abs(_scene.CurrentDocument.Page.WidthMm - normalized) < 0.001)
+                return;
+
+            _scene.CurrentDocument.Page.WidthMm = normalized;
+            UpdatePageBounds();
+        }
+    }
+
+    public double PageHeightMm
+    {
+        get => _scene.CurrentDocument.Page.HeightMm;
+        set
+        {
+            var normalized = Math.Max(1, value);
+            if (Math.Abs(_scene.CurrentDocument.Page.HeightMm - normalized) < 0.001)
+                return;
+
+            _scene.CurrentDocument.Page.HeightMm = normalized;
+            UpdatePageBounds();
+        }
+    }
+
+    public bool IsLandscape
+    {
+        get => _scene.CurrentDocument.Page.WidthMm >= _scene.CurrentDocument.Page.HeightMm;
+        set
+        {
+            if (IsLandscape == value)
+                return;
+
+            (_scene.CurrentDocument.Page.WidthMm, _scene.CurrentDocument.Page.HeightMm) =
+                (_scene.CurrentDocument.Page.HeightMm, _scene.CurrentDocument.Page.WidthMm);
+            UpdatePageBounds();
+        }
+    }
+
+    public int DefaultBarcodeTextPositionIndex
+    {
+        get => (int)Defaults.BarcodeTextPosition;
+        set
+        {
+            var position = (BarcodeTextPosition)Math.Clamp(value, 0, Enum.GetValues<BarcodeTextPosition>().Length - 1);
+            if (Defaults.BarcodeTextPosition == position)
+                return;
+
+            Defaults.BarcodeTextPosition = position;
+            OnPropertyChanged(nameof(DefaultBarcodeTextPositionIndex));
+        }
+    }
+
+    public string DefaultBarcodeTextFontFamily
+    {
+        get => Defaults.BarcodeTextFontFamily;
+        set
+        {
+            if (Defaults.BarcodeTextFontFamily == value)
+                return;
+
+            Defaults.BarcodeTextFontFamily = value;
+            OnPropertyChanged(nameof(DefaultBarcodeTextFontFamily));
+        }
+    }
+
+    public double DefaultBarcodeTextFontSize
+    {
+        get => Defaults.BarcodeTextFontSize;
+        set
+        {
+            if (Math.Abs(Defaults.BarcodeTextFontSize - value) < 0.001)
+                return;
+
+            Defaults.BarcodeTextFontSize = value;
+            OnPropertyChanged(nameof(DefaultBarcodeTextFontSize));
+        }
+    }
+
+    public string DefaultBarcodeTextColor
+    {
+        get => Defaults.BarcodeTextColor;
+        set
+        {
+            if (Defaults.BarcodeTextColor == value)
+                return;
+
+            Defaults.BarcodeTextColor = value;
+            OnPropertyChanged(nameof(DefaultBarcodeTextColor));
+        }
+    }
+
+    public string DefaultTextFontFamily
+    {
+        get => Defaults.TextFontFamily;
+        set
+        {
+            if (Defaults.TextFontFamily == value)
+                return;
+
+            Defaults.TextFontFamily = value;
+            OnPropertyChanged(nameof(DefaultTextFontFamily));
+        }
+    }
+
+    public double DefaultTextFontSize
+    {
+        get => Defaults.TextFontSize;
+        set
+        {
+            if (Math.Abs(Defaults.TextFontSize - value) < 0.001)
+                return;
+
+            Defaults.TextFontSize = value;
+            OnPropertyChanged(nameof(DefaultTextFontSize));
+        }
+    }
+
+    public string DefaultTextColor
+    {
+        get => Defaults.TextColor;
+        set
+        {
+            if (Defaults.TextColor == value)
+                return;
+
+            Defaults.TextColor = value;
+            OnPropertyChanged(nameof(DefaultTextColor));
+        }
+    }
+
+    public bool DefaultTextBold
+    {
+        get => Defaults.TextBold;
+        set
+        {
+            if (Defaults.TextBold == value)
+                return;
+
+            Defaults.TextBold = value;
+            OnPropertyChanged(nameof(DefaultTextBold));
+        }
+    }
+
+    public bool DefaultTextItalic
+    {
+        get => Defaults.TextItalic;
+        set
+        {
+            if (Defaults.TextItalic == value)
+                return;
+
+            Defaults.TextItalic = value;
+            OnPropertyChanged(nameof(DefaultTextItalic));
+        }
+    }
+
+    public bool DefaultTextUnderline
+    {
+        get => Defaults.TextUnderline;
+        set
+        {
+            if (Defaults.TextUnderline == value)
+                return;
+
+            Defaults.TextUnderline = value;
+            OnPropertyChanged(nameof(DefaultTextUnderline));
+        }
+    }
+
+    public int DefaultTextAlignmentIndex
+    {
+        get => (int)Defaults.TextAlignment;
+        set
+        {
+            var alignment = (TextAlignmentType)Math.Clamp(value, 0, Enum.GetValues<TextAlignmentType>().Length - 1);
+            if (Defaults.TextAlignment == alignment)
+                return;
+
+            Defaults.TextAlignment = alignment;
+            OnPropertyChanged(nameof(DefaultTextAlignmentIndex));
+        }
+    }
+
+    public bool DefaultTextMultiline
+    {
+        get => Defaults.TextMultiline;
+        set
+        {
+            if (Defaults.TextMultiline == value)
+                return;
+
+            Defaults.TextMultiline = value;
+            OnPropertyChanged(nameof(DefaultTextMultiline));
+        }
+    }
+
+    public double DefaultTextLineSpacing
+    {
+        get => Defaults.TextLineSpacing;
+        set
+        {
+            if (Math.Abs(Defaults.TextLineSpacing - value) < 0.001)
+                return;
+
+            Defaults.TextLineSpacing = value;
+            OnPropertyChanged(nameof(DefaultTextLineSpacing));
+        }
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBarcodeSelected))]
@@ -136,6 +356,7 @@ public partial class DesignerViewModel : ObservableObject
         };
         AppSettingsService.SettingsChanged += OnSettingsChanged;
         Layers.RequestRedraw = () => RequestRedraw?.Invoke();
+        _scene.DocumentReset += OnDocumentReset;
 
         var layer = _scene.AddLayer("Layer 1");
 
@@ -165,10 +386,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.WidthMm = preset.LabelWidthMm;
         _scene.CurrentDocument.Page.HeightMm = preset.LabelHeightMm;
         _scene.CurrentDocument.Page.Dpi = 300;
-        PageBounds = new RectD(50, 50, preset.LabelWidthMm * 3.78, preset.LabelHeightMm * 3.78);
-        Viewport.PageOriginX = PageBounds.X;
-        Viewport.PageOriginY = PageBounds.Y;
-        RequestRedraw?.Invoke();
+        UpdatePageBounds();
     }
 
     [RelayCommand]
@@ -187,6 +405,7 @@ public partial class DesignerViewModel : ObservableObject
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeFilter.Add(".ldlabel");
         picker.FileTypeFilter.Add(".json");
+        picker.FileTypeFilter.Add(".ldtemplate");
 
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;
@@ -240,6 +459,13 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void SelectTool()
+    {
+        CancelPlacement();
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
     public void Undo()
     {
         _undoRedo.Undo();
@@ -259,10 +485,133 @@ public partial class DesignerViewModel : ObservableObject
         Layers.Refresh(Selected?.Id);
     }
 
+    private void UpdatePageBounds()
+    {
+        PageBounds = new RectD(0, 0, _scene.CurrentDocument.Page.WidthMm * PixelsPerMm, _scene.CurrentDocument.Page.HeightMm * PixelsPerMm);
+        Viewport.PageOriginX = 0;
+        Viewport.PageOriginY = 0;
+        OnPropertyChanged(nameof(PageBounds));
+        OnPropertyChanged(nameof(PageWidthMm));
+        OnPropertyChanged(nameof(PageHeightMm));
+        OnPropertyChanged(nameof(IsLandscape));
+        RequestRedraw?.Invoke();
+    }
+
+    private void SetInteractionState(InteractionState state)
+    {
+        if (InteractionState == state)
+            return;
+
+        InteractionState = state;
+        OnPropertyChanged(nameof(InteractionState));
+    }
+
+    private static RectD NormalizeRect(PointD start, PointD current)
+    {
+        var x = Math.Min(start.X, current.X);
+        var y = Math.Min(start.Y, current.Y);
+        var width = Math.Abs(current.X - start.X);
+        var height = Math.Abs(current.Y - start.Y);
+        return new RectD(x, y, width, height);
+    }
+
+    private void BeginMarqueeSelection(PointD start)
+    {
+        _marqueeStartPoint = start;
+        MarqueeSelectionRect = new RectD(start.X, start.Y, 0, 0);
+        OnPropertyChanged(nameof(MarqueeSelectionRect));
+        SetInteractionState(InteractionState.MarqueeSelection);
+    }
+
+    private void UpdateMarqueeSelection(PointD current)
+    {
+        if (_marqueeStartPoint == null)
+            return;
+
+        MarqueeSelectionRect = NormalizeRect(_marqueeStartPoint.Value, current);
+        OnPropertyChanged(nameof(MarqueeSelectionRect));
+    }
+
+    private void ClearMarqueeSelection()
+    {
+        _marqueeStartPoint = null;
+        MarqueeSelectionRect = null;
+        OnPropertyChanged(nameof(MarqueeSelectionRect));
+    }
+
+    private void FinalizeMarqueeSelection()
+    {
+        if (MarqueeSelectionRect is not { } rect || rect.Width <= 0 || rect.Height <= 0)
+            return;
+
+        var hits = _scene.GetElementsInRect(rect).ToList();
+        _scene.ClearSelection();
+        foreach (var hit in hits)
+            _scene.Select(hit.Id);
+
+        Selected = hits.Count == 1 ? hits[0] : null;
+        if (hits.Count == 0)
+            _properties.TrackElement(null);
+
+        NotifyElementsChanged();
+        RequestRedraw?.Invoke();
+    }
+
+    private void OnDocumentReset()
+    {
+        Selected = null;
+        _properties.TrackElement(null);
+        Layers.Refresh(null);
+        OnPropertyChanged(nameof(ElementCount));
+        OnPropertyChanged(nameof(ElementsText));
+        OnPropertyChanged(nameof(ZoomText));
+        OnPropertyChanged(nameof(CursorText));
+        OnPropertyChanged(nameof(RulerUnitText));
+        OnPropertyChanged(nameof(SnapStateText));
+        OnPropertyChanged(nameof(RecentFiles));
+        OnPropertyChanged(nameof(PageWidthMm));
+        OnPropertyChanged(nameof(PageHeightMm));
+        OnPropertyChanged(nameof(IsLandscape));
+        OnPropertyChanged(nameof(DefaultBarcodeTextPositionIndex));
+        OnPropertyChanged(nameof(DefaultBarcodeTextFontFamily));
+        OnPropertyChanged(nameof(DefaultBarcodeTextFontSize));
+        OnPropertyChanged(nameof(DefaultBarcodeTextColor));
+        OnPropertyChanged(nameof(DefaultTextFontFamily));
+        OnPropertyChanged(nameof(DefaultTextFontSize));
+        OnPropertyChanged(nameof(DefaultTextColor));
+        OnPropertyChanged(nameof(DefaultTextBold));
+        OnPropertyChanged(nameof(DefaultTextItalic));
+        OnPropertyChanged(nameof(DefaultTextUnderline));
+        OnPropertyChanged(nameof(DefaultTextAlignmentIndex));
+        OnPropertyChanged(nameof(DefaultTextMultiline));
+        OnPropertyChanged(nameof(DefaultTextLineSpacing));
+        UpdatePageBounds();
+        ClearMarqueeSelection();
+        SetInteractionState(InteractionState.Idle);
+    }
+
+    public void SelectElementAt(PointD worldPoint)
+    {
+        var hit = _scene.HitTest(worldPoint);
+        if (hit == null)
+        {
+            Selected = null;
+            _scene.ClearSelection();
+            return;
+        }
+
+        _scene.ClearSelection();
+        _scene.Select(hit.Id);
+        Selected = hit;
+    }
+
     public void CancelPlacement()
     {
         _placementMode = PlacementMode.None;
         _pendingElement = null;
+        _activeHandle = ResizeHandle.None;
+        ClearMarqueeSelection();
+        SetInteractionState(InteractionState.Idle);
     }
 
     [RelayCommand]
@@ -350,7 +699,10 @@ public partial class DesignerViewModel : ObservableObject
         {
             Bounds = new RectD(0, 0, 200, 100),
             Value = "TYPE HERE",
-            TextPosition = BarcodeTextPosition.Bottom
+            TextPosition = Defaults.BarcodeTextPosition,
+            TextFontFamily = Defaults.BarcodeTextFontFamily,
+            TextFontSize = Defaults.BarcodeTextFontSize,
+            TextColor = Defaults.BarcodeTextColor
         });
     }
 
@@ -360,8 +712,34 @@ public partial class DesignerViewModel : ObservableObject
         EnterPlacementMode(new TextElement
         {
             Bounds = new RectD(0, 0, 150, 30),
-            Text = "Double-click to edit"
+            Text = "Double-click to edit",
+            FontFamily = Defaults.TextFontFamily,
+            FontSize = Defaults.TextFontSize,
+            ForeColor = Defaults.TextColor,
+            Bold = Defaults.TextBold,
+            Italic = Defaults.TextItalic,
+            Underline = Defaults.TextUnderline,
+            TextAlignment = Defaults.TextAlignment,
+            IsMultiline = Defaults.TextMultiline,
+            LineSpacing = Defaults.TextLineSpacing
         });
+    }
+
+    [RelayCommand]
+    private async Task SaveTemplate()
+    {
+        var savePicker = new Windows.Storage.Pickers.FileSavePicker();
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+        savePicker.SuggestedFileName = "Template.ldtemplate";
+        savePicker.FileTypeChoices.Add("Label Template", new[] { ".ldtemplate", ".ldlabel", ".json" });
+
+        var file = await savePicker.PickSaveFileAsync();
+        if (file == null) return;
+
+        await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
+        _currentFilePath = file.Path;
+        AppSettingsService.AddRecentFile(file.Path);
     }
 
     [RelayCommand]
@@ -479,8 +857,8 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void ZoomToFit()
     {
-        double pageW = _scene.CurrentDocument.Page.WidthMm * 3.78;
-        double pageH = _scene.CurrentDocument.Page.HeightMm * 3.78;
+        double pageW = _scene.CurrentDocument.Page.WidthMm * PixelsPerMm;
+        double pageH = _scene.CurrentDocument.Page.HeightMm * PixelsPerMm;
         Viewport.ZoomToFit(1200, 800, pageW, pageH);
         RequestRedraw?.Invoke();
     }
@@ -524,11 +902,112 @@ public partial class DesignerViewModel : ObservableObject
 
     private static DesignElement? CloneElement(DesignElement source, Guid? id = null)
     {
-        if (source is BarcodeElement b) return new BarcodeElement { Id = id ?? Guid.NewGuid(), Value = b.Value, TextPosition = b.TextPosition, Bounds = b.Bounds };
-        if (source is TextElement t) return new TextElement { Id = id ?? Guid.NewGuid(), Text = t.Text, FontSize = t.FontSize, Bounds = t.Bounds };
-        if (source is ShapeElement s) return new ShapeElement { Id = id ?? Guid.NewGuid(), Type = s.Type, Fill = s.Fill, Stroke = s.Stroke, StrokeWidth = s.StrokeWidth, Bounds = s.Bounds };
-        if (source is LineElement l) return new LineElement { Id = id ?? Guid.NewGuid(), X1 = l.X1, Y1 = l.Y1, X2 = l.X2, Y2 = l.Y2, Stroke = l.Stroke, StrokeWidth = l.StrokeWidth, Bounds = l.Bounds };
-        if (source is ImageElement i) return new ImageElement { Id = id ?? Guid.NewGuid(), SourcePath = i.SourcePath, Stretch = i.Stretch, Bounds = i.Bounds };
+        var newId = id ?? Guid.NewGuid();
+        
+        if (source is BarcodeElement b)
+            return new BarcodeElement 
+            { 
+                Id = newId, 
+                Value = b.Value, 
+                TextPosition = b.TextPosition, 
+                TextFontFamily = b.TextFontFamily,
+                TextFontSize = b.TextFontSize,
+                TextColor = b.TextColor,
+                Bounds = b.Bounds,
+                Name = b.Name,
+                Rotation = b.Rotation,
+                Opacity = b.Opacity,
+                Locked = b.Locked
+            };
+        
+        if (source is TextElement t)
+            return new TextElement 
+            { 
+                Id = newId, 
+                Text = t.Text, 
+                FontSize = t.FontSize,
+                FontFamily = t.FontFamily,
+                Bold = t.Bold,
+                Italic = t.Italic,
+                Underline = t.Underline,
+                ForeColor = t.ForeColor,
+                LineSpacing = t.LineSpacing,
+                TextAlignment = t.TextAlignment,
+                IsMultiline = t.IsMultiline,
+                Bounds = t.Bounds,
+                Name = t.Name,
+                Rotation = t.Rotation,
+                Opacity = t.Opacity,
+                Locked = t.Locked
+            };
+        
+        if (source is ShapeElement s)
+            return new ShapeElement 
+            { 
+                Id = newId, 
+                Type = s.Type, 
+                Fill = s.Fill, 
+                Stroke = s.Stroke, 
+                StrokeWidth = s.StrokeWidth, 
+                Bounds = s.Bounds,
+                Name = s.Name,
+                Rotation = s.Rotation,
+                Opacity = s.Opacity,
+                Locked = s.Locked
+            };
+        
+        if (source is LineElement l)
+            return new LineElement 
+            { 
+                Id = newId, 
+                X1 = l.X1, 
+                Y1 = l.Y1, 
+                X2 = l.X2, 
+                Y2 = l.Y2, 
+                Stroke = l.Stroke, 
+                StrokeWidth = l.StrokeWidth, 
+                Bounds = l.Bounds,
+                Name = l.Name,
+                Rotation = l.Rotation,
+                Opacity = l.Opacity,
+                Locked = l.Locked
+            };
+        
+        if (source is ImageElement i)
+            return new ImageElement 
+            { 
+                Id = newId, 
+                SourcePath = i.SourcePath, 
+                Stretch = i.Stretch, 
+                Bounds = i.Bounds,
+                Name = i.Name,
+                Rotation = i.Rotation,
+                Opacity = i.Opacity,
+                Locked = i.Locked
+            };
+        
+        if (source is SvgElement sv)
+            return new SvgElement 
+            { 
+                Id = newId, 
+                SourcePath = sv.SourcePath, 
+                Stretch = sv.Stretch, 
+                Bounds = sv.Bounds,
+                Name = sv.Name,
+                Rotation = sv.Rotation,
+                Opacity = sv.Opacity,
+                Locked = sv.Locked,
+                CachedBitmap = sv.CachedBitmap
+            };
+        
+        if (source is ContainerElement c)
+        {
+            var container = new ContainerElement { Id = newId, Name = c.Name };
+            // For now, don't clone children recursively - just clone the container shell
+            // In a full implementation, you'd need to recursively clone all descendants
+            return container;
+        }
+        
         return null;
     }
 
@@ -557,13 +1036,13 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SetPageA4() { SetPage(PageSize.A4, false); RequestRedraw?.Invoke(); }
+    private void SetPageA4() { SetPage(PageSize.A4, false); }
 
     [RelayCommand]
-    private void SetPageA5() { SetPage(PageSize.A5, false); RequestRedraw?.Invoke(); }
+    private void SetPageA5() { SetPage(PageSize.A5, false); }
 
     [RelayCommand]
-    private void SetPageA3() { SetPage(PageSize.A3, false); RequestRedraw?.Invoke(); }
+    private void SetPageA3() { SetPage(PageSize.A3, false); }
 
     [RelayCommand]
     private void SetPageLabel4x5()
@@ -571,10 +1050,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.WidthMm = 101.6;
         _scene.CurrentDocument.Page.HeightMm = 127.0;
         _scene.CurrentDocument.Page.Dpi = 300;
-        PageBounds = new RectD(50, 50, 101.6 * 3.78, 127.0 * 3.78);
-        Viewport.PageOriginX = PageBounds.X;
-        Viewport.PageOriginY = PageBounds.Y;
-        RequestRedraw?.Invoke();
+        UpdatePageBounds();
     }
 
     [RelayCommand]
@@ -583,10 +1059,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.WidthMm = 152.4;
         _scene.CurrentDocument.Page.HeightMm = 101.6;
         _scene.CurrentDocument.Page.Dpi = 300;
-        PageBounds = new RectD(50, 50, 152.4 * 3.78, 101.6 * 3.78);
-        Viewport.PageOriginX = PageBounds.X;
-        Viewport.PageOriginY = PageBounds.Y;
-        RequestRedraw?.Invoke();
+        UpdatePageBounds();
     }
 
     [RelayCommand]
@@ -595,10 +1068,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.WidthMm = 203.2;
         _scene.CurrentDocument.Page.HeightMm = 76.2;
         _scene.CurrentDocument.Page.Dpi = 300;
-        PageBounds = new RectD(50, 50, 203.2 * 3.78, 76.2 * 3.78);
-        Viewport.PageOriginX = PageBounds.X;
-        Viewport.PageOriginY = PageBounds.Y;
-        RequestRedraw?.Invoke();
+        UpdatePageBounds();
     }
 
     [RelayCommand]
@@ -629,7 +1099,27 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task AddSvg()
     {
-        await PickAndPlaceImage(new[] { ".svg" });
+        await PickAndPlaceSvg(new[] { ".svg" });
+    }
+
+    private async Task PickAndPlaceSvg(IEnumerable<string> fileTypes)
+    {
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        foreach (var fileType in fileTypes)
+            picker.FileTypeFilter.Add(fileType);
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        var element = new SvgElement
+        {
+            Bounds = new RectD(0, 0, 150, 150),
+            SourcePath = file.Path
+        };
+
+        EnterPlacementMode(element);
     }
 
     private async Task PickAndPlaceImage(IEnumerable<string> fileTypes)
@@ -661,6 +1151,46 @@ public partial class DesignerViewModel : ObservableObject
             foreach (var id in _scene.SelectedIds.ToList())
                 _scene.RemoveElement(id);
         NotifyElementsChanged();
+    }
+
+    [RelayCommand]
+    private void MoveLeft()
+    {
+        _scene.MoveSelected(-5, 0);
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void MoveRight()
+    {
+        _scene.MoveSelected(5, 0);
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void MoveUp()
+    {
+        _scene.MoveSelected(0, -5);
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void MoveDown()
+    {
+        _scene.MoveSelected(0, 5);
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void ScaleUp()
+    {
+        ApplyScale(1.1);
+    }
+
+    [RelayCommand]
+    private void ScaleDown()
+    {
+        ApplyScale(0.9);
     }
 
     [RelayCommand]
@@ -848,6 +1378,67 @@ public partial class DesignerViewModel : ObservableObject
         }
     }
 
+    private void ApplyScale(double factor)
+    {
+        if (Selected == null || Selected.Locked)
+            return;
+
+        var oldScaleX = Selected.ScaleX;
+        var oldScaleY = Selected.ScaleY;
+        var newScaleX = Math.Clamp(oldScaleX * factor, 0.1, 10.0);
+        var newScaleY = Math.Clamp(oldScaleY * factor, 0.1, 10.0);
+
+        _undoRedo.Execute(new ScaleElementCommand(
+            Selected,
+            oldScaleX,
+            oldScaleY,
+            newScaleX,
+            newScaleY,
+            RequestRedraw));
+    }
+
+    private sealed class ScaleElementCommand : IUndoableCommand
+    {
+        private readonly DesignElement _element;
+        private readonly double _oldScaleX;
+        private readonly double _oldScaleY;
+        private readonly double _newScaleX;
+        private readonly double _newScaleY;
+        private readonly Action? _onChanged;
+
+        public ScaleElementCommand(
+            DesignElement element,
+            double oldScaleX,
+            double oldScaleY,
+            double newScaleX,
+            double newScaleY,
+            Action? onChanged)
+        {
+            _element = element;
+            _oldScaleX = oldScaleX;
+            _oldScaleY = oldScaleY;
+            _newScaleX = newScaleX;
+            _newScaleY = newScaleY;
+            _onChanged = onChanged;
+        }
+
+        public string Description => "Scale element";
+
+        public void Execute()
+        {
+            _element.ScaleX = _newScaleX;
+            _element.ScaleY = _newScaleY;
+            _onChanged?.Invoke();
+        }
+
+        public void Undo()
+        {
+            _element.ScaleX = _oldScaleX;
+            _element.ScaleY = _oldScaleY;
+            _onChanged?.Invoke();
+        }
+    }
+
     [RelayCommand]
     private void IncreaseFont()
     {
@@ -872,20 +1463,11 @@ public partial class DesignerViewModel : ObservableObject
     public void ToggleOrientation()
     {
         IsLandscape = !IsLandscape;
-        var w = _scene.CurrentDocument.Page.WidthMm;
-        var h = _scene.CurrentDocument.Page.HeightMm;
-        _scene.CurrentDocument.Page.WidthMm = h;
-        _scene.CurrentDocument.Page.HeightMm = w;
-        PageBounds = new RectD(PageBounds.X, PageBounds.Y, PageBounds.Height, PageBounds.Width);
-        Viewport.PageOriginX = PageBounds.X;
-        Viewport.PageOriginY = PageBounds.Y;
-        RequestRedraw?.Invoke();
     }
 
     public void SetPage(PageSize size, bool landscape)
     {
         CurrentPageSize = size;
-        IsLandscape = landscape;
 
         (double wMm, double hMm) = size switch
         {
@@ -899,12 +1481,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.WidthMm = wMm;
         _scene.CurrentDocument.Page.HeightMm = hMm;
         _scene.CurrentDocument.Page.Dpi = 300;
-        double wPx = wMm * 3.78;
-        double hPx = hMm * 3.78;
-        PageBounds = new RectD(50, 50, wPx, hPx);
-        Viewport.PageOriginX = PageBounds.X;
-        Viewport.PageOriginY = PageBounds.Y;
-        RequestRedraw?.Invoke();
+        UpdatePageBounds();
     }
 
     public bool IsDragging => _interaction.IsDragging;
@@ -921,8 +1498,8 @@ public partial class DesignerViewModel : ObservableObject
         if (_placementMode == PlacementMode.PlaceOnce && _pendingElement != null)
         {
             var page = _scene.CurrentDocument.Page;
-            var pw = page.WidthMm * 3.78;
-            var ph = page.HeightMm * 3.78;
+            var pw = page.WidthMm * PixelsPerMm;
+            var ph = page.HeightMm * PixelsPerMm;
             var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
 
             // Center the element at click position
@@ -957,7 +1534,18 @@ public partial class DesignerViewModel : ObservableObject
         if (Selected != null)
         {
             var selectedHandle = _interaction.GetHoverHandle(Selected, pD, Viewport.Zoom);
+            _activeHandle = selectedHandle;
+
             if (selectedHandle == ResizeHandle.Rotate)
+                SetInteractionState(InteractionState.Rotating);
+            else if (selectedHandle == ResizeHandle.Move)
+                SetInteractionState(InteractionState.Selecting);
+            else if (selectedHandle != ResizeHandle.None)
+                SetInteractionState(InteractionState.Resizing);
+            else
+                SetInteractionState(InteractionState.Selecting);
+
+            if (selectedHandle != ResizeHandle.None)
             {
                 _interaction.BeginDrag(pD, Selected, selectedHandle);
                 return;
@@ -968,10 +1556,13 @@ public partial class DesignerViewModel : ObservableObject
 
         if (_isShiftHeld && hit != null)
         {
+            SetInteractionState(InteractionState.Selecting);
             _scene.ToggleSelect(hit.Id);
             Selected = _scene.SelectedIds.Count == 1 ? _scene.SingleSelected : null;
             if (Selected != null)
             {
+                _activeHandle = ResizeHandle.Move;
+                SetInteractionState(InteractionState.Dragging);
                 _interaction.BeginDrag(pD, Selected, ResizeHandle.Move);
             }
             return;
@@ -983,14 +1574,24 @@ public partial class DesignerViewModel : ObservableObject
             _scene.ClearSelection();
             _interaction.EndDrag();
             _properties.TrackElement(null);
+            _activeHandle = ResizeHandle.None;
+            BeginMarqueeSelection(pD);
             return;
         }
 
+        SetInteractionState(InteractionState.Selecting);
         _scene.ClearSelection();
         _scene.Select(hit.Id);
         Selected = hit;
         _properties.TrackElement(hit);
         var handle = _interaction.GetHoverHandle(hit, pD, Viewport.Zoom);
+        _activeHandle = handle;
+        if (handle == ResizeHandle.Rotate)
+            SetInteractionState(InteractionState.Rotating);
+        else if (handle == ResizeHandle.Move)
+            SetInteractionState(InteractionState.Selecting);
+        else if (handle != ResizeHandle.None)
+            SetInteractionState(InteractionState.Resizing);
         _interaction.BeginDrag(pD, hit, handle);
     }
 
@@ -1002,39 +1603,66 @@ public partial class DesignerViewModel : ObservableObject
         CursorWorldX = (int)pD.X;
         CursorWorldY = (int)pD.Y;
 
-        if (!_interaction.IsDragging || Selected == null)
+        if (InteractionState == InteractionState.MarqueeSelection)
+        {
+            UpdateMarqueeSelection(pD);
+            RequestRedraw?.Invoke();
             return;
-
-        var otherBounds = _scene.CurrentDocument.AllElements
-            .Where(e => e.Id != Selected.Id)
-            .Select(e => e.Bounds);
-        var update = _interaction.UpdateDrag(pD, Selected, otherBounds, GetPageRect());
-
-        if (update.Rotation.HasValue)
-        {
-            Selected.Rotation = update.Rotation.Value;
         }
 
-        if (update.Bounds.HasValue)
+        if (_interaction.IsDragging && Selected != null)
         {
-            Selected.Bounds = update.Bounds.Value;
+            var otherBounds = _scene.CurrentDocument.AllElements
+                .Where(e => e.Id != Selected.Id)
+                .Select(e => e.Bounds);
+            var update = _interaction.UpdateDrag(pD, Selected, otherBounds, GetPageRect());
+
+            if (update.Rotation.HasValue)
+            {
+                Selected.Rotation = update.Rotation.Value;
+            }
+
+            if (update.Bounds.HasValue)
+            {
+                Selected.Bounds = update.Bounds.Value;
+            }
+
+            if (_activeHandle == ResizeHandle.Rotate)
+                SetInteractionState(InteractionState.Rotating);
+            else if (_activeHandle == ResizeHandle.Move || _activeHandle == ResizeHandle.None)
+                SetInteractionState(InteractionState.Dragging);
+            else
+                SetInteractionState(InteractionState.Resizing);
+
+            Guides.Clear();
+            Guides.AddRange(update.Guides);
+            return;
         }
 
-        Guides.Clear();
-        Guides.AddRange(update.Guides);
+        var hit = _scene.HitTest(pD);
+        SetInteractionState(hit != null ? InteractionState.Hover : InteractionState.Idle);
     }
 
     public void PointerReleased()
     {
+        var wasMarqueeSelection = InteractionState == InteractionState.MarqueeSelection;
         _interaction.EndDrag();
         Guides.Clear();
+        if (wasMarqueeSelection)
+            FinalizeMarqueeSelection();
+
+        ClearMarqueeSelection();
+        _activeHandle = ResizeHandle.None;
+        if (InteractionState is InteractionState.Dragging or InteractionState.Resizing or InteractionState.Rotating or InteractionState.Selecting or InteractionState.MarqueeSelection)
+            SetInteractionState(InteractionState.Idle);
+        RequestRedraw?.Invoke();
     }
 
     private RectD GetPageRect()
     {
         return new RectD(0, 0,
-            _scene.CurrentDocument.Page.WidthMm * 3.78,
-            _scene.CurrentDocument.Page.HeightMm * 3.78);
+            _scene.CurrentDocument.Page.WidthMm * PixelsPerMm,
+            _scene.CurrentDocument.Page.HeightMm * PixelsPerMm);
     }
 
     public ResizeHandle GetHoverHandle(PointD pD)
@@ -1062,7 +1690,7 @@ public partial class DesignerViewModel : ObservableObject
 
     private static string FormatMeasurement(double pixels)
     {
-        var mm = pixels / 3.78;
+        var mm = pixels / PixelsPerMm;
         return AppSettingsService.RulerUnit switch
         {
             MeasurementUnit.Millimeters => $"{mm:0} mm",

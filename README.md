@@ -15,6 +15,7 @@ A professional **WinUI 3** desktop application for designing barcode labels — 
 - **Copy / paste** — element clipboard with clone-at-copy (Ctrl+C / Ctrl+V)
 - **Multi-select** — rubber-band selection + Shift-click; alignment commands on selection
 - **Page templates** — standard label sizes (A4, letter, custom)
+- **Document settings** — page size / orientation plus default barcode and text styling
 
 ### Elements
 | Type | Notes |
@@ -56,6 +57,7 @@ A professional **WinUI 3** desktop application for designing barcode labels — 
 - **Theme** — Light / Dark / System
 - **Ruler units** — mm / cm / in
 - **Snap to grid** — on/off with configurable grid size
+- **Templates** — save the current scene document as a reusable `.ldtemplate` file
 
 ---
 
