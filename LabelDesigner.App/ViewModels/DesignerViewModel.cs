@@ -537,6 +537,7 @@ public partial class DesignerViewModel : ObservableObject
 
         InteractionState = state;
         OnPropertyChanged(nameof(InteractionState));
+        RequestRedraw?.Invoke();
     }
 
     private static RectD NormalizeRect(PointD start, PointD current)
@@ -1742,11 +1743,13 @@ public partial class DesignerViewModel : ObservableObject
 
             Guides.Clear();
             Guides.AddRange(update.Guides);
+            RequestRedraw?.Invoke();
             return;
         }
 
         var hit = _scene.HitTest(pD);
         SetInteractionState(hit != null ? InteractionState.Hover : InteractionState.Idle);
+        RequestRedraw?.Invoke();
     }
 
     public void PointerReleased()
