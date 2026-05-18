@@ -44,6 +44,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<ILabelPersistenceService, JsonLabelPersistenceService>();
         services.AddSingleton<ISceneGraphService, LabelDesigner.Application.Services.SceneGraphService>();
         services.AddSingleton<ISnapService, LabelDesigner.Application.Services.SnapService>();
+        services.AddSingleton<IDataBindingService, LabelDesigner.Application.Services.DataBindingService>();
 
         // Infrastructure services
         services.AddSingleton<IBarcodeService, BarcodeService>();

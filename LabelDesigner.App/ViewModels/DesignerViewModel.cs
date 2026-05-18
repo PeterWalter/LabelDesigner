@@ -15,6 +15,8 @@ public partial class DesignerViewModel : ObservableObject
     private readonly ISceneGraphService _scene;
     private readonly IUndoRedoService _undoRedo;
     private readonly ILabelPersistenceService _persistence;
+    private readonly IDataSourceService _dataSource;
+    private readonly IDataBindingService _dataBinding;
     private readonly PropertiesViewModel _properties;
 
     public PropertiesViewModel Properties => _properties;
@@ -76,12 +78,16 @@ public partial class DesignerViewModel : ObservableObject
         ISceneGraphService scene,
         IUndoRedoService undoRedo,
         ILabelPersistenceService persistence,
+        IDataSourceService dataSource,
+        IDataBindingService dataBinding,
         PropertiesViewModel properties,
         ISnapService snap)
     {
         _scene = scene;
         _undoRedo = undoRedo;
         _persistence = persistence;
+        _dataSource = dataSource;
+        _dataBinding = dataBinding;
         _properties = properties;
         _properties.RequestRedraw = () => RequestRedraw?.Invoke();
         _snap = snap;
@@ -329,8 +335,7 @@ public partial class DesignerViewModel : ObservableObject
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;
 
-        var dataSource = App.Services!.GetRequiredService<Core.Interfaces.IDataSourceService>();
-        var data = await dataSource.LoadAsync(file.Path);
+        _ = await _dataSource.LoadAsync(file.Path);
 
         _scene.CurrentDocument.DataSource = new DataSourceConfig
         {
@@ -345,66 +350,16 @@ public partial class DesignerViewModel : ObservableObject
         var ds = _scene.CurrentDocument.DataSource;
         if (ds == null) { await Print(); return; }
 
-        var dataSource = App.Services!.GetRequiredService<Core.Interfaces.IDataSourceService>();
-        var records = await dataSource.LoadAsync(ds.Path);
+        var records = await _dataSource.LoadAsync(ds.Path);
         if (records.Count == 0) { await Print(); return; }
 
         var originalDoc = _scene.CurrentDocument;
         foreach (var record in records)
         {
-            var boundDoc = ApplyDataBinding(originalDoc, record);
+            var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
             var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
             await print.PrintAsync(boundDoc);
         }
-    }
-
-    private static SceneDocument ApplyDataBinding(SceneDocument doc, IReadOnlyDictionary<string, string> record)
-    {
-        var clone = new SceneDocument { Version = doc.Version, Page = doc.Page, DataSource = doc.DataSource };
-        foreach (var layer in doc.Layers)
-            clone.Layers.Add(new LayerNode { Name = layer.Name, Visible = layer.Visible, Locked = layer.Locked });
-        foreach (var el in doc.AllElements)
-        {
-            var boundEl = BindElement(el, record);
-            clone.AllElements.Add(boundEl);
-            if (boundEl.ParentId.HasValue)
-            {
-                var parentLayer = clone.Layers.FirstOrDefault(l => l.Id == boundEl.ParentId);
-                parentLayer?.ElementIds.Add(boundEl.Id);
-            }
-        }
-        return clone;
-    }
-
-    private static DesignElement BindElement(DesignElement el, IReadOnlyDictionary<string, string> record)
-    {
-        if (el is BarcodeElement bc)
-        {
-            var bound = new BarcodeElement { Bounds = bc.Bounds, TextPosition = bc.TextPosition };
-            bound.Value = ResolveTemplate(bc.Value, record);
-            return bound;
-        }
-        if (el is TextElement txt)
-        {
-            var bound = new TextElement { Bounds = txt.Bounds, FontSize = txt.FontSize };
-            bound.Text = ResolveTemplate(txt.Text, record);
-            return bound;
-        }
-        return CloneElement(el) ?? el;
-    }
-
-    private static string ResolveTemplate(string template, IReadOnlyDictionary<string, string> record)
-    {
-        int start;
-        while ((start = template.IndexOf("{{")) >= 0)
-        {
-            int end = template.IndexOf("}}", start);
-            if (end < 0) break;
-            var field = template.Substring(start + 2, end - start - 2).Trim();
-            var value = record.TryGetValue(field, out var v) ? v : "";
-            template = template.Substring(0, start) + value + template.Substring(end + 2);
-        }
-        return template;
     }
 
     [RelayCommand]
