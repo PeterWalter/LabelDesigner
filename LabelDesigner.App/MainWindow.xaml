@@ -67,11 +67,21 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Clipboard">
-                        <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}">
+                        <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}"
+                            AutomationProperties.Name="Copy selected element (Ctrl+C)"
+                            ToolTipService.ToolTip="Copy (Ctrl+C)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="C"/>
+                            </ribbon:RibbonButton.KeyboardAccelerators>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}">
+                        <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}"
+                            AutomationProperties.Name="Paste element (Ctrl+V)"
+                            ToolTipService.ToolTip="Paste (Ctrl+V)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE77F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="V"/>
+                            </ribbon:RibbonButton.KeyboardAccelerators>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="View">
@@ -205,34 +215,57 @@
 
             <Border Grid.Column="2" x:Name="SplitterLeft" Width="6" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                AutomationProperties.Name="Resize Layers panel"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-            <views:LayersPaneView Grid.Column="1" x:Name="LayersPane"/>
+            <views:LayersPaneView Grid.Column="1" x:Name="LayersPane"
+                AutomationProperties.Name="Layers panel"/>
 
-            <views:DesignerCanvasView Grid.Column="3"/>
+            <views:DesignerCanvasView Grid.Column="3"
+                AutomationProperties.Name="Label design canvas"
+                AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
 
             <Border Grid.Column="4" x:Name="SplitterRight" Width="6" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                AutomationProperties.Name="Resize Properties panel"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
             <views:PropertiesPaneView Grid.Column="5" x:Name="PropertiesPane"/>
         </Grid>
 
-        <Border Grid.Row="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0">
+        <Border Grid.Row="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0"
+            AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Designer.RulerUnitText}" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="#555"/>
-                <TextBlock Grid.Column="1" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC"/>
-                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.ZoomText}"/>
-                <Button Grid.Column="4" Content="-" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14" Command="{Binding Designer.ZoomOutCommand}"/>
-                <Button Grid.Column="5" Content="+" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14" Command="{Binding Designer.ZoomInCommand}"/>
-                <Button Grid.Column="6" Content="Fit" Margin="1,0" Padding="4,0" Height="20" FontSize="11" Command="{Binding Designer.ZoomToFitCommand}"/>
-                <TextBlock Grid.Column="7" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="8,0,0,0" Text="{Binding Designer.CursorText}"/>
-                <TextBlock Grid.Column="8" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"/>
+                <TextBlock Grid.Column="0" Text="{Binding Designer.RulerUnitText}" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="#555"
+                    AutomationProperties.Name="Ruler unit"/>
+                <TextBlock Grid.Column="1" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC" IsHitTestVisible="False"/>
+                <TextBlock Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.SnapStateText}"
+                    AutomationProperties.Name="Snap state"/>
+                <TextBlock Grid.Column="3" Text="|" VerticalAlignment="Center" FontSize="12" Foreground="#CCC" IsHitTestVisible="False"/>
+                <TextBlock Grid.Column="4" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="4,0" Text="{Binding Designer.ZoomText}"
+                    AutomationProperties.Name="Zoom level"/>
+                <Button Grid.Column="6" Content="-" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14"
+                    Command="{Binding Designer.ZoomOutCommand}"
+                    AutomationProperties.Name="Zoom out"
+                    ToolTipService.ToolTip="Zoom out (Ctrl+-)"/>
+                <Button Grid.Column="7" Content="+" Margin="1,0" Padding="0" MinWidth="22" Height="20" FontSize="14"
+                    Command="{Binding Designer.ZoomInCommand}"
+                    AutomationProperties.Name="Zoom in"
+                    ToolTipService.ToolTip="Zoom in (Ctrl++)"/>
+                <Button Grid.Column="8" Content="Fit" Margin="1,0" Padding="4,0" Height="20" FontSize="11"
+                    Command="{Binding Designer.ZoomToFitCommand}"
+                    AutomationProperties.Name="Zoom to fit"
+                    ToolTipService.ToolTip="Zoom to fit (Ctrl+0)"/>
+                <TextBlock Grid.Column="9" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="8,0,0,0" Text="{Binding Designer.CursorText}"
+                    AutomationProperties.Name="Cursor position"/>
+                <TextBlock Grid.Column="10" FontSize="12" VerticalAlignment="Center" Foreground="#555" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"
+                    AutomationProperties.Name="Element count"/>
             </Grid>
         </Border>
 

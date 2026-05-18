@@ -39,6 +39,7 @@
                     <ToggleButton Grid.Column="1" x:Name="CollapseToggle"
                         Width="28" Height="28" Padding="0" IsChecked="False"
                         Checked="OnCollapseToggleChanged" Unchecked="OnCollapseToggleChanged"
+                        AutomationProperties.Name="Collapse Properties panel"
                         ToolTipService.ToolTip="Collapse Properties panel">
                         <FontIcon x:Name="CollapseIcon" Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
                     </ToggleButton>

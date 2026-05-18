@@ -51,6 +51,7 @@ public partial class DesignerViewModel : ObservableObject
     public string CursorText => $"Cursor: {FormatMeasurement(CursorWorldX)}, {FormatMeasurement(CursorWorldY)}";
     public string RulerUnitText => $"Unit: {GetUnitSuffix()}";
     public string ElementsText => $"Elements: {ElementCount}";
+    public string SnapStateText => AppSettingsService.ShowSnapGrid ? "Snap: ON" : "Snap: OFF";
 
     public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
@@ -763,6 +764,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(CursorText));
         OnPropertyChanged(nameof(RulerUnitText));
+        OnPropertyChanged(nameof(SnapStateText));
         RequestRedraw?.Invoke();
     }
 
