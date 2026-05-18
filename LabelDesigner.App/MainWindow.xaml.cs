@@ -20,9 +20,15 @@ public sealed partial class MainWindow : Window
 
         ViewModel.Designer.Layers.Refresh();
 
-        // Set splitter cursors
-        SplitterLeft.ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
-        SplitterRight.ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
+        // Splitter cursor: use PointerEntered/Exited to change window cursor
+        SplitterLeft.PointerEntered += (_, _) =>
+            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
+        SplitterLeft.PointerExited += (_, _) =>
+            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
+        SplitterRight.PointerEntered += (_, _) =>
+            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
+        SplitterRight.PointerExited += (_, _) =>
+            this.AppWindow.GetInputPointerSource().Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
 
         var appWindow = this.AppWindow;
         if (appWindow != null)
