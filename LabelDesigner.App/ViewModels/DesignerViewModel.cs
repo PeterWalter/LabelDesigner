@@ -17,54 +17,7 @@ namespace LabelDesigner.App.ViewModels;
 
 public partial class DesignerViewModel : ObservableObject
 {
-    private double? _cachedPixelsPerMm;
-    private readonly object _pixelsPerMmLock = new();
-    private const double BASE_PpMm = 96.0 / 25.4; // 3.78 at 100% DPI
-
-    private double GetPixelsPerMm()
-    {
-        // Return cached value immediately (fast path after first successful detection)
-        if (_cachedPixelsPerMm.HasValue)
-            return _cachedPixelsPerMm.Value;
-
-        lock (_pixelsPerMmLock)
-        {
-            // Double-check after acquiring lock
-            if (_cachedPixelsPerMm.HasValue)
-                return _cachedPixelsPerMm.Value;
-
-            // Always start with base value; scale will be detected on first render
-            _cachedPixelsPerMm = BASE_PpMm;
-            return _cachedPixelsPerMm.Value;
-        }
-    }
-
-    public double PixelsPerMm
-    {
-        get
-        {
-            // Cached value exists and was detected from system DPI
-            if (_cachedPixelsPerMm.HasValue && _cachedPixelsPerMm.Value > BASE_PpMm * 0.9)
-                return _cachedPixelsPerMm.Value;
-
-            // Try to detect DPI from current context (safe for UI thread)
-            lock (_pixelsPerMmLock)
-            {
-                try
-                {
-                    var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
-                    double dpiScale = displayInfo.RawPixelsPerViewPixel;
-                    _cachedPixelsPerMm = BASE_PpMm * dpiScale;
-                    return _cachedPixelsPerMm.Value;
-                }
-                catch
-                {
-                    // Not on UI thread or CoreWindow not ready—use cached value or base
-                    return _cachedPixelsPerMm ?? BASE_PpMm;
-                }
-            }
-        }
-    }
+    public double PixelsPerMm => DpiService.PixelsPerMm;
 
     private readonly ISceneGraphService _scene;
     private readonly IUndoRedoService _undoRedo;
