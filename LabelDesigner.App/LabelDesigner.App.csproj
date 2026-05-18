@@ -31,6 +31,8 @@
     <None Remove="Controls\RulerControl.xaml" />
     <None Remove="Resources\Styles.xaml" />
     <None Remove="Views\DesignerCanvasView.xaml" />
+    <None Remove="Views\LayersPaneView.xaml" />
+    <None Remove="Views\PropertiesPaneView.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -76,6 +78,15 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\DesignerCanvasView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\LayersPaneView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\PropertiesPaneView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Views\SettingsDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

@@ -10,6 +10,9 @@ public interface ISceneGraphService
     void Load(SceneDocument doc);
     void Clear();
 
+    /// <summary>Raised after <see cref="Load"/> or <see cref="Clear"/> resets the document. Infrastructure can flush caches here.</summary>
+    event Action? DocumentReset;
+
     void AddElement(DesignElement element, Guid? parentLayerId = null);
     void RemoveElement(Guid id);
     void MoveElement(Guid id, Guid newParentLayerId);

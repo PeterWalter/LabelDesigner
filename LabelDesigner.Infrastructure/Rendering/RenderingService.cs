@@ -4,6 +4,7 @@ using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Common;
 using LabelDesigner.Infrastructure.Interfaces;
+using LabelDesigner.Infrastructure.Rendering;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
@@ -22,6 +23,8 @@ public class RenderService : IRenderService
     {
         _barcode = barcode;
     }
+
+    public void ClearBitmapCache() => ElementRenderer.ClearBarcodeCache();
 
     public void RenderScene(
         CanvasDrawingSession ds,
@@ -77,7 +80,7 @@ public class RenderService : IRenderService
 
                 var local = ds.Transform;
                 ds.Transform = el.GetLocalTransform() * local;
-                DrawElement(ds, el, lookup);
+                ElementRenderer.DrawElement(ds, el, lookup, _barcode);
                 if (selectedSet.Contains(el.Id))
                     DrawSelectionHandles(ds, el, zoom);
                 else if (hoveredSet.Contains(el.Id) && !selectedSet.Contains(el.Id))
@@ -88,195 +91,12 @@ public class RenderService : IRenderService
         ds.Transform = originalTransform;
     }
 
-    private void DrawElement(CanvasDrawingSession ds, DesignElement el, Dictionary<Guid, DesignElement> lookup)
-    {
-        if (el is BarcodeElement barcode)
-            DrawBarcode(ds, barcode);
-        else if (el is TextElement text)
-            DrawText(ds, text);
-        else if (el is ShapeElement shape)
-            DrawShape(ds, shape);
-        else if (el is LineElement line)
-            DrawLine(ds, line);
-        else if (el is ImageElement image)
-            DrawImage(ds, image);
-        else if (el is ContainerElement container)
-            DrawContainer(ds, container, lookup);
-    }
-
-    private void DrawBarcode(CanvasDrawingSession ds, BarcodeElement b)
-    {
-        var bounds = b.Bounds;
-        float padding = 6, textHeight = 18;
-        RectD barcodeRect = bounds;
-        float textX = 0, textY = 0;
-        string text = b.DisplayText;
-
-        switch (b.TextPosition)
-        {
-            case BarcodeTextPosition.Top:
-                barcodeRect = new RectD(bounds.X, bounds.Y + textHeight + padding, bounds.Width, bounds.Height - textHeight - padding);
-                textX = (float)(bounds.X + bounds.Width / 2); textY = (float)bounds.Y; break;
-            case BarcodeTextPosition.Bottom:
-                barcodeRect = new RectD(bounds.X, bounds.Y, bounds.Width, bounds.Height - textHeight - padding);
-                textX = (float)(bounds.X + bounds.Width / 2); textY = (float)(bounds.Y + bounds.Height - textHeight); break;
-            case BarcodeTextPosition.Left:
-                barcodeRect = new RectD(bounds.X + 60, bounds.Y, bounds.Width - 60, bounds.Height);
-                textX = (float)bounds.X; textY = (float)(bounds.Y + bounds.Height / 2); break;
-            case BarcodeTextPosition.Right:
-                barcodeRect = new RectD(bounds.X, bounds.Y, bounds.Width - 60, bounds.Height);
-                textX = (float)(bounds.X + bounds.Width - 60); textY = (float)(bounds.Y + bounds.Height / 2); break;
-        }
-
-        var bmp = _barcode.Generate(b.Value, ZXing.BarcodeFormat.CODE_128, (int)barcodeRect.Width, (int)barcodeRect.Height);
-        if (bmp != null)
-        {
-            var img = CanvasBitmap.CreateFromSoftwareBitmap(ds.Device, bmp);
-            ds.DrawImage(img, barcodeRect.ToWinRect());
-        }
-
-        ds.DrawText(text, new Vector2(textX, textY), Colors.Black, new CanvasTextFormat
-        {
-            HorizontalAlignment = CanvasHorizontalAlignment.Center,
-            VerticalAlignment = CanvasVerticalAlignment.Center, FontSize = 14
-        });
-    }
-
-    private void DrawText(CanvasDrawingSession ds, TextElement txt)
-    {
-        var alignment = txt.TextAlignment switch
-        {
-            TextAlignmentType.Center => CanvasHorizontalAlignment.Center,
-            TextAlignmentType.Right => CanvasHorizontalAlignment.Right,
-            _ => CanvasHorizontalAlignment.Left
-        };
-
-        var fontStyle = txt.Italic
-            ? Windows.UI.Text.FontStyle.Italic
-            : Windows.UI.Text.FontStyle.Normal;
-
-        var fontWeight = txt.Bold
-            ? Microsoft.UI.Text.FontWeights.Bold
-            : Microsoft.UI.Text.FontWeights.Normal;
-
-        var format = new CanvasTextFormat
-        {
-            FontSize = (float)txt.FontSize,
-            FontFamily = string.IsNullOrEmpty(txt.FontFamily) ? "Segoe UI" : txt.FontFamily,
-            FontStyle = fontStyle,
-            FontWeight = fontWeight,
-            HorizontalAlignment = alignment,
-            WordWrapping = txt.IsMultiline ? CanvasWordWrapping.Wrap : CanvasWordWrapping.NoWrap
-        };
-
-        var color = ParseColor(txt.ForeColor, Colors.Black);
-        var rect = txt.Bounds.ToWinRect();
-
-        if (txt.IsMultiline)
-            ds.DrawText(txt.Text, rect, color, format);
-        else
-            ds.DrawText(txt.Text, (float)rect.X, (float)rect.Y, color, format);
-
-        if (txt.Underline)
-        {
-            float y = (float)(txt.Bounds.Y + txt.FontSize + 2);
-            ds.DrawLine((float)txt.Bounds.X, y, (float)(txt.Bounds.X + txt.Bounds.Width), y, color, 1);
-        }
-    }
-
-    private void DrawShape(CanvasDrawingSession ds, ShapeElement shape)
-    {
-        var b = shape.Bounds.ToWinRect();
-        var fill = ParseColor(shape.Fill, Colors.LightGray);
-        var stroke = ParseColor(shape.Stroke, Colors.Black);
-        float sw = (float)shape.StrokeWidth;
-        var cx = new Vector2((float)(b.X + b.Width / 2), (float)(b.Y + b.Height / 2));
-
-        if (shape.Type == ShapeType.Ellipse)
-        {
-            ds.FillEllipse(cx, (float)(b.Width / 2), (float)(b.Height / 2), fill);
-            ds.DrawEllipse(cx, (float)(b.Width / 2), (float)(b.Height / 2), stroke, sw);
-        }
-        else if (shape.Type == ShapeType.Triangle)
-        {
-            var xL = (float)b.X; var xR = (float)(b.X + b.Width); var xM = (float)(b.X + b.Width / 2);
-            var yT = (float)b.Y; var yB = (float)(b.Y + b.Height);
-            var tri = new[] { new Vector2(xM, yT), new Vector2(xL, yB), new Vector2(xR, yB) };
-            ds.FillGeometry(CanvasGeometry.CreatePolygon(ds, tri), fill);
-            ds.DrawGeometry(CanvasGeometry.CreatePolygon(ds, tri), stroke, sw);
-        }
-        else
-        {
-            ds.FillRectangle(b, fill);
-            ds.DrawRectangle(b, stroke, sw);
-        }
-    }
-
-    private void DrawLine(CanvasDrawingSession ds, LineElement line)
-    {
-        ds.DrawLine(new Vector2((float)line.X1, (float)line.Y1),
-            new Vector2((float)line.X2, (float)line.Y2),
-            ParseColor(line.Stroke, Colors.Black), (float)line.StrokeWidth);
-    }
-
-    private void DrawImage(CanvasDrawingSession ds, ImageElement image)
-    {
-        var b = image.Bounds.ToWinRect();
-        try
-        {
-            if (!string.IsNullOrEmpty(image.SourcePath) && System.IO.File.Exists(image.SourcePath))
-            {
-                var bitmap = CanvasBitmap.LoadAsync(ds.Device, image.SourcePath).GetAwaiter().GetResult();
-                var srcRect = new Rect(0, 0, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height);
-                var dstRect = b;
-
-                if (image.Stretch == ImageStretch.Uniform)
-                {
-                    float scale = Math.Min((float)(b.Width / bitmap.Size.Width), (float)(b.Height / bitmap.Size.Height));
-                    float drawW = (float)(bitmap.Size.Width * scale);
-                    float drawH = (float)(bitmap.Size.Height * scale);
-                    dstRect = new Rect((float)(b.X + (b.Width - drawW) / 2), (float)(b.Y + (b.Height - drawH) / 2), drawW, drawH);
-                }
-                else if (image.Stretch == ImageStretch.UniformToFill)
-                {
-                    float scale = Math.Max((float)(b.Width / bitmap.Size.Width), (float)(b.Height / bitmap.Size.Height));
-                    float drawW = (float)(bitmap.Size.Width * scale);
-                    float drawH = (float)(bitmap.Size.Height * scale);
-                    dstRect = new Rect((float)(b.X + (b.Width - drawW) / 2), (float)(b.Y + (b.Height - drawH) / 2), drawW, drawH);
-                }
-
-                ds.DrawImage(bitmap, dstRect, srcRect, 1.0f, CanvasImageInterpolation.HighQualityCubic);
-                return;
-            }
-        }
-        catch { }
-        ds.FillRectangle(b, Colors.LightGray);
-        var l = (float)b.Left; var t = (float)b.Top; var r = (float)b.Right; var bo = (float)b.Bottom;
-        ds.DrawLine(l, t, r, bo, Colors.DarkGray, 1);
-        ds.DrawLine(r, t, l, bo, Colors.DarkGray, 1);
-    }
-
-    private void DrawContainer(CanvasDrawingSession ds, ContainerElement container, Dictionary<Guid, DesignElement> lookup)
-    {
-        foreach (var childId in container.ChildIds.OrderBy(id => lookup.GetValueOrDefault(id)?.ZIndex ?? 0))
-        {
-            if (lookup.TryGetValue(childId, out var child) && child.Visible)
-            {
-                var local = ds.Transform;
-                ds.Transform = child.GetLocalTransform() * local;
-                DrawElement(ds, child, lookup);
-                ds.Transform = local;
-            }
-        }
-    }
-
     private static void DrawSelectionHandles(CanvasDrawingSession ds, DesignElement el, float zoom)
     {
         var rect = el.Bounds.ToWinRect();
         float zf = Math.Max(zoom, 0.25f);
         float s = 6f / zf, es = 4f / zf, rotR = 5f / zf, rotOff = 20f / zf;
 
-        // Corner handles
         foreach (var p in new[] {
             new Vector2((float)rect.Left, (float)rect.Top),
             new Vector2((float)rect.Right, (float)rect.Top),
@@ -288,7 +108,6 @@ public class RenderService : IRenderService
             ds.DrawRectangle(p.X - s, p.Y - s, s * 2, s * 2, Colors.Blue);
         }
 
-        // Edge midpoints
         foreach (var p in new[] {
             new Vector2((float)(rect.Left + rect.Width / 2), (float)rect.Top),
             new Vector2((float)(rect.Right), (float)(rect.Top + rect.Height / 2)),
@@ -300,14 +119,11 @@ public class RenderService : IRenderService
             ds.DrawRectangle(p.X - es, p.Y - es, es * 2, es * 2, Colors.Blue);
         }
 
-        // Rotation handle
         float rotCX = (float)(rect.Left + rect.Width / 2);
         float rotCY = (float)(rect.Top - rotOff);
         ds.DrawLine(new Vector2(rotCX, (float)rect.Top), new Vector2(rotCX, rotCY), Colors.Blue, 1);
         ds.FillCircle(new Vector2(rotCX, rotCY), rotR, Colors.White);
         ds.DrawCircle(new Vector2(rotCX, rotCY), rotR, Colors.Blue);
-
-        // Dashed outline
         ds.DrawRectangle(rect, Colors.Blue, 1, new CanvasStrokeStyle { DashStyle = CanvasDashStyle.Dash });
     }
 
@@ -322,21 +138,9 @@ public class RenderService : IRenderService
             new Vector2((float)rect.Right, (float)rect.Bottom),
             new Vector2((float)rect.Left, (float)rect.Bottom),
         })
-        {
             ds.FillEllipse(p, dot, dot, Color.FromArgb(160, 128, 200, 255));
-        }
     }
 
-    internal static Color ParseColor(string hex, Color fallback)
-    {
-        if (string.IsNullOrEmpty(hex)) return fallback;
-        try
-        {
-            hex = hex.TrimStart('#');
-            if (hex.Length == 6)
-                return Color.FromArgb(255, Convert.ToByte(hex[..2], 16), Convert.ToByte(hex[2..4], 16), Convert.ToByte(hex[4..6], 16));
-        }
-        catch { }
-        return fallback;
-    }
+    internal static Color ParseColor(string hex, Color fallback) =>
+        ElementRenderer.ParseColor(hex, fallback);
 }

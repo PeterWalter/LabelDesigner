@@ -14,4 +14,7 @@ public interface IRenderService
         float zoom,
         RectD viewport,
         bool showGrid = true);
+
+    /// <summary>Disposes and clears all cached GPU/CPU bitmaps. Call when a new document is loaded.</summary>
+    void ClearBitmapCache();
 }

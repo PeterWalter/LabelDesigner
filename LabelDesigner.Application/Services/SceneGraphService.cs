@@ -26,6 +26,8 @@ public class SceneGraphService : ISceneGraphService
         _undoRedo = undoRedo;
     }
 
+    public event Action? DocumentReset;
+
     public void Load(SceneDocument doc)
     {
         CurrentDocument = doc;
@@ -38,6 +40,8 @@ public class SceneGraphService : ISceneGraphService
 
         foreach (var layer in doc.Layers)
             _layers[layer.Id] = layer;
+
+        DocumentReset?.Invoke();
     }
 
     public void Clear()
@@ -47,6 +51,7 @@ public class SceneGraphService : ISceneGraphService
         _layers.Clear();
         _selectedIds.Clear();
         _undoRedo.Clear();
+        DocumentReset?.Invoke();
     }
 
     public void AddElement(DesignElement element, Guid? parentLayerId = null)
@@ -207,6 +212,15 @@ public class SceneGraphService : ISceneGraphService
     public void RemoveLayer(Guid id)
     {
         if (!_layers.TryGetValue(id, out var layer)) return;
+
+        // Evict all elements that belong to this layer from both lookups.
+        foreach (var elId in layer.ElementIds.ToList())
+        {
+            _elements.Remove(elId);
+            CurrentDocument.AllElements.RemoveAll(e => e.Id == elId);
+            _selectedIds.Remove(elId);
+        }
+
         _layers.Remove(id);
         CurrentDocument.Layers.Remove(layer);
     }
@@ -221,7 +235,7 @@ public class SceneGraphService : ISceneGraphService
     private LayerNode GetDefaultLayer()
     {
         if (CurrentDocument.Layers.Count == 0)
-            AddLayer("Default");
+            AddLayer("Layer 1");
         return CurrentDocument.Layers[0];
     }
 

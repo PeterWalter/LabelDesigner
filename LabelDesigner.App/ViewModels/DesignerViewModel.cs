@@ -51,6 +51,7 @@ public partial class DesignerViewModel : ObservableObject
     public string CursorText => $"Cursor: {FormatMeasurement(CursorWorldX)}, {FormatMeasurement(CursorWorldY)}";
     public string RulerUnitText => $"Unit: {GetUnitSuffix()}";
     public string ElementsText => $"Elements: {ElementCount}";
+    public string SnapStateText => AppSettingsService.ShowSnapGrid ? "Snap: ON" : "Snap: OFF";
 
     public RectD PageBounds { get; set; } = new(50, 50, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
@@ -113,11 +114,15 @@ public partial class DesignerViewModel : ObservableObject
         this.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(Selected))
+            {
                 _properties.TrackElement(Selected);
+                Layers.Refresh(Selected?.Id);
+            }
         };
         AppSettingsService.SettingsChanged += OnSettingsChanged;
+        Layers.RequestRedraw = () => RequestRedraw?.Invoke();
 
-        var layer = _scene.AddLayer("Default");
+        var layer = _scene.AddLayer("Layer 1");
 
         _scene.AddElement(new BarcodeElement
         {
@@ -137,7 +142,7 @@ public partial class DesignerViewModel : ObservableObject
     private async Task NewDocument()
     {
         _scene.Clear();
-        _scene.AddLayer("Default");
+        _scene.AddLayer("Layer 1");
         _currentFilePath = null;
     }
 
@@ -202,7 +207,7 @@ public partial class DesignerViewModel : ObservableObject
     public void NotifyElementsChanged()
     {
         OnPropertyChanged(nameof(ElementsText));
-        Layers.Refresh();
+        Layers.Refresh(Selected?.Id);
     }
 
     public void CancelPlacement()
@@ -495,6 +500,8 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.HeightMm = 127.0;
         _scene.CurrentDocument.Page.Dpi = 300;
         PageBounds = new RectD(50, 50, 101.6 * 3.78, 127.0 * 3.78);
+        Viewport.PageOriginX = PageBounds.X;
+        Viewport.PageOriginY = PageBounds.Y;
         RequestRedraw?.Invoke();
     }
 
@@ -505,6 +512,8 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.HeightMm = 101.6;
         _scene.CurrentDocument.Page.Dpi = 300;
         PageBounds = new RectD(50, 50, 152.4 * 3.78, 101.6 * 3.78);
+        Viewport.PageOriginX = PageBounds.X;
+        Viewport.PageOriginY = PageBounds.Y;
         RequestRedraw?.Invoke();
     }
 
@@ -515,6 +524,8 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.HeightMm = 76.2;
         _scene.CurrentDocument.Page.Dpi = 300;
         PageBounds = new RectD(50, 50, 203.2 * 3.78, 76.2 * 3.78);
+        Viewport.PageOriginX = PageBounds.X;
+        Viewport.PageOriginY = PageBounds.Y;
         RequestRedraw?.Invoke();
     }
 
@@ -745,6 +756,8 @@ public partial class DesignerViewModel : ObservableObject
         _scene.CurrentDocument.Page.WidthMm = h;
         _scene.CurrentDocument.Page.HeightMm = w;
         PageBounds = new RectD(PageBounds.X, PageBounds.Y, PageBounds.Height, PageBounds.Width);
+        Viewport.PageOriginX = PageBounds.X;
+        Viewport.PageOriginY = PageBounds.Y;
         RequestRedraw?.Invoke();
     }
 
@@ -768,8 +781,12 @@ public partial class DesignerViewModel : ObservableObject
         double wPx = wMm * 3.78;
         double hPx = hMm * 3.78;
         PageBounds = new RectD(50, 50, wPx, hPx);
+        Viewport.PageOriginX = PageBounds.X;
+        Viewport.PageOriginY = PageBounds.Y;
         RequestRedraw?.Invoke();
     }
+
+    public bool IsDragging => _interaction.IsDragging;
 
     public void SetShiftState(bool held) => _isShiftHeld = held;
 
@@ -908,6 +925,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(CursorText));
         OnPropertyChanged(nameof(RulerUnitText));
+        OnPropertyChanged(nameof(SnapStateText));
         RequestRedraw?.Invoke();
     }
 

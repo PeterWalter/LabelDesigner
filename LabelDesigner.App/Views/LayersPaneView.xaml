@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="LabelDesigner.App.Views.LayersPaneView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:LabelDesigner.App.ViewModels"
+    xmlns:converters="using:LabelDesigner.App.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:BoolToStringConverter x:Key="BoolToExpandGlyph"/>
+        <!-- True = active (#2B5EA7), False = dim (#AAAAAA) -->
+        <converters:BoolToSolidBrushConverter x:Key="BoolToActiveBrush"/>
+        <!-- True = amber lock (#CC7700), False = dim (#AAAAAA) -->
+        <converters:BoolToSolidBrushConverter x:Key="BoolToLockBrush"/>
+        <!-- True = selection highlight, False = transparent -->
+        <converters:BoolToSolidBrushConverter x:Key="BoolToSelectionBrush"/>
+        <!-- True = selected text white, False = normal dark -->
+        <converters:BoolToSolidBrushConverter x:Key="BoolToSelectedTextBrush"/>
+    </UserControl.Resources>
+
+    <Border Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="6,3">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="HeaderText" Grid.Column="0" Text="Layers"
+                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Foreground="#2B2B2B"/>
+                    <ToggleButton Grid.Column="1" x:Name="CollapseToggle"
+                        Width="28" Height="28" Padding="0" IsChecked="False"
+                        Checked="OnCollapseToggleChanged" Unchecked="OnCollapseToggleChanged"
+                        AutomationProperties.Name="Collapse Layers panel"
+                        ToolTipService.ToolTip="Collapse Layers panel">
+                        <FontIcon x:Name="CollapseIcon" Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                    </ToggleButton>
+                </Grid>
+            </Border>
+
+            <!-- Layer tree -->
+            <ScrollViewer Grid.Row="1" x:Name="ContentArea" Padding="0,2,0,2">
+                <ItemsControl ItemsSource="{Binding Designer.Layers.Layers}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <!-- Layer header -->
+                                <Border Background="#E4EAF0" Padding="2,3" Margin="0,2,0,0"
+                                    PointerPressed="OnLayerHeaderClick" Tag="{Binding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="18"/>  <!-- expand -->
+                                            <ColumnDefinition Width="22"/>  <!-- eye -->
+                                            <ColumnDefinition Width="22"/>  <!-- lock -->
+                                            <ColumnDefinition Width="*"/>   <!-- name -->
+                                            <ColumnDefinition Width="Auto"/><!-- badge -->
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0" Width="18" Height="18" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Click="OnLayerExpandClick" Tag="{Binding}">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="9" Foreground="#555"
+                                                Glyph="{Binding IsExpanded, Converter={StaticResource BoolToExpandGlyph}, ConverterParameter='&#xE76C;|&#xE76D;', FallbackValue='&#xE76C;'}"/>
+                                        </Button>
+
+                                        <Button Grid.Column="1" Width="22" Height="18" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Command="{Binding ToggleVisibilityCommand}"
+                                            ToolTipService.ToolTip="Toggle layer visibility">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                Glyph="{Binding VisibilityGlyph}"
+                                                Foreground="{Binding IsVisible, Converter={StaticResource BoolToActiveBrush}, ConverterParameter='#2B5EA7|#AAAAAA'}"/>
+                                        </Button>
+
+                                        <Button Grid.Column="2" Width="22" Height="18" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Command="{Binding ToggleLockCommand}"
+                                            ToolTipService.ToolTip="Toggle layer lock">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                Glyph="{Binding LockGlyph}"
+                                                Foreground="{Binding IsLocked, Converter={StaticResource BoolToLockBrush}, ConverterParameter='#CC7700|#AAAAAA'}"/>
+                                        </Button>
+
+                                        <TextBox Grid.Column="3"
+                                            Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            FontWeight="SemiBold" FontSize="12" Foreground="#1A1A1A"
+                                            BorderThickness="0" Background="Transparent" Padding="2,0"
+                                            VerticalAlignment="Center" Height="22"/>
+
+                                        <Border Grid.Column="4" Background="#C8D4E0" CornerRadius="8"
+                                            Padding="5,1" Margin="2,0,3,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ElementCountText}"
+                                                FontSize="9" Foreground="#445566"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Elements list -->
+                                <ItemsControl ItemsSource="{Binding Children}"
+                                    Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="4,3" Margin="4,1,4,1"
+                                                Background="{Binding IsSelected, Converter={StaticResource BoolToSelectionBrush}, ConverterParameter='#1A73E8|transparent'}"
+                                                PointerPressed="OnLayerItemClick">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="20"/>
+                                                        <ColumnDefinition Width="18"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="1"
+                                                        Text="{Binding TypeGlyph}"
+                                                        FontFamily="Segoe MDL2 Assets"
+                                                        FontSize="11" Foreground="#667788"
+                                                        VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2"
+                                                        Text="{Binding Name}"
+                                                        FontSize="11" VerticalAlignment="Center"
+                                                        Foreground="{Binding IsSelected, Converter={StaticResource BoolToSelectedTextBrush}, ConverterParameter='#FFFFFF|#444444'}"
+                                                        TextTrimming="CharacterEllipsis"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Footer: Add/Delete layer -->
+            <Border Grid.Row="2" x:Name="FooterArea"
+                Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,3">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button FontSize="11" Height="24" Padding="8,0"
+                        Command="{Binding Designer.Layers.AddLayerCommand}"
+                        ToolTipService.ToolTip="Add new layer">
+                        <StackPanel Orientation="Horizontal" Spacing="3">
+                            <FontIcon Glyph="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+                            <TextBlock Text="Layer" FontSize="11"/>
+                        </StackPanel>
+                    </Button>
+                    <Button FontSize="11" Height="24" Padding="8,0"
+                        Command="{Binding Designer.Layers.DeleteSelectedLayerCommand}"
+                        ToolTipService.ToolTip="Delete selected layer">
+                        <StackPanel Orientation="Horizontal" Spacing="3">
+                            <FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+                            <TextBlock Text="Layer" FontSize="11"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
