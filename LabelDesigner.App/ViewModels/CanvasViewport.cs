@@ -37,10 +37,10 @@ public partial class CanvasViewport : ObservableObject
         double fitX = (canvasWidth - margin * 2) / pageWidth;
         double fitY = (canvasHeight - margin * 2) / pageHeight;
         Zoom = Math.Min(fitX, fitY);
-        // Offset calculation for Translate(-Offset) * Scale(Zoom) rendering
-        // Negative to center the page on canvas
-        OffsetX = -(pageWidth * Zoom - canvasWidth) / 2;
-        OffsetY = -(pageHeight * Zoom - canvasHeight) / 2;
+        // Screen = World * Zoom - Offset, so a positive left/top margin requires
+        // a negative offset. Using the wrong sign pushes the page off-canvas.
+        OffsetX = (pageWidth * Zoom - canvasWidth) / 2;
+        OffsetY = (pageHeight * Zoom - canvasHeight) / 2;
     }
 
     public Windows.Foundation.Point ScreenToWorld(Windows.Foundation.Point screen) =>

@@ -29,6 +29,7 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
@@ -158,63 +159,15 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="View">
-                        <StackPanel>
-                            <ribbon:RibbonButton Content="Zoom In" Command="{Binding Designer.ZoomInCommand}" AllowedSizeModes="Large">
-                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                            </ribbon:RibbonButton>
-                            <ribbon:RibbonButton Content="Zoom Out" Command="{Binding Designer.ZoomOutCommand}" AllowedSizeModes="Large">
-                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE71E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                            </ribbon:RibbonButton>
-                            <ribbon:RibbonButton Content="Fit" Command="{Binding Designer.ZoomToFitCommand}" AllowedSizeModes="Large">
-                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                            </ribbon:RibbonButton>
-                            <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
-                                Margin="0,4,0,0" Padding="6,2" FontSize="11"
-                                Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
-                                ToolTipService.ToolTip="Show/hide Layers panel"/>
-                            <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
-                                Margin="0,2,0,0" Padding="6,2" FontSize="11"
-                                Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
-                                ToolTipService.ToolTip="Show/hide Properties panel"/>
-                            <Button Content="Reset Layout" Click="OnResetLayout"
-                                Margin="0,2,0,0" Padding="6,2" FontSize="11"
-                                ToolTipService.ToolTip="Restore default panel layout"/>
-                            <Button Content="Settings" Click="OnSettingsClicked"
-                                Margin="0,2,0,0" Padding="6,2" FontSize="11"
-                                ToolTipService.ToolTip="Application Settings"/>
-                            <TextBlock x:Name="RecentFilesLabel" Text="Recent Files" FontSize="11" Margin="0,6,0,4"/>
-                            <ComboBox Width="220"
-                                ItemsSource="{Binding Designer.RecentFiles}"
-                                SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}" />
-                            <Button x:Name="OpenRecentButton" Content="Open Recent"
-                                Command="{Binding Designer.OpenSelectedRecentCommand}"
-                                Margin="0,2,0,0" Padding="6,2" FontSize="11"
-                                ToolTipService.ToolTip="Open the selected recent file"/>
-                        </StackPanel>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Settings">
-                        <StackPanel>
-                            <TextBlock Text="Ruler Units" FontSize="11" Margin="0,0,0,4"/>
-                            <ComboBox x:Name="RulerUnitComboBox" Width="90" SelectionChanged="OnRulerUnitChanged" SelectedIndex="0">
-                                <ComboBoxItem Content="mm" Tag="Millimeters"/>
-                                <ComboBoxItem Content="cm" Tag="Centimeters"/>
-                                <ComboBoxItem Content="in" Tag="Inches"/>
-                            </ComboBox>
-                            <TextBlock x:Name="StockPresetLabel" Text="Stock Preset" FontSize="11" Margin="0,6,0,4"/>
-                            <ComboBox Width="220"
-                                DisplayMemberPath="DisplayName"
-                                SelectedValuePath="Id"
-                                ItemsSource="{Binding Designer.LabelStockPresets}"
-                                SelectedValue="{Binding Designer.SelectedLabelStockPresetId, Mode=TwoWay}" />
-                            <ribbon:RibbonToggleButton x:Name="SnapGridToggle" Content="Grid" IsChecked="True"
-                                Margin="0,4,0,0" Padding="6,2" FontSize="11" AllowedSizeModes="Large"
-                                Checked="OnSnapGridToggled" Unchecked="OnSnapGridToggled"
-                                ToolTipService.ToolTip="Show snap grid on canvas">
-                                <ribbon:RibbonToggleButton.Icon>
-                                    <FontIcon Glyph="&#xE73E;" FontFamily="Segoe MDL2 Assets"/>
-                                </ribbon:RibbonToggleButton.Icon>
-                            </ribbon:RibbonToggleButton>
-                        </StackPanel>
+                        <ribbon:RibbonButton Content="Zoom In" Command="{Binding Designer.ZoomInCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Zoom Out" Command="{Binding Designer.ZoomOutCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE71E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Fit" Command="{Binding Designer.ZoomToFitCommand}" AllowedSizeModes="Large">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Page">
                         <ribbon:RibbonButton Content="A4" Command="{Binding Designer.SetPageA4Command}">
@@ -298,7 +251,50 @@
 
         </ribbon:SfRibbon>
 
-        <Grid Grid.Row="1">
+        <Border Grid.Row="1" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="8,4">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
+                    Padding="6,2"
+                    Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
+                    ToolTipService.ToolTip="Show/hide Layers panel"/>
+                <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
+                    Padding="6,2"
+                    Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
+                    ToolTipService.ToolTip="Show/hide Properties panel"/>
+                <Button Content="Reset Layout" Click="OnResetLayout"
+                    Padding="6,2"
+                    ToolTipService.ToolTip="Restore default panel layout"/>
+                <Button Content="Settings" Click="OnSettingsClicked"
+                    Padding="6,2"
+                    ToolTipService.ToolTip="Application Settings"/>
+                <ToggleButton x:Name="SnapGridToggle" Content="Grid" IsChecked="True"
+                    Padding="6,2"
+                    Checked="OnSnapGridToggled" Unchecked="OnSnapGridToggled"
+                    ToolTipService.ToolTip="Show snap grid on canvas"/>
+                <TextBlock Text="Ruler Units" VerticalAlignment="Center"/>
+                <ComboBox x:Name="RulerUnitComboBox" Width="90" SelectionChanged="OnRulerUnitChanged" SelectedIndex="0">
+                    <ComboBoxItem Content="mm" Tag="Millimeters"/>
+                    <ComboBoxItem Content="cm" Tag="Centimeters"/>
+                    <ComboBoxItem Content="in" Tag="Inches"/>
+                </ComboBox>
+                <TextBlock x:Name="StockPresetLabel" Text="Stock Preset" VerticalAlignment="Center"/>
+                <ComboBox Width="220"
+                    DisplayMemberPath="DisplayName"
+                    SelectedValuePath="Id"
+                    ItemsSource="{Binding Designer.LabelStockPresets}"
+                    SelectedValue="{Binding Designer.SelectedLabelStockPresetId, Mode=TwoWay}" />
+                <TextBlock x:Name="RecentFilesLabel" Text="Recent Files" VerticalAlignment="Center"/>
+                <ComboBox Width="220"
+                    ItemsSource="{Binding Designer.RecentFiles}"
+                    SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}" />
+                <Button x:Name="OpenRecentButton" Content="Open Recent"
+                    Command="{Binding Designer.OpenSelectedRecentCommand}"
+                    Padding="6,2"
+                    ToolTipService.ToolTip="Open the selected recent file"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="LayerColumn" Width="180"/>
                 <ColumnDefinition Width="4"/>
@@ -351,7 +347,7 @@
             <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
         </Grid>
 
-        <Border Grid.Row="2" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0"
+        <Border Grid.Row="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="4,0"
             AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>
