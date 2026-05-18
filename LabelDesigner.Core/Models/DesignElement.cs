@@ -20,23 +20,25 @@ public abstract class DesignElement
 
     public Matrix3x2 GetLocalTransform()
     {
-        float cx = (float)(Bounds.X + Bounds.Width / 2);
-        float cy = (float)(Bounds.Y + Bounds.Height / 2);
+        float w = Math.Max((float)Bounds.Width, 1f);
+        float h = Math.Max((float)Bounds.Height, 1f);
+        float cx = (float)(Bounds.X + w / 2);
+        float cy = (float)(Bounds.Y + h / 2);
         float radians = (float)(Rotation * Math.PI / 180.0);
+        float sx = (float)(Math.Abs(ScaleX) < 0.001 ? 0.001 : ScaleX);
+        float sy = (float)(Math.Abs(ScaleY) < 0.001 ? 0.001 : ScaleY);
 
         return
-            Matrix3x2.CreateTranslation((float)Bounds.X, (float)Bounds.Y) *
-            Matrix3x2.CreateTranslation(cx - (float)Bounds.X, cy - (float)Bounds.Y) *
+            Matrix3x2.CreateTranslation(cx, cy) *
             Matrix3x2.CreateRotation(radians) *
-            Matrix3x2.CreateScale((float)ScaleX, (float)ScaleY) *
-            Matrix3x2.CreateTranslation(-cx + (float)Bounds.X, -cy + (float)Bounds.Y);
+            Matrix3x2.CreateScale(sx, sy) *
+            Matrix3x2.CreateTranslation(-w / 2f, -h / 2f);
     }
 
     public bool HitTest(PointD worldPoint)
     {
         var mat = GetLocalTransform();
-        Matrix3x2.Invert(mat, out var inv);
-        if (!Matrix3x2.Invert(mat, out inv)) return false;
+        if (!Matrix3x2.Invert(mat, out var inv)) return false;
         var local = Vector2.Transform(new Vector2((float)worldPoint.X, (float)worldPoint.Y), inv);
         return local.X >= 0 && local.X <= (float)Bounds.Width &&
                local.Y >= 0 && local.Y <= (float)Bounds.Height;
