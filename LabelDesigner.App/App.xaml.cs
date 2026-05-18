@@ -51,6 +51,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<IBarcodeService, BarcodeService>();
         services.AddSingleton<IRenderService, RenderService>();
         services.AddSingleton<IPrintService, PrintService>();
+        services.AddSingleton<IDocumentRasterizer>(sp => (IDocumentRasterizer)sp.GetRequiredService<IPrintService>());
         services.AddSingleton<IPdfExportService, PdfExportService>();
         services.AddSingleton<Core.Interfaces.IDataSourceService, CsvDataSourceService>();
 

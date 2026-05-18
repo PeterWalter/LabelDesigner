@@ -1,5 +1,4 @@
 using LabelDesigner.App.ViewModels;
-using LabelDesigner.Infrastructure.Interfaces;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,7 +7,6 @@ using Microsoft.UI.Input;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Core.Models;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LabelDesigner.App.Views;
 
@@ -20,11 +18,7 @@ public sealed partial class DesignerCanvasView : UserControl
     private PointD _lineStartPoint;
     private CanvasControl? _canvas;
 
-    public DesignerViewModel VM =>
-        App.Services!.GetRequiredService<DesignerViewModel>();
-
-    private readonly IRenderService _renderer =
-        App.Services!.GetRequiredService<IRenderService>();
+    private DesignerViewModel? VM => (DataContext as MainViewModel)?.Designer;
 
     public DesignerCanvasView()
     {
@@ -52,6 +46,7 @@ public sealed partial class DesignerCanvasView : UserControl
 
     private void DoZoomToFit(CanvasControl canvas)
     {
+        if (VM == null) return;
         double pageW = VM.Scene.CurrentDocument.Page.WidthMm * 3.78;
         double pageH = VM.Scene.CurrentDocument.Page.HeightMm * 3.78;
         if (pageW <= 0 || pageH <= 0 || canvas.ActualWidth <= 0) return;
@@ -154,7 +149,7 @@ public sealed partial class DesignerCanvasView : UserControl
         var ds = args.DrawingSession;
         var viewport = new RectD(VM.Viewport.OffsetX, VM.Viewport.OffsetY,
             sender.ActualWidth, sender.ActualHeight);
-        _renderer.RenderScene(
+        VM.RenderService.RenderScene(
             ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
             _hoveredIds, (float)VM.Viewport.Zoom, viewport);
     }

@@ -14,7 +14,7 @@ using System.Numerics;
 
 namespace LabelDesigner.Infrastructure.Export;
 
-public class PrintService : IPrintService
+public class PrintService : IPrintService, IDocumentRasterizer
 {
     private readonly IBarcodeService _barcode;
 

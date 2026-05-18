@@ -4,7 +4,7 @@ using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
-using Microsoft.Extensions.DependencyInjection;
+using LabelDesigner.Infrastructure.Interfaces;
 using Microsoft.UI;
 using Windows.Foundation;
 
@@ -18,6 +18,10 @@ public partial class DesignerViewModel : ObservableObject
     private readonly IDataSourceService _dataSource;
     private readonly IDataBindingService _dataBinding;
     private readonly IElementInteractionService _interaction;
+    private readonly IPrintService _printService;
+    private readonly IPdfExportService _pdfExportService;
+    private readonly IDocumentRasterizer _rasterizer;
+    private readonly IRenderService _renderService;
     private readonly PropertiesViewModel _properties;
 
     public PropertiesViewModel Properties => _properties;
@@ -25,6 +29,7 @@ public partial class DesignerViewModel : ObservableObject
 
     public CanvasViewport Viewport { get; } = new();
     public ISceneGraphService Scene => _scene;
+    public IRenderService RenderService => _renderService;
 
     public double Margin = 40;
     public PageSize CurrentPageSize { get; private set; } = PageSize.A4;
@@ -76,6 +81,10 @@ public partial class DesignerViewModel : ObservableObject
         IDataSourceService dataSource,
         IDataBindingService dataBinding,
         IElementInteractionService interaction,
+        IPrintService printService,
+        IPdfExportService pdfExportService,
+        IDocumentRasterizer rasterizer,
+        IRenderService renderService,
         PropertiesViewModel properties)
     {
         _scene = scene;
@@ -84,6 +93,10 @@ public partial class DesignerViewModel : ObservableObject
         _dataSource = dataSource;
         _dataBinding = dataBinding;
         _interaction = interaction;
+        _printService = printService;
+        _pdfExportService = pdfExportService;
+        _rasterizer = rasterizer;
+        _renderService = renderService;
         _properties = properties;
         _properties.RequestRedraw = () => RequestRedraw?.Invoke();
         Layers = new LayerPanelViewModel(scene);
@@ -297,14 +310,12 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task Print()
     {
-        var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
-        await print.PrintAsync(_scene.CurrentDocument);
+        await _printService.PrintAsync(_scene.CurrentDocument);
     }
 
     [RelayCommand]
     private async Task ExportPdf()
     {
-        var pdf = App.Services!.GetRequiredService<Core.Interfaces.IPdfExportService>();
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
@@ -314,7 +325,7 @@ public partial class DesignerViewModel : ObservableObject
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
 
-        await pdf.ExportAsync(_scene.CurrentDocument, file.Path,
+        await _pdfExportService.ExportAsync(_scene.CurrentDocument, file.Path,
             new Core.Interfaces.PdfExportOptions());
     }
 
@@ -352,16 +363,14 @@ public partial class DesignerViewModel : ObservableObject
         foreach (var record in records)
         {
             var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
-            var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
-            await print.PrintAsync(boundDoc);
+            await _printService.PrintAsync(boundDoc);
         }
     }
 
     [RelayCommand]
     private async Task PreviewPrint()
     {
-        var print = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
-        await print.ShowPrintPreviewAsync(_scene.CurrentDocument);
+        await _printService.ShowPrintPreviewAsync(_scene.CurrentDocument);
     }
 
     [RelayCommand]
@@ -376,8 +385,7 @@ public partial class DesignerViewModel : ObservableObject
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
 
-        var printService = App.Services!.GetRequiredService<Core.Interfaces.IPrintService>();
-        var bitmap = await ((Infrastructure.Export.PrintService)printService).RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
+        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
 
         using var fileStream = await file.OpenStreamForWriteAsync();
         var encoder = Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
