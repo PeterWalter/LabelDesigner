@@ -17,6 +17,7 @@
         <Grid.Resources>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
             <converters:ColorToBrushConverter x:Key="ColorToBrush"/>
+            <converters:ToolModeToBackgroundConverter x:Key="ToolModeToBackground"/>
             <Style TargetType="TextBox" x:Key="PropBox">
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Height" Value="24"/>
@@ -38,25 +39,47 @@
 
                 <ribbon:RibbonTab Header="Home" Background="#FAFAFA">
                     <ribbon:RibbonGroup Header="Elements" Background="#FAFAFA">
-                        <ribbon:RibbonButton Content="Select" Command="{Binding Designer.SelectToolCommand}" AllowedSizeModes="Large">
+                        <ribbon:RibbonButton 
+                            Content="Select" 
+                            Command="{Binding Designer.SelectToolCommand}" 
+                            AllowedSizeModes="Large"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=Select}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8B6;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Barcode" Command="{Binding Designer.AddBarcodeCommand}">
+                        <ribbon:RibbonButton 
+                            Content="Barcode" 
+                            Command="{Binding Designer.AddBarcodeCommand}"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceBarcode}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Text" Command="{Binding Designer.AddTextCommand}">
+                        <ribbon:RibbonButton 
+                            Content="Text" 
+                            Command="{Binding Designer.AddTextCommand}"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceText}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Shape" Command="{Binding Designer.AddShapeCommand}">
+                        <ribbon:RibbonButton 
+                            Content="Shape" 
+                            Command="{Binding Designer.AddShapeCommand}"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceShape}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Line" Command="{Binding Designer.AddLineCommand}">
+                        <ribbon:RibbonButton 
+                            Content="Line" 
+                            Command="{Binding Designer.AddLineCommand}"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceLine}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE136;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Image" Command="{Binding Designer.AddImageCommand}">
+                        <ribbon:RibbonButton 
+                            Content="Image" 
+                            Command="{Binding Designer.AddImageCommand}"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceImage}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="SVG" Command="{Binding Designer.AddSvgCommand}">
+                        <ribbon:RibbonButton 
+                            Content="SVG" 
+                            Command="{Binding Designer.AddSvgCommand}"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceSvg}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB8C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}" AllowedSizeModes="Large">

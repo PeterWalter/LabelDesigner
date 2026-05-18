@@ -71,6 +71,9 @@ public partial class DesignerViewModel : ObservableObject
     public InteractionState InteractionState { get; private set; } = InteractionState.Idle;
     public RectD? MarqueeSelectionRect { get; private set; }
 
+    [ObservableProperty]
+    private ToolMode activeTool = ToolMode.Select;
+
     private DocumentDefaults Defaults => _scene.CurrentDocument.Defaults;
     private PointD? _marqueeStartPoint;
     private ResizeHandle _activeHandle = ResizeHandle.None;
@@ -494,7 +497,8 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void SelectTool()
     {
-        CancelPlacement();
+        ActiveTool = ToolMode.Select;
+        _placementMode = PlacementMode.None;
         RequestRedraw?.Invoke();
     }
 
@@ -729,6 +733,7 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void AddBarcode()
     {
+        ActiveTool = ToolMode.PlaceBarcode;
         EnterPlacementMode(new BarcodeElement
         {
             Bounds = new RectD(0, 0, 200, 100),
@@ -743,6 +748,7 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void AddText()
     {
+        ActiveTool = ToolMode.PlaceText;
         EnterPlacementMode(new TextElement
         {
             Bounds = new RectD(0, 0, 150, 30),
@@ -1171,6 +1177,7 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void AddShape()
     {
+        ActiveTool = ToolMode.PlaceShape;
         EnterPlacementMode(new ShapeElement
         {
             Bounds = new RectD(0, 0, 120, 80),
@@ -1183,19 +1190,21 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void AddLine()
     {
-        // Line uses click-drag mode: first click sets start, release sets end
+        ActiveTool = ToolMode.PlaceLine;
         _placementMode = PlacementMode.LineClickDrag;
     }
 
     [RelayCommand]
     private async Task AddImage()
     {
+        ActiveTool = ToolMode.PlaceImage;
         await PickAndPlaceImage(new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg" });
     }
 
     [RelayCommand]
     private async Task AddSvg()
     {
+        ActiveTool = ToolMode.PlaceSvg;
         await PickAndPlaceSvg(new[] { ".svg" });
     }
 
@@ -1637,6 +1646,10 @@ public partial class DesignerViewModel : ObservableObject
             RequestRedraw?.Invoke();
             return;
         }
+
+        // Only allow selection and dragging when in Select tool mode
+        if (ActiveTool != ToolMode.Select)
+            return;
 
         if (Selected != null)
         {
