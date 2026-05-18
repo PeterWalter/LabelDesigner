@@ -20,3 +20,6 @@ obj/
 # Environment secrets
 .env
 .deepseek/
+
+# Mono local registry artifacts
+**/.mono/

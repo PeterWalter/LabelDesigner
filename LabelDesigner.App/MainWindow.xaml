@@ -65,7 +65,31 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7B4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Align">
+                        <ribbon:RibbonButton Content="Left" Command="{Binding Designer.AlignLeftCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE12B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Center" Command="{Binding Designer.AlignCenterCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE14A;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Right" Command="{Binding Designer.AlignRightCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE12C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Top" Command="{Binding Designer.AlignTopCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE14B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Bottom" Command="{Binding Designer.AlignBottomCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE14C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Dist H" Command="{Binding Designer.DistributeHorizontalCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE134;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Dist V" Command="{Binding Designer.DistributeVerticalCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE135;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Clipboard">
+                        <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}" ToolTipService.ToolTip="Copy (Ctrl+C)">
                         <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}"
                             AutomationProperties.Name="Copy selected element (Ctrl+C)"
                             ToolTipService.ToolTip="Copy (Ctrl+C)">
@@ -74,6 +98,7 @@
                                 <KeyboardAccelerator Modifiers="Control" Key="C"/>
                             </ribbon:RibbonButton.KeyboardAccelerators>
                         </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}" ToolTipService.ToolTip="Paste (Ctrl+V)">
                         <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}"
                             AutomationProperties.Name="Paste element (Ctrl+V)"
                             ToolTipService.ToolTip="Paste (Ctrl+V)">

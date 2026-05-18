@@ -17,5 +17,18 @@
     PointerMoved="OnPointerMoved"
     PointerPressed="OnPointerPressed"
     PointerExited="OnPointerExited"
-    PointerReleased="OnPointerReleased"/>
+    PointerReleased="OnPointerReleased">
+        <canvas:CanvasControl.ContextFlyout>
+            <MenuFlyout>
+                <MenuFlyoutItem Text="Cut" Command="{Binding Designer.CutSelectedCommand}"/>
+                <MenuFlyoutItem Text="Copy" Command="{Binding Designer.CopySelectedCommand}"/>
+                <MenuFlyoutItem Text="Paste" Command="{Binding Designer.PasteElementCommand}"/>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Delete" Command="{Binding Designer.DeleteSelectedCommand}"/>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Bring to Front" Command="{Binding Designer.BringToFrontCommand}"/>
+                <MenuFlyoutItem Text="Send to Back" Command="{Binding Designer.SendToBackCommand}"/>
+            </MenuFlyout>
+        </canvas:CanvasControl.ContextFlyout>
+    </canvas:CanvasControl>
 </UserControl>
