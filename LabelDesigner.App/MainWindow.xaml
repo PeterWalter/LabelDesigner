@@ -166,13 +166,19 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="20"/>
-                <ColumnDefinition Width="180"/>
+                <ColumnDefinition x:Name="LayerColumn" Width="180"/>
+                <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition x:Name="PropertiesColumn" Width="220"/>
             </Grid.ColumnDefinitions>
 
             <controls:RulerControl Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
                 Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
+
+            <Border Grid.Column="2" x:Name="SplitterLeft" Width="4" Background="Transparent" Cursor="SizeWestEast"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
             <Border Grid.Column="1" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Padding="6,4">
                 <Grid>
@@ -205,9 +211,13 @@
                 </Grid>
             </Border>
 
-            <views:DesignerCanvasView Grid.Column="2"/>
+            <views:DesignerCanvasView Grid.Column="3"/>
 
-            <Border Grid.Column="3" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
+            <Border Grid.Column="4" x:Name="SplitterRight" Width="4" Background="Transparent" Cursor="SizeWestEast"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
+
+            <Border Grid.Column="5" Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
                 Visibility="{Binding Designer.Properties.IsVisible, Converter={StaticResource BoolToVisibility}}">
                 <ScrollViewer Padding="8,4">
                     <StackPanel Spacing="5">
