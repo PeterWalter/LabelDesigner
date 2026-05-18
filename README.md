@@ -1,39 +1,116 @@
 # LabelDesigner
 
-LabelDesigner is a WinUI-based desktop application for designing label layouts and producing barcode-driven output for print and PDF workflows.
+A professional **WinUI 3** desktop application for designing barcode labels — built for Windows with full print, PDF and PNG export.
 
-## Current capabilities
+---
 
-- Scene-based label editing with selection, move/resize/rotate, zoom/pan, rulers, and layers.
-- Element support: barcode, text, shape, line, and image.
-- Undo/redo, copy/paste, templates, and document persistence.
-- Data binding from CSV for record-driven output.
-- Export and output paths for print preview, direct print flow, PDF, and PNG.
+## Features
 
-## Architecture direction
+### Label Canvas
+- **Scene-based editing** — select, move, resize, rotate elements with handles
+- **Zoom & pan** — smooth canvas zoom with mouse wheel; pan with middle-button drag
+- **Rulers** — horizontal & vertical rulers with configurable units (mm / cm / in); origin (0, 0) aligned to page top-left corner
+- **Snap to grid** — configurable grid size, toggle on/off via Settings
+- **Undo / redo** — full command history (Ctrl+Z / Ctrl+Y)
+- **Copy / paste** — element clipboard with clone-at-copy (Ctrl+C / Ctrl+V)
+- **Multi-select** — rubber-band selection + Shift-click; alignment commands on selection
+- **Page templates** — standard label sizes (A4, letter, custom)
 
-The project is being deepened around explicit seams so behavior is easier to test, evolve, and automate:
+### Elements
+| Type | Notes |
+|------|-------|
+| **Barcode** | QR, Code 128, EAN-13, EAN-8, DataMatrix, PDF417, and more via ZXing.Net |
+| **Text** | Multiline; font family, size, bold/italic, color, horizontal alignment |
+| **Shape** | Rectangle, ellipse, rounded rectangle; fill & stroke |
+| **Line** | Free-angle line with color and weight |
+| **Image** | JPEG/PNG import |
 
-- **Interaction seam** for pointer/placement behavior.
-- **Label Editing seam** for copy/paste, alignment, and element mutation flows.
-- **Rendering seam** (draw-command based, see ADR) to unify preview/print/PDF fidelity.
-- **Settings and layout seams** for ruler units, workspace layout, and output pagination.
+### Barcode text label
+- The human-readable text below a barcode has its own **font family, size, and color**, independent of the barcode symbol.
 
-Domain vocabulary is documented in `CONTEXT.md`, and rendering decisions are tracked in `docs/adr/0001-draw-command-rendering-seam.md`.
+### Layers panel
+- Named layers (Layer 1, Layer 2 …)
+- Per-layer **visibility** toggle (eye icon) and **lock** toggle
+- Expand / collapse layer to see contained elements
+- Element count badge per layer
+- **Add / Delete layer** toolbar
+- Canvas selection synchronised — selected element highlighted in blue
 
-## Planned roadmap highlights
+### Properties panel
+- Live position (X, Y), size (W, H), rotation for any selected element
+- Element-specific fields: barcode value & symbology; text content, font, alignment; fill/stroke color; image source
+- All edits routed through the undo stack
 
-- Workspace docking for Layers/Properties tool panes with persisted layout and reset.
-- Ruler unit settings (mm/cm/in) with page origin aligned to ruler `0,0`.
-- Snap-to-grid and alignment guides with clearer visual feedback.
-- Richer text formatting (font family/size/style, multiline, alignment, spacing).
-- Unified print/PDF pagination with single-record-per-page and tiled multi-label merge modes.
-- Accessibility and keyboard-first shell feedback improvements.
+### Output
+- **Print preview** — paginated multi-page preview with zoom
+- **Direct print** — sends to any installed Windows printer; supports multiple labels per sheet
+- **Multi-label sheet layout** — configure rows, columns, gap, and margin for tiled label sheets
+- **Export to PDF** — full-fidelity vector PDF via SkiaSharp
+- **Export to PNG** — high-resolution raster export
 
-## Repository layout
+### Data binding
+- Bind text / barcode fields to a **CSV column**
+- Merge-print mode generates one page per CSV record
 
-- `LabelDesigner.App` - WinUI shell, views, and viewmodels.
-- `LabelDesigner.Application` - application-level orchestration and use-case modules.
-- `LabelDesigner.Core` - domain models, value objects, and interfaces.
-- `LabelDesigner.Infrastructure` - rendering, export, persistence, and external integrations.
-- `LabelDesigner.Tests` - test project (to be expanded as seams are deepened).
+### Settings
+- **Theme** — Light / Dark / System
+- **Ruler units** — mm / cm / in
+- **Snap to grid** — on/off with configurable grid size
+
+---
+
+## Architecture
+
+```
+LabelDesigner.App           WinUI 3 shell: views, view-models, converters
+LabelDesigner.Application   Application services: scene graph, undo, file I/O, print
+LabelDesigner.Core          Domain models, interfaces, value objects (no UI dependency)
+LabelDesigner.Infrastructure Rendering (SkiaSharp/Win2D), export, barcode, persistence
+LabelDesigner.Tests         Unit tests: scene graph, undo/redo, persistence
+```
+
+Key architectural decisions are tracked in [`docs/adr/`](docs/adr/). Domain vocabulary is in [`CONTEXT.md`](CONTEXT.md).
+
+### Design seams
+| Seam | Responsibility |
+|------|---------------|
+| **Interaction** | Pointer placement, rubber-band select, resize / rotate handles |
+| **Label Editing** | Copy/paste, alignment, element ordering, property mutations |
+| **Rendering** | Draw-command pipeline shared by canvas, print preview, PDF, and PNG |
+| **Settings & Layout** | Ruler units, workspace layout, sheet layout pagination |
+
+---
+
+## Tech stack
+
+| Concern | Library |
+|---------|---------|
+| UI framework | WinUI 3 / Windows App SDK |
+| MVVM | CommunityToolkit.Mvvm |
+| Canvas rendering | Microsoft.Graphics.Canvas (Win2D) |
+| PDF / PNG export | SkiaSharp |
+| Barcode generation | ZXing.Net |
+| Unit testing | xUnit |
+
+---
+
+## Building
+
+Requires **Visual Studio 2022** (or later) with the **Windows App SDK** workload installed.
+
+```
+dotnet build LabelDesigner.slnx
+dotnet test  LabelDesigner.Tests
+```
+
+---
+
+## Roadmap (next)
+
+- SVG import (Svg.Skia)
+- Right-click context menu (Cut / Copy / Paste / Bring to Front / Send to Back)
+- Label Stock Presets (Avery, Dymo, Zebra standard sheets)
+- Dark theme polish
+- Accessibility (Narrator / keyboard-first navigation)
+- Recent files list
+- Unit test coverage for rendering seam and CSV data binding
