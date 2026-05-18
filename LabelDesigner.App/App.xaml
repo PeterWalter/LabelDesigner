@@ -12,40 +12,56 @@
             </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="AppShellBackgroundBrush" Color="#F0F2F5"/>
-                    <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FAFAFA"/>
-                    <SolidColorBrush x:Key="AppSurfaceAltBrush" Color="#F0F2F5"/>
-                    <SolidColorBrush x:Key="AppSurfaceSubtleBrush" Color="#F5F5F5"/>
-                    <SolidColorBrush x:Key="AppPaneItemBrush" Color="#E4EAF0"/>
-                    <SolidColorBrush x:Key="AppPaneBadgeBrush" Color="#C8D4E0"/>
-                    <SolidColorBrush x:Key="AppBorderBrush" Color="#E0E0E0"/>
-                    <SolidColorBrush x:Key="AppTextBrush" Color="#1A1A1A"/>
-                    <SolidColorBrush x:Key="AppSubtleTextBrush" Color="#666666"/>
-                    <SolidColorBrush x:Key="AppMutedTextBrush" Color="#888888"/>
-                    <SolidColorBrush x:Key="AppStatusTextBrush" Color="#555555"/>
-                    <SolidColorBrush x:Key="AppStatusSeparatorBrush" Color="#CCCCCC"/>
-                    <SolidColorBrush x:Key="AppGlyphBrush" Color="#555555"/>
-                    <SolidColorBrush x:Key="AppSecondaryGlyphBrush" Color="#667788"/>
-                    <SolidColorBrush x:Key="AppBadgeTextBrush" Color="#445566"/>
+                    <SolidColorBrush x:Key="AppShellBackgroundBrush" Color="#ECEEF2"/>
+                    <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="AppSurfaceAltBrush" Color="#F2F4F7"/>
+                    <SolidColorBrush x:Key="AppSurfaceSubtleBrush" Color="#F7F8FA"/>
+                    <SolidColorBrush x:Key="AppPaneItemBrush" Color="#E8EDF3"/>
+                    <SolidColorBrush x:Key="AppPaneBadgeBrush" Color="#D0DCE8"/>
+                    <SolidColorBrush x:Key="AppBorderBrush" Color="#DDE1E7"/>
+                    <SolidColorBrush x:Key="AppTextBrush" Color="#111827"/>
+                    <SolidColorBrush x:Key="AppSubtleTextBrush" Color="#4B5563"/>
+                    <SolidColorBrush x:Key="AppMutedTextBrush" Color="#6B7280"/>
+                    <SolidColorBrush x:Key="AppStatusTextBrush" Color="#374151"/>
+                    <SolidColorBrush x:Key="AppStatusSeparatorBrush" Color="#D1D5DB"/>
+                    <SolidColorBrush x:Key="AppGlyphBrush" Color="#374151"/>
+                    <SolidColorBrush x:Key="AppSecondaryGlyphBrush" Color="#6B7280"/>
+                    <SolidColorBrush x:Key="AppBadgeTextBrush" Color="#1E3A5F"/>
                     <SolidColorBrush x:Key="AppSelectedTextBrush" Color="#FFFFFF"/>
+                    <!-- Active layer -->
+                    <SolidColorBrush x:Key="AppActiveLayerBgBrush" Color="#EBF3FE"/>
+                    <SolidColorBrush x:Key="AppActiveLayerAccentBrush" Color="#0078D4"/>
+                    <SolidColorBrush x:Key="AppActivePillBgBrush" Color="#0078D4"/>
+                    <SolidColorBrush x:Key="AppActivePillTextBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="AppLockedPillBgBrush" Color="#FFF3E0"/>
+                    <SolidColorBrush x:Key="AppLockedPillTextBrush" Color="#B45309"/>
+                    <SolidColorBrush x:Key="AppLayerRowHoverBrush" Color="#F0F5FF"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="AppShellBackgroundBrush" Color="#1E1E1E"/>
-                    <SolidColorBrush x:Key="AppSurfaceBrush" Color="#252526"/>
-                    <SolidColorBrush x:Key="AppSurfaceAltBrush" Color="#2D2D30"/>
-                    <SolidColorBrush x:Key="AppSurfaceSubtleBrush" Color="#333337"/>
-                    <SolidColorBrush x:Key="AppPaneItemBrush" Color="#30343B"/>
-                    <SolidColorBrush x:Key="AppPaneBadgeBrush" Color="#404854"/>
-                    <SolidColorBrush x:Key="AppBorderBrush" Color="#3F3F46"/>
-                    <SolidColorBrush x:Key="AppTextBrush" Color="#F3F3F3"/>
-                    <SolidColorBrush x:Key="AppSubtleTextBrush" Color="#D0D0D0"/>
-                    <SolidColorBrush x:Key="AppMutedTextBrush" Color="#B0B0B0"/>
-                    <SolidColorBrush x:Key="AppStatusTextBrush" Color="#D0D0D0"/>
-                    <SolidColorBrush x:Key="AppStatusSeparatorBrush" Color="#6A6A6A"/>
-                    <SolidColorBrush x:Key="AppGlyphBrush" Color="#D0D0D0"/>
-                    <SolidColorBrush x:Key="AppSecondaryGlyphBrush" Color="#C0CBD6"/>
-                    <SolidColorBrush x:Key="AppBadgeTextBrush" Color="#E1E6EC"/>
+                    <SolidColorBrush x:Key="AppShellBackgroundBrush" Color="#1A1B1E"/>
+                    <SolidColorBrush x:Key="AppSurfaceBrush" Color="#242528"/>
+                    <SolidColorBrush x:Key="AppSurfaceAltBrush" Color="#2C2D31"/>
+                    <SolidColorBrush x:Key="AppSurfaceSubtleBrush" Color="#313235"/>
+                    <SolidColorBrush x:Key="AppPaneItemBrush" Color="#2E3038"/>
+                    <SolidColorBrush x:Key="AppPaneBadgeBrush" Color="#3D4350"/>
+                    <SolidColorBrush x:Key="AppBorderBrush" Color="#3B3D44"/>
+                    <SolidColorBrush x:Key="AppTextBrush" Color="#F1F3F5"/>
+                    <SolidColorBrush x:Key="AppSubtleTextBrush" Color="#CDD0D6"/>
+                    <SolidColorBrush x:Key="AppMutedTextBrush" Color="#9CA3AF"/>
+                    <SolidColorBrush x:Key="AppStatusTextBrush" Color="#D1D5DB"/>
+                    <SolidColorBrush x:Key="AppStatusSeparatorBrush" Color="#4B5563"/>
+                    <SolidColorBrush x:Key="AppGlyphBrush" Color="#D1D5DB"/>
+                    <SolidColorBrush x:Key="AppSecondaryGlyphBrush" Color="#B8C2D0"/>
+                    <SolidColorBrush x:Key="AppBadgeTextBrush" Color="#E0E8F5"/>
                     <SolidColorBrush x:Key="AppSelectedTextBrush" Color="#FFFFFF"/>
+                    <!-- Active layer -->
+                    <SolidColorBrush x:Key="AppActiveLayerBgBrush" Color="#142033"/>
+                    <SolidColorBrush x:Key="AppActiveLayerAccentBrush" Color="#60CDFF"/>
+                    <SolidColorBrush x:Key="AppActivePillBgBrush" Color="#003F6C"/>
+                    <SolidColorBrush x:Key="AppActivePillTextBrush" Color="#60CDFF"/>
+                    <SolidColorBrush x:Key="AppLockedPillBgBrush" Color="#3D2500"/>
+                    <SolidColorBrush x:Key="AppLockedPillTextBrush" Color="#FFB900"/>
+                    <SolidColorBrush x:Key="AppLayerRowHoverBrush" Color="#252A35"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

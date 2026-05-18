@@ -86,7 +86,6 @@ public sealed partial class RulerControl : UserControl
 
         double pixelsPerMm = PixelsPerMm;
         var vp = Viewport;
-        double offset = IsVertical ? (vp?.OffsetY ?? 0) : (vp?.OffsetX ?? 0);
         double zoom = vp?.Zoom ?? 1.0;
         double tickInterval = zoom < 0.5 ? 100 : zoom < 1.0 ? 50 : zoom < 2.0 ? 25 : 10;
         double labelInterval = 100;
@@ -94,14 +93,24 @@ public sealed partial class RulerControl : UserControl
         float rulerDim = IsVertical ? (float)sender.ActualWidth : (float)sender.ActualHeight;
 
         // Compute the visible world range so the loop only covers what's on screen
-        double worldStart = offset / zoom;
-        double worldEnd = (offset + canvasLen) / zoom;
+        double worldStart = IsVertical
+            ? (vp?.ScreenToWorld(new Windows.Foundation.Point(0, 0)).Y ?? 0)
+            : (vp?.ScreenToWorld(new Windows.Foundation.Point(0, 0)).X ?? 0);
+        double worldEnd = IsVertical
+            ? (vp?.ScreenToWorld(new Windows.Foundation.Point(0, canvasLen)).Y ?? 0)
+            : (vp?.ScreenToWorld(new Windows.Foundation.Point(canvasLen, 0)).X ?? 0);
+
+        if (worldEnd < worldStart)
+            (worldStart, worldEnd) = (worldEnd, worldStart);
+
         double alignedStart = Math.Floor(worldStart / tickInterval) * tickInterval;
         double pageOrigin = IsVertical ? (vp?.PageOriginY ?? 0) : (vp?.PageOriginX ?? 0);
 
         for (double wp = alignedStart; wp <= worldEnd + tickInterval; wp += Math.Max(tickInterval, 5))
         {
-            double sp = wp * zoom - offset;
+            double sp = IsVertical
+                ? (vp?.WorldToScreen(new Windows.Foundation.Point(0, wp)).Y ?? 0)
+                : (vp?.WorldToScreen(new Windows.Foundation.Point(wp, 0)).X ?? 0);
             if (sp < -10 || sp > canvasLen + 10) continue;
 
             // Labels show measurement relative to page corner (page top-left = 0)

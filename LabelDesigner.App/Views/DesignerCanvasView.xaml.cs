@@ -301,17 +301,20 @@ public sealed partial class DesignerCanvasView : UserControl
             double newZoom = vm.Viewport.Zoom + (delta > 0 ? 0.1 : -0.1);
             newZoom = Math.Clamp(newZoom, CanvasViewport.MinZoom, CanvasViewport.MaxZoom);
             vm.Viewport.Zoom = newZoom;
-            var worldAfter = vm.Viewport.ScreenToWorld(cursorPos);
-            vm.Viewport.OffsetX += (worldAfter.X - worldBefore.X) * vm.Viewport.Zoom;
-            vm.Viewport.OffsetY += (worldAfter.Y - worldBefore.Y) * vm.Viewport.Zoom;
+            vm.Viewport.OffsetX = worldBefore.X - (cursorPos.X / vm.Viewport.Zoom);
+            vm.Viewport.OffsetY = worldBefore.Y - (cursorPos.Y / vm.Viewport.Zoom);
+        }
+        else if (props.IsHorizontalMouseWheel)
+        {
+            vm.Viewport.OffsetX -= delta / 2.0;
         }
         else if (shiftHeld)
         {
-            vm.Viewport.OffsetX -= delta / 2;
+            vm.Viewport.OffsetX -= delta / 2.0;
         }
         else
         {
-            vm.Viewport.OffsetY -= delta / 2;
+            vm.Viewport.OffsetY -= delta / 2.0;
         }
         _canvas?.Invalidate();
     }

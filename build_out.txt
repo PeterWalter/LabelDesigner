@@ -1,0 +1,11 @@
+  LabelDesigner.Core -> D:\projects\source code\LabelDesigner\LabelDesigner.Core\bin\Debug\net10.0\LabelDesigner.Core.dll
+  LabelDesigner.Application -> D:\projects\source code\LabelDesigner\LabelDesigner.Application\bin\Debug\net10.0\LabelDesigner.Application.dll
+  LabelDesigner.Infrastructure -> D:\projects\source code\LabelDesigner\LabelDesigner.Infrastructure\bin\Debug\net10.0-windows10.0.19041.0\LabelDesigner.Infrastructure.dll
+  LabelDesigner.Tests -> D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Debug\net10.0\LabelDesigner.Tests.dll
+  LabelDesigner.App -> D:\projects\source code\LabelDesigner\LabelDesigner.App\bin\x64\Debug\net10.0-windows10.0.19041.0\win-x64\LabelDesigner.App.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:22.55

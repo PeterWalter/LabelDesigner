@@ -15,6 +15,11 @@ public partial class LayerPanelViewModel : ObservableObject
     [ObservableProperty]
     public partial LayerItemViewModel? SelectedLayer { get; set; }
 
+    partial void OnSelectedLayerChanged(LayerItemViewModel? value)
+    {
+        UpdateActiveLayerState(value?.LayerId);
+    }
+
     public Action? RequestRedraw { get; set; }
 
     public LayerPanelViewModel(ISceneGraphService scene)
@@ -41,6 +46,7 @@ public partial class LayerPanelViewModel : ObservableObject
 
         SelectedLayer = Layers.FirstOrDefault(l => l.LayerId == previouslySelectedLayerId)
             ?? Layers.FirstOrDefault();
+        UpdateActiveLayerState(SelectedLayer?.LayerId);
     }
 
     public void SelectElement(Guid? elementId)
@@ -51,6 +57,12 @@ public partial class LayerPanelViewModel : ObservableObject
             _scene.Select(elementId.Value);
             Refresh(elementId);
         }
+    }
+
+    private void UpdateActiveLayerState(Guid? activeLayerId)
+    {
+        foreach (var layer in Layers)
+            layer.IsActive = activeLayerId.HasValue && layer.LayerId == activeLayerId.Value;
     }
 
     [RelayCommand]
@@ -107,10 +119,15 @@ public partial class LayerItemViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
 
+    [ObservableProperty]
+    public partial bool IsActive { get; set; }
+
     public Guid LayerId => LayerNode.Id;
     public string VisibilityGlyph => IsVisible ? "\uE7B3" : "\uED1A";  // Eye / EyeHide
     public string LockGlyph => IsLocked ? "\uE72E" : "\uE785";         // Lock / Unlock
     public string ElementCountText => Children.Count == 1 ? "1 element" : $"{Children.Count} elements";
+    public string ActiveStateText => IsActive ? "Active" : "Inactive";
+    public string LockStateText => IsLocked ? "Locked" : "Unlocked";
 
     public ObservableCollection<ElementItemViewModel> Children { get; }
 
@@ -131,6 +148,12 @@ public partial class LayerItemViewModel : ObservableObject
 
     public void RefreshVisibility() => IsVisible = LayerNode.Visible;
     public void RefreshLock() => IsLocked = LayerNode.Locked;
+
+    partial void OnIsActiveChanged(bool value) => OnPropertyChanged(nameof(ActiveStateText));
+    partial void OnIsLockedChanged(bool value) => OnPropertyChanged(nameof(LockStateText));
+
+    [RelayCommand]
+    private void ActivateLayer() => _panel.SelectedLayer = this;
 
     [RelayCommand]
     private void ToggleVisibility() => _panel.OnToggleVisibility(this);

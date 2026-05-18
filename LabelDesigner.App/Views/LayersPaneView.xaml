@@ -12,17 +12,23 @@
     <UserControl.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
         <converters:BoolToStringConverter x:Key="BoolToExpandGlyph"/>
-        <!-- True = active (#2B5EA7), False = dim (#AAAAAA) -->
+        <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
         <converters:BoolToSolidBrushConverter x:Key="BoolToActiveBrush"/>
-        <!-- True = amber lock (#CC7700), False = dim (#AAAAAA) -->
         <converters:BoolToSolidBrushConverter x:Key="BoolToLockBrush"/>
-        <!-- True = selection highlight, False = transparent -->
         <converters:BoolToSolidBrushConverter x:Key="BoolToSelectionBrush"/>
-        <!-- True = selected text white, False = normal dark -->
         <converters:BoolToSolidBrushConverter x:Key="BoolToSelectedTextBrush"/>
+
+        <Style x:Key="LayerIconBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
     </UserControl.Resources>
 
-    <Border Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,0">
+    <Border Background="{ThemeResource AppSurfaceBrush}"
+            BorderBrush="{ThemeResource AppBorderBrush}"
+            BorderThickness="0,0,1,0">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -30,135 +36,218 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Border Grid.Row="0" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="6,3">
+            <!-- ── Header ── -->
+            <Border Grid.Row="0"
+                    Background="{ThemeResource AppSurfaceAltBrush}"
+                    BorderBrush="{ThemeResource AppBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="10,6">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="HeaderText" Grid.Column="0" Text="Layers"
-                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Foreground="{ThemeResource AppTextBrush}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE81E;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                  Foreground="{ThemeResource AppGlyphBrush}"/>
+                        <TextBlock x:Name="HeaderText" Text="Layers"
+                                   FontWeight="SemiBold" FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Foreground="{ThemeResource AppTextBrush}"/>
+                    </StackPanel>
                     <ToggleButton Grid.Column="1" x:Name="CollapseToggle"
-                        Width="28" Height="28" Padding="0" IsChecked="False"
-                        Checked="OnCollapseToggleChanged" Unchecked="OnCollapseToggleChanged"
-                        AutomationProperties.Name="Collapse Layers panel"
-                        ToolTipService.ToolTip="Collapse Layers panel">
-                        <FontIcon x:Name="CollapseIcon" Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                  Width="26" Height="26" Padding="0"
+                                  IsChecked="False" CornerRadius="4"
+                                  Checked="OnCollapseToggleChanged"
+                                  Unchecked="OnCollapseToggleChanged"
+                                  AutomationProperties.Name="Collapse Layers panel"
+                                  ToolTipService.ToolTip="Collapse Layers panel">
+                        <FontIcon x:Name="CollapseIcon" Glyph="&#xE76B;"
+                                  FontFamily="Segoe MDL2 Assets" FontSize="11"/>
                     </ToggleButton>
                 </Grid>
             </Border>
 
-            <!-- Layer tree -->
-            <ScrollViewer Grid.Row="1" x:Name="ContentArea" Padding="0,2,0,2">
+            <!-- ── Layer list ── -->
+            <ScrollViewer Grid.Row="1" x:Name="ContentArea" Padding="4,4,4,4">
                 <ItemsControl ItemsSource="{Binding Designer.Layers.Layers}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <!-- Layer header -->
-                                <Border Background="{ThemeResource AppPaneItemBrush}" Padding="2,3" Margin="0,2,0,0"
-                                    PointerPressed="OnLayerHeaderClick" Tag="{Binding}">
+                            <StackPanel Margin="0,1,0,1">
+
+                                <!-- Layer header row -->
+                                <Border CornerRadius="6" Margin="0,1,0,0"
+                                        Background="{Binding IsActive, Converter={StaticResource BoolToActiveBrush},
+                                                     ConverterParameter='$AppActiveLayerBgBrush|$AppPaneItemBrush'}"
+                                        PointerPressed="OnLayerHeaderClick" Tag="{Binding}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="18"/>  <!-- expand -->
-                                            <ColumnDefinition Width="22"/>  <!-- eye -->
-                                            <ColumnDefinition Width="22"/>  <!-- lock -->
-                                            <ColumnDefinition Width="*"/>   <!-- name -->
-                                            <ColumnDefinition Width="Auto"/><!-- badge -->
+                                            <ColumnDefinition Width="4"/>   <!-- accent bar -->
+                                            <ColumnDefinition Width="20"/>  <!-- expand -->
+                                            <ColumnDefinition Width="26"/>  <!-- eye -->
+                                            <ColumnDefinition Width="26"/>  <!-- lock -->
+                                            <ColumnDefinition Width="*"/>   <!-- name + pills -->
+                                            <ColumnDefinition Width="Auto"/><!-- count badge -->
+                                            <ColumnDefinition Width="28"/>  <!-- activate star -->
                                         </Grid.ColumnDefinitions>
 
-                                        <Button Grid.Column="0" Width="18" Height="18" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            Click="OnLayerExpandClick" Tag="{Binding}">
-                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="9" Foreground="{ThemeResource AppGlyphBrush}"
-                                                Glyph="{Binding IsExpanded, Converter={StaticResource BoolToExpandGlyph}, ConverterParameter='&#xE76C;|&#xE76D;', FallbackValue='&#xE76C;'}"/>
+                                        <!-- Active accent bar -->
+                                        <Border Grid.Column="0" CornerRadius="6,0,0,6"
+                                                Background="{Binding IsActive, Converter={StaticResource BoolToActiveBrush},
+                                                             ConverterParameter='$AppActiveLayerAccentBrush|transparent'}"/>
+
+                                        <!-- Expand/collapse -->
+                                        <Button Grid.Column="1"
+                                                Width="20" Height="20"
+                                                Style="{StaticResource LayerIconBtn}"
+                                                Click="OnLayerExpandClick" Tag="{Binding}"
+                                                VerticalAlignment="Center" Margin="0,0,0,0"
+                                                ToolTipService.ToolTip="Expand/collapse layer">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="9"
+                                                      Foreground="{ThemeResource AppGlyphBrush}"
+                                                      Glyph="{Binding IsExpanded, Converter={StaticResource BoolToExpandGlyph},
+                                                              ConverterParameter='&#xE76C;|&#xE76D;', FallbackValue='&#xE76C;'}"/>
                                         </Button>
 
-                                        <Button Grid.Column="1" Width="22" Height="18" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            Command="{Binding ToggleVisibilityCommand}"
-                                            ToolTipService.ToolTip="Toggle layer visibility">
-                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                                Glyph="{Binding VisibilityGlyph}"
-                                                Foreground="{Binding IsVisible, Converter={StaticResource BoolToActiveBrush}, ConverterParameter='#2B5EA7|$AppMutedTextBrush'}"/>
+                                        <!-- Visibility eye -->
+                                        <Button Grid.Column="2"
+                                                Width="26" Height="26"
+                                                Style="{StaticResource LayerIconBtn}"
+                                                Command="{Binding ToggleVisibilityCommand}"
+                                                VerticalAlignment="Center"
+                                                ToolTipService.ToolTip="Toggle layer visibility">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                      Glyph="{Binding VisibilityGlyph}"
+                                                      Foreground="{Binding IsVisible, Converter={StaticResource BoolToActiveBrush},
+                                                                   ConverterParameter='#0078D4|#9CA3AF'}"/>
                                         </Button>
 
-                                        <Button Grid.Column="2" Width="22" Height="18" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            Command="{Binding ToggleLockCommand}"
-                                            ToolTipService.ToolTip="Toggle layer lock">
-                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                                Glyph="{Binding LockGlyph}"
-                                                Foreground="{Binding IsLocked, Converter={StaticResource BoolToLockBrush}, ConverterParameter='#CC7700|$AppMutedTextBrush'}"/>
+                                        <!-- Lock -->
+                                        <Button Grid.Column="3"
+                                                Width="26" Height="26"
+                                                Style="{StaticResource LayerIconBtn}"
+                                                Command="{Binding ToggleLockCommand}"
+                                                VerticalAlignment="Center"
+                                                ToolTipService.ToolTip="Toggle layer lock">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                      Glyph="{Binding LockGlyph}"
+                                                      Foreground="{Binding IsLocked, Converter={StaticResource BoolToLockBrush},
+                                                                   ConverterParameter='#D97706|#9CA3AF'}"/>
                                         </Button>
 
-                                        <TextBox Grid.Column="3"
-                                            Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            FontWeight="SemiBold" FontSize="12" Foreground="{ThemeResource AppTextBrush}"
-                                            BorderThickness="0" Background="Transparent" Padding="2,0"
-                                            VerticalAlignment="Center" Height="22"/>
+                                        <!-- Name + status pills -->
+                                        <StackPanel Grid.Column="4" Orientation="Vertical" Spacing="2"
+                                                    VerticalAlignment="Center" Margin="2,4,2,4">
+                                            <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontWeight="SemiBold"
+                                                     FontSize="12"
+                                                     Foreground="{ThemeResource AppTextBrush}"
+                                                     BorderThickness="0" Background="Transparent"
+                                                     Padding="2,0" Height="22"/>
+                                            <!-- Status pills -->
+                                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="2,0,0,0">
+                                                <Border CornerRadius="4" Padding="5,1"
+                                                        Background="{ThemeResource AppActivePillBgBrush}"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBlock Text="Active" FontSize="9" FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource AppActivePillTextBrush}"/>
+                                                </Border>
+                                                <Border CornerRadius="4" Padding="5,1"
+                                                        Background="{ThemeResource AppLockedPillBgBrush}"
+                                                        Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBlock Text="Locked" FontSize="9" FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource AppLockedPillTextBrush}"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
 
-                                        <Border Grid.Column="4" Background="{ThemeResource AppPaneBadgeBrush}" CornerRadius="8"
-                                            Padding="5,1" Margin="2,0,3,0" VerticalAlignment="Center">
+                                        <!-- Element count badge -->
+                                        <Border Grid.Column="5"
+                                                Background="{ThemeResource AppPaneBadgeBrush}"
+                                                CornerRadius="8" Padding="6,2"
+                                                Margin="2,0,2,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding ElementCountText}"
-                                                FontSize="9" Foreground="{ThemeResource AppBadgeTextBrush}"/>
+                                                       FontSize="9"
+                                                       Foreground="{ThemeResource AppBadgeTextBrush}"/>
                                         </Border>
+
+                                        <!-- Activate button (star) -->
+                                        <Button Grid.Column="6"
+                                                Width="28" Height="28"
+                                                Style="{StaticResource LayerIconBtn}"
+                                                Command="{Binding ActivateLayerCommand}"
+                                                VerticalAlignment="Center"
+                                                ToolTipService.ToolTip="Set as active layer">
+                                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                                      Glyph="{Binding IsActive, Converter={StaticResource BoolToStringConverter},
+                                                              ConverterParameter='&#xE735;|&#xE734;'}"
+                                                      Foreground="{Binding IsActive, Converter={StaticResource BoolToActiveBrush},
+                                                                   ConverterParameter='#0078D4|#9CA3AF'}"/>
+                                        </Button>
                                     </Grid>
                                 </Border>
 
-                                <!-- Elements list -->
+                                <!-- Element children list -->
                                 <ItemsControl ItemsSource="{Binding Children}"
-                                    Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                              Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border CornerRadius="4" Padding="4,3" Margin="4,1,4,1"
-                                                Background="{Binding IsSelected, Converter={StaticResource BoolToSelectionBrush}, ConverterParameter='#1A73E8|transparent'}"
-                                                PointerPressed="OnLayerItemClick">
+                                            <Border CornerRadius="4" Padding="4,3"
+                                                    Margin="16,1,4,1"
+                                                    Background="{Binding IsSelected, Converter={StaticResource BoolToSelectionBrush},
+                                                                 ConverterParameter='#0078D4|transparent'}"
+                                                    PointerPressed="OnLayerItemClick">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="20"/>
-                                                        <ColumnDefinition Width="18"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding TypeGlyph}"
+                                                               FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="11"
+                                                               Foreground="{Binding IsSelected, Converter={StaticResource BoolToActiveBrush},
+                                                                            ConverterParameter='#FFFFFF|$AppSecondaryGlyphBrush'}"
+                                                               VerticalAlignment="Center"/>
                                                     <TextBlock Grid.Column="1"
-                                                        Text="{Binding TypeGlyph}"
-                                                        FontFamily="Segoe MDL2 Assets"
-                                                        FontSize="11" Foreground="{ThemeResource AppSecondaryGlyphBrush}"
-                                                        VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2"
-                                                        Text="{Binding Name}"
-                                                        FontSize="11" VerticalAlignment="Center"
-                                                        Foreground="{Binding IsSelected, Converter={StaticResource BoolToSelectedTextBrush}, ConverterParameter='$AppSelectedTextBrush|$AppTextBrush'}"
-                                                        TextTrimming="CharacterEllipsis"/>
+                                                               Text="{Binding Name}"
+                                                               FontSize="11"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{Binding IsSelected, Converter={StaticResource BoolToSelectedTextBrush},
+                                                                            ConverterParameter='$AppSelectedTextBrush|$AppTextBrush'}"
+                                                               TextTrimming="CharacterEllipsis"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Footer: Add/Delete layer -->
+            <!-- ── Footer: Add / Delete ── -->
             <Border Grid.Row="2" x:Name="FooterArea"
-                Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,3">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <Button FontSize="11" Height="24" Padding="8,0"
-                        Command="{Binding Designer.Layers.AddLayerCommand}"
-                        ToolTipService.ToolTip="Add new layer">
-                        <StackPanel Orientation="Horizontal" Spacing="3">
+                    Background="{ThemeResource AppSurfaceAltBrush}"
+                    BorderBrush="{ThemeResource AppBorderBrush}"
+                    BorderThickness="0,1,0,0" Padding="6,5">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Height="26" Padding="8,0" CornerRadius="5"
+                            Command="{Binding Designer.Layers.AddLayerCommand}"
+                            ToolTipService.ToolTip="Add new layer">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
                             <FontIcon Glyph="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
-                            <TextBlock Text="Layer" FontSize="11"/>
+                            <TextBlock Text="Add Layer" FontSize="11"/>
                         </StackPanel>
                     </Button>
-                    <Button FontSize="11" Height="24" Padding="8,0"
-                        Command="{Binding Designer.Layers.DeleteSelectedLayerCommand}"
-                        ToolTipService.ToolTip="Delete selected layer">
-                        <StackPanel Orientation="Horizontal" Spacing="3">
+                    <Button Height="26" Padding="8,0" CornerRadius="5"
+                            Command="{Binding Designer.Layers.DeleteSelectedLayerCommand}"
+                            ToolTipService.ToolTip="Delete selected layer">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
                             <FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
-                            <TextBlock Text="Layer" FontSize="11"/>
+                            <TextBlock Text="Delete" FontSize="11"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
