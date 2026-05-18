@@ -33,4 +33,11 @@ public class DataSourceConfig
 {
     public string Type { get; set; } = "";
     public string Path { get; set; } = "";
+    public string MergeMode { get; set; } = nameof(DataMergeMode.OneRecordPerPage);
+}
+
+public enum DataMergeMode
+{
+    OneRecordPerPage,
+    MultipleRecordsPerPage
 }

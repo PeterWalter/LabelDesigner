@@ -7,6 +7,7 @@ namespace LabelDesigner.Core.Interfaces;
 public interface IElementInteractionService
 {
     bool IsDragging { get; }
+    bool SnapEnabled { get; set; }
 
     ResizeHandle GetHoverHandle(DesignElement? selected, PointD point, double zoom);
     void BeginDrag(PointD startPoint, DesignElement selected, ResizeHandle handle);

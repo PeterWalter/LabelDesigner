@@ -24,6 +24,7 @@ public partial class LayerPanelViewModel : ObservableObject
 
     public void Refresh(Guid? selectedElementId = null)
     {
+        var previouslySelectedLayerId = SelectedLayer?.LayerId;
         Layers.Clear();
         foreach (var layer in _scene.CurrentDocument.Layers)
         {
@@ -37,6 +38,9 @@ public partial class LayerPanelViewModel : ObservableObject
             var vm = new LayerItemViewModel(this, layer, children);
             Layers.Add(vm);
         }
+
+        SelectedLayer = Layers.FirstOrDefault(l => l.LayerId == previouslySelectedLayerId)
+            ?? Layers.FirstOrDefault();
     }
 
     public void SelectElement(Guid? elementId)
@@ -55,6 +59,7 @@ public partial class LayerPanelViewModel : ObservableObject
         int layerNum = _scene.CurrentDocument.Layers.Count + 1;
         _scene.AddLayer($"Layer {layerNum}");
         Refresh();
+        SelectedLayer = Layers.LastOrDefault();
     }
 
     [RelayCommand]

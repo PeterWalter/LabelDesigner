@@ -39,7 +39,8 @@ public class DataBindingServiceTests
             DataSource = new DataSourceConfig
             {
                 Type = "csv",
-                Path = "sample.csv"
+                Path = "sample.csv",
+                MergeMode = nameof(DataMergeMode.MultipleRecordsPerPage)
             }
         };
 
@@ -89,6 +90,7 @@ public class DataBindingServiceTests
         Assert.Contains(elementId, boundLayer.ElementIds);
         Assert.Equal("csv", bound.DataSource?.Type);
         Assert.Equal("sample.csv", bound.DataSource?.Path);
+        Assert.Equal(nameof(DataMergeMode.MultipleRecordsPerPage), bound.DataSource?.MergeMode);
         Assert.Equal(5, bound.Page.Margins.Left);
         Assert.Equal(8, bound.Page.Margins.Bottom);
     }

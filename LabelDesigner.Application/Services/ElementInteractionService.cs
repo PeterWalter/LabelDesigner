@@ -20,6 +20,7 @@ public class ElementInteractionService : IElementInteractionService
     }
 
     public bool IsDragging => _isDragging;
+    public bool SnapEnabled { get; set; } = true;
 
     public ResizeHandle GetHoverHandle(DesignElement? selected, PointD point, double zoom)
     {
@@ -93,7 +94,13 @@ public class ElementInteractionService : IElementInteractionService
 
         if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
         {
-            var snappedBounds = _snapService.Snap(_originalBounds.Translate(dx, dy), otherBounds, out var guides);
+            var movedBounds = _originalBounds.Translate(dx, dy);
+            IReadOnlyList<GuideLine> guides = Array.Empty<GuideLine>();
+            var snappedBounds = movedBounds;
+            if (SnapEnabled)
+            {
+                snappedBounds = _snapService.Snap(movedBounds, otherBounds, out guides);
+            }
             var clampedBounds = snappedBounds.ClampToBounds(pageRect);
             return new InteractionUpdate(clampedBounds, null, guides);
         }
@@ -102,8 +109,11 @@ public class ElementInteractionService : IElementInteractionService
             .EnsureMinimumSize(20, 20)
             .ClampToBounds(pageRect);
 
-        resizedBounds = SnapResizeToGrid(resizedBounds, _activeHandle)
-            .ClampToBounds(pageRect);
+        if (SnapEnabled)
+        {
+            resizedBounds = SnapResizeToGrid(resizedBounds, _activeHandle)
+                .ClampToBounds(pageRect);
+        }
 
         return new InteractionUpdate(resizedBounds, null, Array.Empty<GuideLine>());
     }

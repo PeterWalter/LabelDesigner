@@ -201,6 +201,12 @@
                         <ribbon:RibbonButton Content="CSV" Command="{Binding Designer.LoadDataSourceCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8E5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="1/Page" Command="{Binding Designer.SetMergeModeOneRecordPerPageCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Multi/Page" Command="{Binding Designer.SetMergeModeMultipleRecordsPerPageCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8EF;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Print All" Command="{Binding Designer.PrintWithDataCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>

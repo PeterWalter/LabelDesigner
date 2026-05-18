@@ -66,6 +66,7 @@ public partial class DesignerViewModel : ObservableObject
     public string ElementsText => $"Elements: {ElementCount}";
     public string SnapStateText => AppSettingsService.ShowSnapGrid ? "Snap: ON" : "Snap: OFF";
     public IReadOnlyList<string> RecentFiles => AppSettingsService.RecentFiles;
+    public int DataMergeModeIndex => GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage ? 1 : 0;
 
     public RectD PageBounds { get; set; } = new(0, 0, 800, 1100);
     public List<GuideLine> Guides { get; } = new();
@@ -318,6 +319,7 @@ public partial class DesignerViewModel : ObservableObject
 
     public bool IsInLinePlacementMode => _placementMode == PlacementMode.LineClickDrag;
     public bool IsInPlacementMode => _placementMode != PlacementMode.None;
+    public Guid? ActiveLayerId => GetTargetLayerId();
 
     public DesignerViewModel(
         ISceneGraphService scene,
@@ -379,6 +381,9 @@ public partial class DesignerViewModel : ObservableObject
         _scene.DocumentReset += _documentReset;
 
         var layer = _scene.AddLayer("Layer 1");
+        Layers.Refresh();
+        Layers.SelectedLayer = Layers.Layers.FirstOrDefault(l => l.LayerId == layer.Id);
+        _interaction.SnapEnabled = AppSettingsService.ShowSnapGrid;
 
         _scene.AddElement(new BarcodeElement
         {
@@ -617,6 +622,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(RulerUnitText));
         OnPropertyChanged(nameof(SnapStateText));
         OnPropertyChanged(nameof(RecentFiles));
+        OnPropertyChanged(nameof(DataMergeModeIndex));
         OnPropertyChanged(nameof(PageWidthMm));
         OnPropertyChanged(nameof(PageHeightMm));
         OnPropertyChanged(nameof(IsLandscape));
@@ -667,7 +673,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var ids = _scene.SelectedIds.ToList();
         if (ids.Count < 2) return;
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        var layerId = GetTargetLayerId();
         if (layerId == null) return;
 
         double minX = double.MaxValue, minY = double.MaxValue;
@@ -708,7 +714,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var container = Selected as ContainerElement;
         if (container == null) return;
-        var layerId = container.ParentId ?? _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        var layerId = container.ParentId ?? GetTargetLayerId();
         if (layerId == null) return;
 
         double offsetX = container.Bounds.X;
@@ -862,8 +868,10 @@ public partial class DesignerViewModel : ObservableObject
             _scene.CurrentDocument.DataSource = new DataSourceConfig
             {
                 Type = Path.GetExtension(file.Path).TrimStart('.'),
-                Path = file.Path
+                Path = file.Path,
+                MergeMode = nameof(DataMergeMode.OneRecordPerPage)
             };
+            OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (Exception ex)
         {
@@ -883,10 +891,20 @@ public partial class DesignerViewModel : ObservableObject
             if (records.Count == 0) { await Print(); return; }
 
             var originalDoc = _scene.CurrentDocument;
-            foreach (var record in records)
+            if (GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage)
             {
-                var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
-                await _printService.PrintAsync(boundDoc);
+                foreach (var page in BuildMergedPages(originalDoc, records))
+                {
+                    await _printService.PrintAsync(page);
+                }
+            }
+            else
+            {
+                foreach (var record in records)
+                {
+                    var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
+                    await _printService.PrintAsync(boundDoc);
+                }
             }
         }
         catch (FileNotFoundException ex)
@@ -989,7 +1007,7 @@ public partial class DesignerViewModel : ObservableObject
     public void PasteElement()
     {
         if (_clipboard == null) return;
-        var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+        var layerId = GetTargetLayerId();
         var clone = CloneElement(_clipboard);
         if (clone != null)
         {
@@ -1626,7 +1644,7 @@ public partial class DesignerViewModel : ObservableObject
             var page = _scene.CurrentDocument.Page;
             var pw = page.WidthMm * PixelsPerMm;
             var ph = page.HeightMm * PixelsPerMm;
-            var layerId = _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+            var layerId = GetTargetLayerId();
 
             // Center the element at click position
             var halfW = _pendingElement is LineElement ? 0 : (_pendingElement.Bounds.Width / 2);
@@ -1802,6 +1820,173 @@ public partial class DesignerViewModel : ObservableObject
             _scene.CurrentDocument.Page.HeightMm * PixelsPerMm);
     }
 
+    private Guid? GetTargetLayerId()
+    {
+        if (Layers.SelectedLayer is { } selectedLayer)
+            return selectedLayer.LayerId;
+
+        return _scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+    }
+
+    [RelayCommand]
+    private void SetMergeModeOneRecordPerPage()
+    {
+        if (_scene.CurrentDocument.DataSource == null)
+            return;
+
+        _scene.CurrentDocument.DataSource.MergeMode = nameof(DataMergeMode.OneRecordPerPage);
+        OnPropertyChanged(nameof(DataMergeModeIndex));
+    }
+
+    [RelayCommand]
+    private void SetMergeModeMultipleRecordsPerPage()
+    {
+        if (_scene.CurrentDocument.DataSource == null)
+            return;
+
+        _scene.CurrentDocument.DataSource.MergeMode = nameof(DataMergeMode.MultipleRecordsPerPage);
+        OnPropertyChanged(nameof(DataMergeModeIndex));
+    }
+
+    private DataMergeMode GetDataMergeMode()
+    {
+        var modeText = _scene.CurrentDocument.DataSource?.MergeMode;
+        if (string.IsNullOrWhiteSpace(modeText))
+            return DataMergeMode.OneRecordPerPage;
+
+        return Enum.TryParse<DataMergeMode>(modeText, true, out var mode)
+            ? mode
+            : DataMergeMode.OneRecordPerPage;
+    }
+
+    private IReadOnlyList<SceneDocument> BuildMergedPages(
+        SceneDocument originalDoc,
+        IReadOnlyList<IReadOnlyDictionary<string, string>> records)
+    {
+        var contentBounds = CalculateContentBounds(originalDoc.AllElements);
+        if (contentBounds.Width <= 0 || contentBounds.Height <= 0)
+            return Array.Empty<SceneDocument>();
+
+        var pageRect = GetPageRect();
+        var columns = Math.Max(1, (int)Math.Floor(pageRect.Width / contentBounds.Width));
+        var rows = Math.Max(1, (int)Math.Floor(pageRect.Height / contentBounds.Height));
+        var slotsPerPage = Math.Max(1, columns * rows);
+        var pages = new List<SceneDocument>();
+
+        for (int start = 0; start < records.Count; start += slotsPerPage)
+        {
+            var pageDoc = CreatePageCloneWithoutElements(originalDoc);
+            var end = Math.Min(start + slotsPerPage, records.Count);
+
+            for (int i = start; i < end; i++)
+            {
+                var slot = i - start;
+                var col = slot % columns;
+                var row = slot / columns;
+                var offsetX = (col * contentBounds.Width) - contentBounds.X;
+                var offsetY = (row * contentBounds.Height) - contentBounds.Y;
+                var boundDoc = _dataBinding.ApplyRecord(originalDoc, records[i]);
+
+                AppendDocumentElements(pageDoc, boundDoc, offsetX, offsetY);
+            }
+
+            pages.Add(pageDoc);
+        }
+
+        return pages;
+    }
+
+    private static RectD CalculateContentBounds(IEnumerable<DesignElement> elements)
+    {
+        double minX = double.MaxValue;
+        double minY = double.MaxValue;
+        double maxX = double.MinValue;
+        double maxY = double.MinValue;
+        var hasElement = false;
+
+        foreach (var element in elements)
+        {
+            var bounds = element.Bounds;
+            minX = Math.Min(minX, bounds.Left);
+            minY = Math.Min(minY, bounds.Top);
+            maxX = Math.Max(maxX, bounds.Right);
+            maxY = Math.Max(maxY, bounds.Bottom);
+            hasElement = true;
+        }
+
+        return hasElement ? new RectD(minX, minY, maxX - minX, maxY - minY) : new RectD(0, 0, 0, 0);
+    }
+
+    private static SceneDocument CreatePageCloneWithoutElements(SceneDocument source)
+    {
+        var clone = new SceneDocument
+        {
+            Version = source.Version,
+            Page = new PageNode
+            {
+                WidthMm = source.Page.WidthMm,
+                HeightMm = source.Page.HeightMm,
+                Dpi = source.Page.Dpi,
+                Margins = new Margins(
+                    source.Page.Margins.Left,
+                    source.Page.Margins.Top,
+                    source.Page.Margins.Right,
+                    source.Page.Margins.Bottom)
+            },
+            Defaults = source.Defaults,
+            DataSource = source.DataSource == null
+                ? null
+                : new DataSourceConfig
+                {
+                    Type = source.DataSource.Type,
+                    Path = source.DataSource.Path,
+                    MergeMode = source.DataSource.MergeMode
+                }
+        };
+
+        foreach (var layer in source.Layers)
+        {
+            clone.Layers.Add(new LayerNode
+            {
+                Id = layer.Id,
+                Name = layer.Name,
+                Visible = layer.Visible,
+                Locked = layer.Locked
+            });
+        }
+
+        return clone;
+    }
+
+    private static void AppendDocumentElements(SceneDocument target, SceneDocument source, double offsetX, double offsetY)
+    {
+        foreach (var element in source.AllElements)
+        {
+            var clone = DeepCloneWithNewId(element);
+            clone.Bounds = new RectD(
+                clone.Bounds.X + offsetX,
+                clone.Bounds.Y + offsetY,
+                clone.Bounds.Width,
+                clone.Bounds.Height);
+
+            if (clone is LineElement line)
+            {
+                line.X1 += offsetX;
+                line.Y1 += offsetY;
+                line.X2 += offsetX;
+                line.Y2 += offsetY;
+            }
+
+            target.AllElements.Add(clone);
+
+            var sourceLayer = source.Layers.FirstOrDefault(l => l.ElementIds.Contains(element.Id));
+            var targetLayer = sourceLayer == null
+                ? target.Layers.FirstOrDefault()
+                : target.Layers.FirstOrDefault(l => l.Id == sourceLayer.Id);
+            targetLayer?.ElementIds.Add(clone.Id);
+        }
+    }
+
     public ResizeHandle GetHoverHandle(PointD pD)
     {
         return _interaction.GetHoverHandle(Selected, pD, Viewport.Zoom);
@@ -1809,6 +1994,7 @@ public partial class DesignerViewModel : ObservableObject
 
     private void OnSettingsChanged()
     {
+        _interaction.SnapEnabled = AppSettingsService.ShowSnapGrid;
         OnPropertyChanged(nameof(CursorText));
         OnPropertyChanged(nameof(RulerUnitText));
         OnPropertyChanged(nameof(SnapStateText));
@@ -1825,6 +2011,7 @@ public partial class DesignerViewModel : ObservableObject
             _currentFilePath = filePath;
             AppSettingsService.AddRecentFile(filePath);
             SelectedRecentFile = filePath;
+            OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (FileNotFoundException ex)
         {

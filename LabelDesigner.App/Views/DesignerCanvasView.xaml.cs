@@ -214,7 +214,7 @@ public sealed partial class DesignerCanvasView : UserControl
             _linePlacementFirstClick = false;
             VM?.CancelPlacement();
             // Second click: place line from saved point to current point
-            var layerId = VM?.Scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
+            var layerId = VM?.ActiveLayerId;
             var line = new LineElement
             {
                 X1 = _lineStartPoint.X,
@@ -291,6 +291,8 @@ public sealed partial class DesignerCanvasView : UserControl
         int delta = props.MouseWheelDelta;
         bool ctrlHeld = InputKeyboardSource.GetKeyStateForCurrentThread(
             Windows.System.VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        bool shiftHeld = InputKeyboardSource.GetKeyStateForCurrentThread(
+            Windows.System.VirtualKey.Shift).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 
         if (ctrlHeld)
         {
@@ -302,6 +304,10 @@ public sealed partial class DesignerCanvasView : UserControl
             var worldAfter = vm.Viewport.ScreenToWorld(cursorPos);
             vm.Viewport.OffsetX += (worldAfter.X - worldBefore.X) * vm.Viewport.Zoom;
             vm.Viewport.OffsetY += (worldAfter.Y - worldBefore.Y) * vm.Viewport.Zoom;
+        }
+        else if (shiftHeld)
+        {
+            vm.Viewport.OffsetX -= delta / 2;
         }
         else
         {

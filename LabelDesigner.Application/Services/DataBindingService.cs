@@ -26,7 +26,8 @@ public class DataBindingService : IDataBindingService
                 : new DataSourceConfig
                 {
                     Type = document.DataSource.Type,
-                    Path = document.DataSource.Path
+                    Path = document.DataSource.Path,
+                    MergeMode = document.DataSource.MergeMode
                 }
         };
 
