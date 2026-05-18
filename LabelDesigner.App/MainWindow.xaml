@@ -242,14 +242,14 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="3" Margin="0,0,4,0"
-                                Background="{Binding Designer.Properties.FillColorValue}"/>
+                                Background="{Binding Designer.Properties.FillColorValue, Converter={StaticResource ColorToBrush}}"/>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.FillColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                         </Grid>
                         <TextBlock Text="Stroke Color" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="22" Height="22" BorderThickness="1" BorderBrush="#D0D0D0" CornerRadius="3" Margin="0,0,4,0"
-                                Background="{Binding Designer.Properties.StrokeColorValue}"/>
+                                Background="{Binding Designer.Properties.StrokeColorValue, Converter={StaticResource ColorToBrush}}"/>
                             <TextBox Grid.Column="1" Text="{Binding Designer.Properties.StrokeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"/>
                         </Grid>
                         <TextBlock Text="Palette" FontSize="11" Foreground="#888" Margin="0,4,0,2"/>
