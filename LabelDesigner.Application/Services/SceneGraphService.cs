@@ -128,7 +128,9 @@ public class SceneGraphService : ISceneGraphService
                 if (_elements.TryGetValue(id, out var el) && el.Visible && !el.Locked)
                 {
                     if (el.HitTest(p))
+                    {
                         return el;
+                    }
                 }
             }
         }

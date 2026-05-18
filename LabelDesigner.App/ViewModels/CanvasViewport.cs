@@ -6,17 +6,17 @@ namespace LabelDesigner.App.ViewModels;
 public partial class CanvasViewport : ObservableObject
 {
     [ObservableProperty]
-    private double _offsetX;
+    public partial double OffsetX { get; set; }
 
     [ObservableProperty]
-    private double _offsetY;
+    public partial double OffsetY { get; set; }
 
     [ObservableProperty]
-    private double _zoom = 1.0;
+    public partial double Zoom { get; set; } = 1.0;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ZoomPercent))]
-    private double _zoomPercentValue = 100;
+    public partial double ZoomPercentValue { get; set; } = 100;
 
     public const double MinZoom = 0.25;
     public const double MaxZoom = 4.0;
@@ -37,22 +37,24 @@ public partial class CanvasViewport : ObservableObject
         double fitX = (canvasWidth - margin * 2) / pageWidth;
         double fitY = (canvasHeight - margin * 2) / pageHeight;
         Zoom = Math.Min(fitX, fitY);
-        OffsetX = (pageWidth * Zoom - canvasWidth) / 2;
-        OffsetY = (pageHeight * Zoom - canvasHeight) / 2;
+        // Offset calculation for Translate(-Offset) * Scale(Zoom) rendering
+        // Negative to center the page on canvas
+        OffsetX = -(pageWidth * Zoom - canvasWidth) / 2;
+        OffsetY = -(pageHeight * Zoom - canvasHeight) / 2;
     }
 
     public Windows.Foundation.Point ScreenToWorld(Windows.Foundation.Point screen) =>
-        new((screen.X + OffsetX) / Zoom, (screen.Y + OffsetY) / Zoom);
+        new((screen.X / Zoom) + OffsetX, (screen.Y / Zoom) + OffsetY);
 
     public Windows.Foundation.Point WorldToScreen(Windows.Foundation.Point world) =>
-        new(world.X * Zoom - OffsetX, world.Y * Zoom - OffsetY);
+        new((world.X * Zoom) - OffsetX, (world.Y * Zoom) - OffsetY);
 
     public PointD WorldToScreenD(PointD world) =>
         new(world.X * Zoom - OffsetX, world.Y * Zoom - OffsetY);
 
     [ObservableProperty]
-    private double _pageOriginX = 0;
+    public partial double PageOriginX { get; set; } = 0;
 
     [ObservableProperty]
-    private double _pageOriginY = 0;
+    public partial double PageOriginY { get; set; } = 0;
 }

@@ -13,7 +13,7 @@ public partial class LayerPanelViewModel : ObservableObject
     public ObservableCollection<LayerItemViewModel> Layers { get; } = new();
 
     [ObservableProperty]
-    private LayerItemViewModel? _selectedLayer;
+    public partial LayerItemViewModel? SelectedLayer { get; set; }
 
     public Action? RequestRedraw { get; set; }
 
@@ -88,19 +88,19 @@ public partial class LayerItemViewModel : ObservableObject
     internal readonly LayerNode LayerNode;
 
     [ObservableProperty]
-    private bool _isExpanded = true;
+    public partial bool IsExpanded { get; set; } = true;
 
     [ObservableProperty]
-    private string _name;
+    public partial string Name { get; set; }
 
     [ObservableProperty]
-    private bool _isVisible;
+    public partial bool IsVisible { get; set; }
 
     [ObservableProperty]
-    private bool _isLocked;
+    public partial bool IsLocked { get; set; }
 
     [ObservableProperty]
-    private bool _isSelected;
+    public partial bool IsSelected { get; set; }
 
     public Guid LayerId => LayerNode.Id;
     public string VisibilityGlyph => IsVisible ? "\uE7B3" : "\uED1A";  // Eye / EyeHide
@@ -113,9 +113,9 @@ public partial class LayerItemViewModel : ObservableObject
     {
         _panel = panel;
         LayerNode = layer;
-        _name = layer.Name;
-        _isVisible = layer.Visible;
-        _isLocked = layer.Locked;
+        Name = layer.Name;
+        IsVisible = layer.Visible;
+        IsLocked = layer.Locked;
         Children = new ObservableCollection<ElementItemViewModel>(children);
     }
 
@@ -139,7 +139,7 @@ public partial class ElementItemViewModel : ObservableObject
     private readonly DesignElement _element;
 
     [ObservableProperty]
-    private bool _isSelected;
+    public partial bool IsSelected { get; set; }
 
     public Guid Id => _element.Id;
     public Guid ElementId => _element.Id;
@@ -163,6 +163,6 @@ public partial class ElementItemViewModel : ObservableObject
     public ElementItemViewModel(DesignElement element, bool isSelected = false)
     {
         _element = element;
-        _isSelected = isSelected;
+        IsSelected = isSelected;
     }
 }

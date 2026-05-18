@@ -11,12 +11,37 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace LabelDesigner.App.ViewModels;
 
 public partial class DesignerViewModel : ObservableObject
 {
-    private const double PixelsPerMm = 3.78;
+    private double? _cachedPixelsPerMm;
+
+    private double GetPixelsPerMm()
+    {
+        if (_cachedPixelsPerMm.HasValue)
+            return _cachedPixelsPerMm.Value;
+
+        try
+        {
+            // Get system DPI scaling
+            var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
+            double dpiScale = displayInfo.RawPixelsPerViewPixel;
+            // Base 96 DPI / 25.4 mm per inch = 3.78 pixels per mm at 100% scaling
+            double basePpMm = 96.0 / 25.4;
+            _cachedPixelsPerMm = basePpMm * dpiScale;
+            return _cachedPixelsPerMm.Value;
+        }
+        catch (COMException)
+        {
+            // GetForCurrentView() must be called on UI thread. Use default and try again later.
+            return 96.0 / 25.4;
+        }
+    }
+
+    public double PixelsPerMm => GetPixelsPerMm();
 
     private readonly ISceneGraphService _scene;
     private readonly IUndoRedoService _undoRedo;
@@ -52,11 +77,11 @@ public partial class DesignerViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CursorText))]
-    private int _cursorWorldX;
+    public partial int CursorWorldX { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CursorText))]
-    private int _cursorWorldY;
+    public partial int CursorWorldY { get; set; }
 
     public int ElementCount => _scene.CurrentDocument.AllElements.Count;
     public string ZoomText => $"Zoom: {Viewport.ZoomPercent}%";
@@ -72,7 +97,7 @@ public partial class DesignerViewModel : ObservableObject
     public RectD? MarqueeSelectionRect { get; private set; }
 
     [ObservableProperty]
-    private ToolMode activeTool = ToolMode.Select;
+    public partial ToolMode ActiveTool { get; set; } = ToolMode.Select;
 
     private DocumentDefaults Defaults => _scene.CurrentDocument.Defaults;
     private PointD? _marqueeStartPoint;
@@ -295,13 +320,13 @@ public partial class DesignerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsBarcodeSelected))]
     [NotifyPropertyChangedFor(nameof(IsTextSelected))]
     [NotifyPropertyChangedFor(nameof(IsElementSelected))]
-    private DesignElement? selected;
+    public partial DesignElement? Selected { get; set; }
 
     [ObservableProperty]
-    private string? selectedLabelStockPresetId;
+    public partial string? SelectedLabelStockPresetId { get; set; }
 
     [ObservableProperty]
-    private string? selectedRecentFile;
+    public partial string? SelectedRecentFile { get; set; }
 
     public bool IsElementSelected => Selected != null;
     public bool IsBarcodeSelected => Selected is BarcodeElement;
@@ -1649,7 +1674,9 @@ public partial class DesignerViewModel : ObservableObject
 
         // Only allow selection and dragging when in Select tool mode
         if (ActiveTool != ToolMode.Select)
+        {
             return;
+        }
 
         if (Selected != null)
         {
@@ -1679,6 +1706,7 @@ public partial class DesignerViewModel : ObservableObject
             SetInteractionState(InteractionState.Selecting);
             _scene.ToggleSelect(hit.Id);
             Selected = _scene.SelectedIds.Count == 1 ? _scene.SingleSelected : null;
+            RequestRedraw?.Invoke();
             if (Selected != null)
             {
                 _activeHandle = ResizeHandle.Move;
@@ -1695,6 +1723,7 @@ public partial class DesignerViewModel : ObservableObject
             _interaction.EndDrag();
             _properties.TrackElement(null);
             _activeHandle = ResizeHandle.None;
+            RequestRedraw?.Invoke();
             BeginMarqueeSelection(pD);
             return;
         }
@@ -1704,6 +1733,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.Select(hit.Id);
         Selected = hit;
         _properties.TrackElement(hit);
+        RequestRedraw?.Invoke();
         var handle = _interaction.GetHoverHandle(hit, pD, Viewport.Zoom);
         _activeHandle = handle;
         if (handle == ResizeHandle.Rotate)
@@ -1829,7 +1859,7 @@ public partial class DesignerViewModel : ObservableObject
         }
     }
 
-    private static string FormatMeasurement(double pixels)
+    private string FormatMeasurement(double pixels)
     {
         var mm = pixels / PixelsPerMm;
         return AppSettingsService.RulerUnit switch
@@ -1893,7 +1923,6 @@ public partial class DesignerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to get window handle: {ex.Message}");
             hwnd = IntPtr.Zero;
             return false;
         }

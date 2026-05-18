@@ -36,6 +36,7 @@ public class RenderService : IRenderService
         IEnumerable<Guid> hoveredIds,
         float zoom,
         RectD viewport,
+        double pixelsPerMm = 3.78,
         bool showGrid = true)
     {
         ds.Clear(Colors.White);
@@ -46,8 +47,8 @@ public class RenderService : IRenderService
         ds.Transform = Matrix3x2.CreateTranslation(-(float)viewport.X, -(float)viewport.Y)
                      * Matrix3x2.CreateScale(zoom);
 
-        float pageW = (float)document.Page.WidthMm * 3.78f;
-        float pageH = (float)document.Page.HeightMm * 3.78f;
+        float pageW = (float)document.Page.WidthMm * (float)pixelsPerMm;
+        float pageH = (float)document.Page.HeightMm * (float)pixelsPerMm;
         ds.FillRectangle(0, 0, pageW, pageH, Colors.White);
 
         if (showGrid && zoom > 0.5f)
@@ -60,9 +61,9 @@ public class RenderService : IRenderService
         }
 
         var m = document.Page.Margins;
-        ds.DrawRectangle((float)m.Left * 3.78f, (float)m.Top * 3.78f,
-            pageW - (float)m.Left * 3.78f - (float)m.Right * 3.78f,
-            pageH - (float)m.Top * 3.78f - (float)m.Bottom * 3.78f, Colors.Gray, 1);
+        ds.DrawRectangle((float)m.Left * (float)pixelsPerMm, (float)m.Top * (float)pixelsPerMm,
+            pageW - (float)m.Left * (float)pixelsPerMm - (float)m.Right * (float)pixelsPerMm,
+            pageH - (float)m.Top * (float)pixelsPerMm - (float)m.Bottom * (float)pixelsPerMm, Colors.Gray, 1);
 
         ds.DrawRectangle(0, 0, pageW, pageH, Colors.Black, 2);
 

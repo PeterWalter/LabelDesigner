@@ -22,78 +22,78 @@ public partial class PropertiesViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsVisible))]
-    private string _elementType = "";
+    public partial string ElementType { get; set; } = "";
 
     [ObservableProperty]
-    private string _elementName = "";
+    public partial string ElementName { get; set; } = "";
 
     [ObservableProperty]
-    private double _posX;
+    public partial double PosX { get; set; }
 
     [ObservableProperty]
-    private double _posY;
+    public partial double PosY { get; set; }
 
     [ObservableProperty]
-    private double _width;
+    public partial double Width { get; set; }
 
     [ObservableProperty]
-    private double _height;
+    public partial double Height { get; set; }
 
     [ObservableProperty]
-    private double _rotation;
+    public partial double Rotation { get; set; }
 
     [ObservableProperty]
-    private string _text = "";
+    public partial string Text { get; set; } = "";
 
     [ObservableProperty]
-    private double _fontSize = 14;
+    public partial double FontSize { get; set; } = 14;
 
     [ObservableProperty]
-    private string _fontFamily = "Segoe UI";
+    public partial string FontFamily { get; set; } = "Segoe UI";
 
     [ObservableProperty]
-    private bool _isBold;
+    public partial bool IsBold { get; set; }
 
     [ObservableProperty]
-    private bool _isItalic;
+    public partial bool IsItalic { get; set; }
 
     [ObservableProperty]
-    private bool _isUnderline;
+    public partial bool IsUnderline { get; set; }
 
     [ObservableProperty]
-    private int _textAlignmentIndex; // 0=Left, 1=Center, 2=Right
+    public partial int TextAlignmentIndex { get; set; } // 0=Left, 1=Center, 2=Right
 
     [ObservableProperty]
-    private bool _isMultiline;
+    public partial bool IsMultiline { get; set; }
 
     [ObservableProperty]
-    private double _lineSpacing;
+    public partial double LineSpacing { get; set; }
 
     [ObservableProperty]
-    private string _foreColor = "#000000";
+    public partial string ForeColor { get; set; } = "#000000";
 
     [ObservableProperty]
-    private string _barcodeValue = "";
+    public partial string BarcodeValue { get; set; } = "";
 
     [ObservableProperty]
-    private int _barcodeTextPositionIndex;
+    public partial int BarcodeTextPositionIndex { get; set; }
 
     [ObservableProperty]
-    private string _barcodeTextFontFamily = "Segoe UI";
+    public partial string BarcodeTextFontFamily { get; set; } = "Segoe UI";
 
     [ObservableProperty]
-    private double _barcodeTextFontSize = 12;
+    public partial double BarcodeTextFontSize { get; set; } = 12;
 
     [ObservableProperty]
-    private string _barcodeTextColor = "#000000";
+    public partial string BarcodeTextColor { get; set; } = "#000000";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FillColorValue))]
-    private string _fillColor = "#CCCCCC";
+    public partial string FillColor { get; set; } = "#CCCCCC";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StrokeColorValue))]
-    private string _strokeColor = "#000000";
+    public partial string StrokeColor { get; set; } = "#000000";
 
     public Windows.UI.Color FillColorValue => ParseColor(FillColor);
     public Windows.UI.Color StrokeColorValue => ParseColor(StrokeColor);

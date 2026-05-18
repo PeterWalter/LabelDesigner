@@ -164,11 +164,13 @@ public sealed partial class DesignerCanvasView : UserControl
     {
         if (VM == null) return;
 
+        double pixelsPerMm = VM.PixelsPerMm;
+
         if (_firstDraw && sender.ActualWidth > 0)
         {
             _firstDraw = false;
-            double pageW = VM.Scene.CurrentDocument.Page.WidthMm * 3.78;
-            double pageH = VM.Scene.CurrentDocument.Page.HeightMm * 3.78;
+            double pageW = VM.Scene.CurrentDocument.Page.WidthMm * pixelsPerMm;
+            double pageH = VM.Scene.CurrentDocument.Page.HeightMm * pixelsPerMm;
             if (pageW > 0 && pageH > 0)
                 VM.Viewport.ZoomToFit(sender.ActualWidth, sender.ActualHeight, pageW, pageH);
         }
@@ -179,7 +181,7 @@ public sealed partial class DesignerCanvasView : UserControl
         VM.RenderService.RenderScene(
             ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
             _hoveredIds, (float)VM.Viewport.Zoom, viewport,
-            LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid);
+            pixelsPerMm, LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid);
 
         if (VM.InteractionState == InteractionState.MarqueeSelection && VM.MarqueeSelectionRect.HasValue)
         {
@@ -209,7 +211,7 @@ public sealed partial class DesignerCanvasView : UserControl
         if (_linePlacementFirstClick)
         {
             _linePlacementFirstClick = false;
-            VM.CancelPlacement();
+            VM?.CancelPlacement();
             // Second click: place line from saved point to current point
             var layerId = VM?.Scene.CurrentDocument.Layers.FirstOrDefault()?.Id;
             var line = new LineElement

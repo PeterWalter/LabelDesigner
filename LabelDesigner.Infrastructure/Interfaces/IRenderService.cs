@@ -13,6 +13,7 @@ public interface IRenderService
         IEnumerable<Guid> hoveredIds,
         float zoom,
         RectD viewport,
+        double pixelsPerMm = 3.78,
         bool showGrid = true);
 
     /// <summary>Disposes and clears all cached GPU/CPU bitmaps. Call when a new document is loaded.</summary>
