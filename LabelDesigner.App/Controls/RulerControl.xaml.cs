@@ -1,4 +1,5 @@
 using LabelDesigner.App.ViewModels;
+using LabelDesigner.App.Services;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -46,9 +47,17 @@ public sealed partial class RulerControl : UserControl
         InitializeComponent();
         Loaded += (_, _) =>
         {
+            AppSettingsService.SettingsChanged += OnSettingsChanged;
             if (Content is CanvasControl canvas)
                 canvas.Invalidate();
         };
+        Unloaded += (_, _) => AppSettingsService.SettingsChanged -= OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged()
+    {
+        if (Content is CanvasControl canvas)
+            canvas.Invalidate();
     }
 
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
@@ -80,8 +89,8 @@ public sealed partial class RulerControl : UserControl
                 ds.DrawLine(rulerDim - ts, (float)sp, rulerDim, (float)sp, tc, 1);
                 if (major)
                 {
-                    var mm = (wp / pixelsPerMm).ToString("0");
-                    ds.DrawText(mm, 2, (float)sp - 5.5f, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
+                    var label = FormatMeasurementLabel(wp / pixelsPerMm);
+                    ds.DrawText(label, 2, (float)sp - 5.5f, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
                 }
             }
             else
@@ -89,8 +98,8 @@ public sealed partial class RulerControl : UserControl
                 ds.DrawLine((float)sp, rulerDim - ts, (float)sp, rulerDim, tc, 1);
                 if (major)
                 {
-                    var mm = (wp / pixelsPerMm).ToString("0");
-                    ds.DrawText(mm, (float)sp - 5, rulerDim - 14, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
+                    var label = FormatMeasurementLabel(wp / pixelsPerMm);
+                    ds.DrawText(label, (float)sp - 5, rulerDim - 14, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
                 }
             }
         }
@@ -99,5 +108,16 @@ public sealed partial class RulerControl : UserControl
             ds.DrawLine(rulerDim - 1, 0, rulerDim - 1, canvasLen, Colors.LightGray, 1);
         else
             ds.DrawLine(0, rulerDim - 1, canvasLen, rulerDim - 1, Colors.LightGray, 1);
+    }
+
+    private static string FormatMeasurementLabel(double millimeters)
+    {
+        return AppSettingsService.RulerUnit switch
+        {
+            MeasurementUnit.Millimeters => $"{millimeters:0} mm",
+            MeasurementUnit.Centimeters => $"{(millimeters / 10.0):0.0} cm",
+            MeasurementUnit.Inches => $"{(millimeters / 25.4):0.00} in",
+            _ => $"{millimeters:0} mm"
+        };
     }
 }

@@ -1,3 +1,4 @@
+using LabelDesigner.App.Services;
 using LabelDesigner.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,6 +18,13 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ViewModel = vm;
         RootGrid.DataContext = ViewModel;
+        RulerUnitComboBox.SelectedIndex = AppSettingsService.RulerUnit switch
+        {
+            MeasurementUnit.Millimeters => 0,
+            MeasurementUnit.Centimeters => 1,
+            MeasurementUnit.Inches => 2,
+            _ => 0
+        };
 
         ViewModel.Designer.Layers.Refresh();
 
@@ -73,5 +81,20 @@ public sealed partial class MainWindow : Window
     {
         _isDraggingSplitter = false;
         (sender as UIElement)?.ReleasePointerCapture(e.Pointer);
+    }
+
+    private void OnRulerUnitChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem selectedItem)
+        {
+            return;
+        }
+
+        AppSettingsService.RulerUnit = selectedItem.Tag?.ToString() switch
+        {
+            "Centimeters" => MeasurementUnit.Centimeters,
+            "Inches" => MeasurementUnit.Inches,
+            _ => MeasurementUnit.Millimeters
+        };
     }
 }
