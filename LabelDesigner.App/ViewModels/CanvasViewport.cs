@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LabelDesigner.Core.ValueObjects;
+using System.Numerics;
 
 namespace LabelDesigner.App.ViewModels;
 
@@ -43,14 +44,31 @@ public partial class CanvasViewport : ObservableObject
         OffsetY = (pageHeight * Zoom - canvasHeight) / 2;
     }
 
-    public Windows.Foundation.Point ScreenToWorld(Windows.Foundation.Point screen) =>
-        new((screen.X + OffsetX) / Zoom, (screen.Y + OffsetY) / Zoom);
+    private Matrix3x2 GetViewportTransform() =>
+        Matrix3x2.CreateTranslation(-(float)OffsetX, -(float)OffsetY) *
+        Matrix3x2.CreateScale((float)Zoom);
 
-    public Windows.Foundation.Point WorldToScreen(Windows.Foundation.Point world) =>
-        new((world.X * Zoom) - OffsetX, (world.Y * Zoom) - OffsetY);
+    public Windows.Foundation.Point ScreenToWorld(Windows.Foundation.Point screen)
+    {
+        var transform = GetViewportTransform();
+        if (!Matrix3x2.Invert(transform, out var inverse))
+            return screen;
 
-    public PointD WorldToScreenD(PointD world) =>
-        new(world.X * Zoom - OffsetX, world.Y * Zoom - OffsetY);
+        var world = Vector2.Transform(new Vector2((float)screen.X, (float)screen.Y), inverse);
+        return new Windows.Foundation.Point(world.X, world.Y);
+    }
+
+    public Windows.Foundation.Point WorldToScreen(Windows.Foundation.Point world)
+    {
+        var screen = Vector2.Transform(new Vector2((float)world.X, (float)world.Y), GetViewportTransform());
+        return new Windows.Foundation.Point(screen.X, screen.Y);
+    }
+
+    public PointD WorldToScreenD(PointD world)
+    {
+        var screen = Vector2.Transform(new Vector2((float)world.X, (float)world.Y), GetViewportTransform());
+        return new PointD(screen.X, screen.Y);
+    }
 
     [ObservableProperty]
     public partial double PageOriginX { get; set; } = 0;
