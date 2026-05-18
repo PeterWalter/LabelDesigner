@@ -10,6 +10,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
+using System.ComponentModel;
 
 namespace LabelDesigner.App.ViewModels;
 
@@ -29,6 +30,12 @@ public partial class DesignerViewModel : ObservableObject
     private readonly IRenderService _renderService;
     private readonly PropertiesViewModel _properties;
     private readonly ILabelStockPresetService _labelStockPresetService;
+
+    // Event handlers stored for cleanup
+    private PropertyChangedEventHandler? _viewportPropertyChanged;
+    private PropertyChangedEventHandler? _selectedPropertyChanged;
+    private Action? _settingsChanged;
+    private Action? _documentReset;
 
     public PropertiesViewModel Properties => _properties;
     public LayerPanelViewModel Layers { get; }
@@ -339,13 +346,16 @@ public partial class DesignerViewModel : ObservableObject
         Layers = new LayerPanelViewModel(scene);
 
         SetPage(PageSize.A4, false);
-        Viewport.PropertyChanged += (_, e) =>
+
+        // Create handler delegates that can be unsubscribed later
+        _viewportPropertyChanged = (_, e) =>
         {
             if (e.PropertyName == nameof(Viewport.ZoomPercent))
                 OnPropertyChanged(nameof(ZoomText));
         };
+        Viewport.PropertyChanged += _viewportPropertyChanged;
 
-        this.PropertyChanged += (_, e) =>
+        _selectedPropertyChanged = (_, e) =>
         {
             if (e.PropertyName == nameof(Selected))
             {
@@ -354,9 +364,15 @@ public partial class DesignerViewModel : ObservableObject
                 RequestRedraw?.Invoke();
             }
         };
-        AppSettingsService.SettingsChanged += OnSettingsChanged;
+        this.PropertyChanged += _selectedPropertyChanged;
+
+        _settingsChanged = () => OnSettingsChanged();
+        AppSettingsService.SettingsChanged += _settingsChanged;
+
         Layers.RequestRedraw = () => RequestRedraw?.Invoke();
-        _scene.DocumentReset += OnDocumentReset;
+
+        _documentReset = () => OnDocumentReset();
+        _scene.DocumentReset += _documentReset;
 
         var layer = _scene.AddLayer("Layer 1");
 
@@ -400,8 +416,13 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenDocument()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeFilter.Add(".ldlabel");
         picker.FileTypeFilter.Add(".json");
@@ -428,8 +449,13 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAsDocument()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var picker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeChoices.Add("LabelDesigner Document", new[] { ".ldlabel" });
         picker.SuggestedFileName = "Untitled.ldlabel";
@@ -437,9 +463,16 @@ public partial class DesignerViewModel : ObservableObject
         var file = await picker.PickSaveFileAsync();
         if (file == null) return;
 
-        await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
-        _currentFilePath = file.Path;
-        AppSettingsService.AddRecentFile(file.Path);
+        try
+        {
+            await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
+            _currentFilePath = file.Path;
+            AppSettingsService.AddRecentFile(file.Path);
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Save Error", $"Could not save document: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -728,8 +761,13 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveTemplate()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
         savePicker.SuggestedFileName = "Template.ldtemplate";
         savePicker.FileTypeChoices.Add("Label Template", new[] { ".ldtemplate", ".ldlabel", ".json" });
@@ -737,9 +775,16 @@ public partial class DesignerViewModel : ObservableObject
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
 
-        await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
-        _currentFilePath = file.Path;
-        AppSettingsService.AddRecentFile(file.Path);
+        try
+        {
+            await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
+            _currentFilePath = file.Path;
+            AppSettingsService.AddRecentFile(file.Path);
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Save Error", $"Could not save template: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -751,38 +796,62 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task ExportPdf()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
-        savePicker.SuggestedFileName = "Label.ldlabel";
+        savePicker.SuggestedFileName = "Label.pdf";
         savePicker.FileTypeChoices.Add("PDF Document", new[] { ".pdf" });
 
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
 
-        await _pdfExportService.ExportAsync(_scene.CurrentDocument, file.Path,
-            new Core.Interfaces.PdfExportOptions());
+        try
+        {
+            await _pdfExportService.ExportAsync(_scene.CurrentDocument, file.Path,
+                new Core.Interfaces.PdfExportOptions());
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Export Error", $"Could not export PDF: {ex.Message}");
+        }
     }
 
     [RelayCommand]
     private async Task LoadDataSource()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        var hwnd2 = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd2);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeFilter.Add(".csv");
         picker.FileTypeFilter.Add(".json");
 
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;
 
-        _ = await _dataSource.LoadAsync(file.Path);
-
-        _scene.CurrentDocument.DataSource = new DataSourceConfig
+        try
         {
-            Type = Path.GetExtension(file.Path).TrimStart('.'),
-            Path = file.Path
-        };
+            _ = await _dataSource.LoadAsync(file.Path);
+
+            _scene.CurrentDocument.DataSource = new DataSourceConfig
+            {
+                Type = Path.GetExtension(file.Path).TrimStart('.'),
+                Path = file.Path
+            };
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Data Source Error", $"Could not load data source: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -791,14 +860,29 @@ public partial class DesignerViewModel : ObservableObject
         var ds = _scene.CurrentDocument.DataSource;
         if (ds == null) { await Print(); return; }
 
-        var records = await _dataSource.LoadAsync(ds.Path);
-        if (records.Count == 0) { await Print(); return; }
-
-        var originalDoc = _scene.CurrentDocument;
-        foreach (var record in records)
+        try
         {
-            var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
-            await _printService.PrintAsync(boundDoc);
+            var records = await _dataSource.LoadAsync(ds.Path);
+            if (records.Count == 0) { await Print(); return; }
+
+            var originalDoc = _scene.CurrentDocument;
+            foreach (var record in records)
+            {
+                var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
+                await _printService.PrintAsync(boundDoc);
+            }
+        }
+        catch (FileNotFoundException ex)
+        {
+            ShowErrorDialog("Data Source Not Found", $"Could not find data source file: {ex.Message}");
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            ShowErrorDialog("Invalid Data Format", $"The data source file is invalid: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Error Loading Data", $"An error occurred while loading the data source: {ex.Message}");
         }
     }
 
@@ -834,8 +918,13 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task ExportPng()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
         savePicker.SuggestedFileName = "Label.png";
         savePicker.FileTypeChoices.Add("PNG Image", new[] { ".png" });
@@ -843,15 +932,22 @@ public partial class DesignerViewModel : ObservableObject
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
 
-        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
+        try
+        {
+            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
 
-        using var fileStream = await file.OpenStreamForWriteAsync();
-        var encoder = Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
-            Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId,
-            fileStream.AsRandomAccessStream()).GetAwaiter().GetResult();
+            using var fileStream = await file.OpenStreamForWriteAsync();
+            var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
+                Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId,
+                fileStream.AsRandomAccessStream());
 
-        encoder.SetSoftwareBitmap(bitmap);
-        await encoder.FlushAsync();
+            encoder.SetSoftwareBitmap(bitmap);
+            await encoder.FlushAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Export Error", $"Could not export PNG: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -1104,8 +1200,13 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task PickAndPlaceSvg(IEnumerable<string> fileTypes)
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         foreach (var fileType in fileTypes)
             picker.FileTypeFilter.Add(fileType);
@@ -1124,8 +1225,13 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task PickAndPlaceImage(IEnumerable<string> fileTypes)
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         foreach (var fileType in fileTypes)
             picker.FileTypeFilter.Add(fileType);
@@ -1681,11 +1787,30 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task OpenDocumentFromPath(string filePath)
     {
-        var doc = await _persistence.LoadAsync(filePath);
-        _scene.Load(doc);
-        _currentFilePath = filePath;
-        AppSettingsService.AddRecentFile(filePath);
-        SelectedRecentFile = filePath;
+        try
+        {
+            var doc = await _persistence.LoadAsync(filePath);
+            _scene.Load(doc);
+            _currentFilePath = filePath;
+            AppSettingsService.AddRecentFile(filePath);
+            SelectedRecentFile = filePath;
+        }
+        catch (FileNotFoundException ex)
+        {
+            ShowErrorDialog("File Not Found", $"Could not open '{Path.GetFileName(filePath)}': {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ShowErrorDialog("Permission Denied", $"Access denied to '{Path.GetFileName(filePath)}': {ex.Message}");
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            ShowErrorDialog("Invalid File Format", $"The file is corrupted or invalid: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Error Opening File", $"An error occurred while opening the file: {ex.Message}");
+        }
     }
 
     private static string FormatMeasurement(double pixels)
@@ -1720,6 +1845,63 @@ public partial class DesignerViewModel : ObservableObject
             .Where(el => el != null)
             .Cast<DesignElement>()
             .ToList();
+    }
+
+    private void ShowErrorDialog(string title, string message)
+    {
+        var mainWindow = App.MainWindow;
+        if (mainWindow == null) return;
+
+        var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+        {
+            Title = title,
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = mainWindow.Content.XamlRoot
+        };
+        _ = dialog.ShowAsync();
+    }
+
+    private bool TryGetWindowHandle(out IntPtr hwnd)
+    {
+        try
+        {
+            var mainWindow = App.MainWindow;
+            if (mainWindow == null)
+            {
+                hwnd = IntPtr.Zero;
+                return false;
+            }
+            hwnd = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
+            return hwnd != IntPtr.Zero;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get window handle: {ex.Message}");
+            hwnd = IntPtr.Zero;
+            return false;
+        }
+    }
+
+    /// <summary>Unsubscribe from all event handlers to prevent memory leaks. Call when view model is being disposed.</summary>
+    public void Dispose()
+    {
+        if (_viewportPropertyChanged != null)
+            Viewport.PropertyChanged -= _viewportPropertyChanged;
+
+        if (_selectedPropertyChanged != null)
+            this.PropertyChanged -= _selectedPropertyChanged;
+
+        if (_settingsChanged != null)
+            AppSettingsService.SettingsChanged -= _settingsChanged;
+
+        if (_documentReset != null)
+            _scene.DocumentReset -= _documentReset;
+
+        _viewportPropertyChanged = null;
+        _selectedPropertyChanged = null;
+        _settingsChanged = null;
+        _documentReset = null;
     }
 
     private void MoveElementTo(DesignElement element, double x, double y)

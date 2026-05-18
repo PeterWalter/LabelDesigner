@@ -121,18 +121,21 @@ public class PdfExportService : IPdfExportService
                 var brush = new PdfSolidBrush(Syncfusion.Drawing.Color.White);
                 graphics.DrawRectangle(brush, (float)image.Bounds.X, (float)image.Bounds.Y,
                     (float)image.Bounds.Width, (float)image.Bounds.Height);
-                 
+                  
                 var pen = new PdfPen(Syncfusion.Drawing.Color.LightGray, 1);
                 graphics.DrawRectangle(pen, (float)image.Bounds.X, (float)image.Bounds.Y,
                     (float)image.Bounds.Width, (float)image.Bounds.Height);
-                 
+                  
                 // Draw placeholder text with filename
                 var fileName = System.IO.Path.GetFileName(image.SourcePath);
                 graphics.DrawString(fileName, new PdfStandardFont(PdfFontFamily.Helvetica, 8),
                     PdfBrushes.Gray, new Syncfusion.Drawing.PointF((float)image.Bounds.X + 2, (float)image.Bounds.Y + 2));
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error rendering image to PDF '{image.SourcePath}': {ex.Message}");
+        }
     }
 
     private static float MillimetersToPoints(double mm) => (float)(mm * 2.83465);

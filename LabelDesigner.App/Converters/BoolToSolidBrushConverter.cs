@@ -38,6 +38,10 @@ public class BoolToSolidBrushConverter : IValueConverter
                 _ => Color.FromArgb(255, 170, 170, 170)
             };
         }
-        catch { return Color.FromArgb(255, 170, 170, 170); }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to parse hex color '{hex}': {ex.Message}");
+            return Color.FromArgb(255, 170, 170, 170);
+        }
     }
 }

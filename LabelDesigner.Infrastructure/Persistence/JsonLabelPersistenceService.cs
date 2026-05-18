@@ -16,14 +16,55 @@ public class JsonLabelPersistenceService : ILabelPersistenceService
 
     public async Task<SceneDocument> LoadAsync(string filePath)
     {
-        var json = await File.ReadAllTextAsync(filePath);
-        return await LoadFromJsonAsync(json);
+        try
+        {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"File not found: {filePath}");
+
+            var json = await File.ReadAllTextAsync(filePath);
+            return await LoadFromJsonAsync(json);
+        }
+        catch (FileNotFoundException)
+        {
+            throw;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new InvalidOperationException($"Access denied reading '{filePath}'", ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"File '{filePath}' is corrupted or invalid JSON", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error loading document from '{filePath}': {ex.Message}", ex);
+        }
     }
 
     public async Task SaveAsync(SceneDocument document, string filePath)
     {
-        var json = await SaveToJsonAsync(document);
-        await File.WriteAllTextAsync(filePath, json);
+        try
+        {
+            var json = await SaveToJsonAsync(document);
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(filePath, json);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new InvalidOperationException($"Access denied writing to '{filePath}'", ex);
+        }
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException($"I/O error while saving to '{filePath}': {ex.Message}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error saving document to '{filePath}': {ex.Message}", ex);
+        }
     }
 
     public Task<SceneDocument> LoadFromJsonAsync(string json)

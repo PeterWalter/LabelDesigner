@@ -287,8 +287,12 @@ internal static class ElementRenderer
                 return;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error rendering image '{image.SourcePath}': {ex.Message}");
+        }
 
+        // Placeholder for missing image
         ds.FillRectangle(b, Colors.LightGray);
         ds.DrawLine((float)b.Left, (float)b.Top, (float)b.Right, (float)b.Bottom, Colors.DarkGray, 1);
         ds.DrawLine((float)b.Right, (float)b.Top, (float)b.Left, (float)b.Bottom, Colors.DarkGray, 1);
@@ -328,8 +332,12 @@ internal static class ElementRenderer
                 return;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error rendering SVG '{svg.SourcePath}': {ex.Message}");
+        }
 
+        // Placeholder for missing SVG
         ds.FillRectangle(b, Colors.LightGray);
         ds.DrawLine((float)b.Left, (float)b.Top, (float)b.Right, (float)b.Bottom, Colors.DarkGray, 1);
         ds.DrawLine((float)b.Right, (float)b.Top, (float)b.Left, (float)b.Bottom, Colors.DarkGray, 1);
