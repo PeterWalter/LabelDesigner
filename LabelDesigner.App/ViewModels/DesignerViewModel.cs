@@ -24,6 +24,7 @@ public partial class DesignerViewModel : ObservableObject
     private readonly IDocumentRasterizer _rasterizer;
     private readonly IRenderService _renderService;
     private readonly PropertiesViewModel _properties;
+    private readonly ILabelStockPresetService _labelStockPresetService;
 
     public PropertiesViewModel Properties => _properties;
     public LayerPanelViewModel Layers { get; }
@@ -31,6 +32,7 @@ public partial class DesignerViewModel : ObservableObject
     public CanvasViewport Viewport { get; } = new();
     public ISceneGraphService Scene => _scene;
     public IRenderService RenderService => _renderService;
+    public IReadOnlyList<LabelStockPreset> LabelStockPresets { get; }
 
     public double Margin = 40;
     public PageSize CurrentPageSize { get; private set; } = PageSize.A4;
@@ -62,6 +64,9 @@ public partial class DesignerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsElementSelected))]
     private DesignElement? selected;
 
+    [ObservableProperty]
+    private string? selectedLabelStockPresetId;
+
     public bool IsElementSelected => Selected != null;
     public bool IsBarcodeSelected => Selected is BarcodeElement;
     public bool IsTextSelected => Selected is TextElement;
@@ -88,6 +93,7 @@ public partial class DesignerViewModel : ObservableObject
         IPdfExportService pdfExportService,
         IDocumentRasterizer rasterizer,
         IRenderService renderService,
+        ILabelStockPresetService labelStockPresetService,
         PropertiesViewModel properties)
     {
         _scene = scene;
@@ -100,7 +106,9 @@ public partial class DesignerViewModel : ObservableObject
         _pdfExportService = pdfExportService;
         _rasterizer = rasterizer;
         _renderService = renderService;
+        _labelStockPresetService = labelStockPresetService;
         _properties = properties;
+        LabelStockPresets = _labelStockPresetService.GetAll();
         _properties.RequestRedraw = () => RequestRedraw?.Invoke();
         Layers = new LayerPanelViewModel(scene);
 
@@ -136,6 +144,24 @@ public partial class DesignerViewModel : ObservableObject
             Bounds = new RectD(200, 300, 200, 50),
             Text = "Hello World"
         }, layer.Id);
+    }
+
+    partial void OnSelectedLabelStockPresetIdChanged(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        var preset = _labelStockPresetService.GetById(value);
+        if (preset == null)
+            return;
+
+        _scene.CurrentDocument.Page.WidthMm = preset.LabelWidthMm;
+        _scene.CurrentDocument.Page.HeightMm = preset.LabelHeightMm;
+        _scene.CurrentDocument.Page.Dpi = 300;
+        PageBounds = new RectD(50, 50, preset.LabelWidthMm * 3.78, preset.LabelHeightMm * 3.78);
+        Viewport.PageOriginX = PageBounds.X;
+        Viewport.PageOriginY = PageBounds.Y;
+        RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
@@ -551,15 +577,22 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task AddImage()
     {
+        await PickAndPlaceImage(new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg" });
+    }
+
+    [RelayCommand]
+    private async Task AddSvg()
+    {
+        await PickAndPlaceImage(new[] { ".svg" });
+    }
+
+    private async Task PickAndPlaceImage(IEnumerable<string> fileTypes)
+    {
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-        picker.FileTypeFilter.Add(".png");
-        picker.FileTypeFilter.Add(".jpg");
-        picker.FileTypeFilter.Add(".jpeg");
-        picker.FileTypeFilter.Add(".bmp");
-        picker.FileTypeFilter.Add(".gif");
-        picker.FileTypeFilter.Add(".svg");
+        foreach (var fileType in fileTypes)
+            picker.FileTypeFilter.Add(fileType);
 
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;

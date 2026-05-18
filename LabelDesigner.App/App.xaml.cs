@@ -46,6 +46,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<ISnapService, LabelDesigner.Application.Services.SnapService>();
         services.AddSingleton<IDataBindingService, LabelDesigner.Application.Services.DataBindingService>();
         services.AddSingleton<IElementInteractionService, LabelDesigner.Application.Services.ElementInteractionService>();
+        services.AddSingleton<ILabelStockPresetService, LabelDesigner.Application.Services.LabelStockPresetService>();
 
         // Infrastructure services
         services.AddSingleton<IBarcodeService, BarcodeService>();

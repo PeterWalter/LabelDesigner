@@ -1,5 +1,6 @@
 using System.Numerics;
 using LabelDesigner.Core.Enums;
+using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Common;
@@ -18,10 +19,12 @@ namespace LabelDesigner.Infrastructure;
 public class RenderService : IRenderService
 {
     private readonly IBarcodeService _barcode;
+    private readonly ISvgService _svg;
 
-    public RenderService(IBarcodeService barcode)
+    public RenderService(IBarcodeService barcode, ISvgService svg)
     {
         _barcode = barcode;
+        _svg = svg;
     }
 
     public void ClearBitmapCache() => ElementRenderer.ClearBarcodeCache();
@@ -80,7 +83,7 @@ public class RenderService : IRenderService
 
                 var local = ds.Transform;
                 ds.Transform = el.GetLocalTransform() * local;
-                ElementRenderer.DrawElement(ds, el, lookup, _barcode);
+                ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
                 if (selectedSet.Contains(el.Id))
                     DrawSelectionHandles(ds, el, zoom);
                 else if (hoveredSet.Contains(el.Id) && !selectedSet.Contains(el.Id))

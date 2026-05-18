@@ -107,10 +107,8 @@ dotnet test  LabelDesigner.Tests
 
 ## Roadmap (next)
 
-- SVG import (Svg.Skia)
-- Right-click context menu (Cut / Copy / Paste / Bring to Front / Send to Back)
 - Label Stock Presets (Avery, Dymo, Zebra standard sheets)
 - Dark theme polish
 - Accessibility (Narrator / keyboard-first navigation)
 - Recent files list
-- Unit test coverage for rendering seam and CSV data binding
+- Localization (.resx)

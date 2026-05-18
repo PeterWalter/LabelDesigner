@@ -12,10 +12,12 @@ namespace LabelDesigner.Infrastructure.Export;
 public class PrintService : IPrintService, IDocumentRasterizer
 {
     private readonly IBarcodeService _barcode;
+    private readonly ISvgService _svg;
 
-    public PrintService(IBarcodeService barcode)
+    public PrintService(IBarcodeService barcode, ISvgService svg)
     {
         _barcode = barcode;
+        _svg = svg;
     }
 
     public async Task PrintAsync(SceneDocument document)
@@ -49,7 +51,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
             foreach (var id in layer.ElementIds)
             {
                 if (!lookup.TryGetValue(id, out var el) || !el.Visible) continue;
-                ElementRenderer.DrawElement(ds, el, lookup, _barcode, scale);
+                ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
             }
         }
 

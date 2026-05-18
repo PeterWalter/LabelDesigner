@@ -1,5 +1,7 @@
 using System.Numerics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using LabelDesigner.Core.Enums;
+using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Common;
@@ -9,6 +11,7 @@ using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI;
 using Windows.Foundation;
+using Windows.Storage.Streams;
 using Windows.UI;
 
 namespace LabelDesigner.Infrastructure.Rendering;
@@ -24,6 +27,7 @@ internal static class ElementRenderer
     // CanvasBitmap holds a Direct3D texture — must be cached to avoid per-frame GPU allocation.
     // SoftwareBitmap is IDisposable — disposed when entries are evicted.
     private static readonly Dictionary<string, (Windows.Graphics.Imaging.SoftwareBitmap? Sw, CanvasBitmap? Gpu)> _barcodeCache = new();
+    private static readonly Dictionary<string, CanvasBitmap> _svgCache = new();
 
     private static CanvasBitmap? GetCachedBarcodeBitmap(
         CanvasDrawingSession ds, IBarcodeService barcode, string value, int width, int height)
@@ -55,6 +59,10 @@ internal static class ElementRenderer
             sw?.Dispose();
         }
         _barcodeCache.Clear();
+
+        foreach (var bitmap in _svgCache.Values)
+            bitmap.Dispose();
+        _svgCache.Clear();
     }
 
     internal static void DrawElement(
@@ -62,19 +70,20 @@ internal static class ElementRenderer
         DesignElement el,
         Dictionary<Guid, DesignElement> lookup,
         IBarcodeService barcode,
+        ISvgService svg,
         float scale = 1f)
     {
         if (el is BarcodeElement b) DrawBarcode(ds, b, barcode, scale);
         else if (el is TextElement txt) DrawText(ds, txt, scale);
         else if (el is ShapeElement shape) DrawShape(ds, shape, scale);
         else if (el is LineElement line) DrawLine(ds, line, scale);
-        else if (el is ImageElement image) DrawImage(ds, image);
+        else if (el is ImageElement image) DrawImage(ds, image, svg);
         else if (el is ContainerElement container)
         {
             foreach (var childId in container.ChildIds)
             {
                 if (lookup.TryGetValue(childId, out var child) && child.Visible)
-                    DrawElement(ds, child, lookup, barcode, scale);
+                    DrawElement(ds, child, lookup, barcode, svg, scale);
             }
         }
     }
@@ -210,14 +219,49 @@ internal static class ElementRenderer
             (float)line.StrokeWidth * scale);
     }
 
-    private static void DrawImage(CanvasDrawingSession ds, ImageElement image)
+    private static CanvasBitmap? GetCachedSvgBitmap(
+        CanvasDrawingSession ds, ISvgService svg, string svgPath, int width, int height)
+    {
+        if (width <= 0 || height <= 0 || string.IsNullOrWhiteSpace(svgPath) || !File.Exists(svgPath))
+            return null;
+
+        var key = $"{svgPath}|{width}|{height}";
+        if (_svgCache.TryGetValue(key, out var cached))
+            return cached;
+
+        var pngBytes = svg.RasterizeToPng(svgPath, width, height);
+        using var stream = new InMemoryRandomAccessStream();
+        using (var outStream = stream.AsStreamForWrite())
+        {
+            outStream.Write(pngBytes, 0, pngBytes.Length);
+            outStream.Flush();
+        }
+        stream.Seek(0);
+        var bitmap = CanvasBitmap.LoadAsync(ds.Device, stream).GetAwaiter().GetResult();
+        _svgCache[key] = bitmap;
+        return bitmap;
+    }
+
+    private static void DrawImage(CanvasDrawingSession ds, ImageElement image, ISvgService svg)
     {
         var b = image.Bounds.ToWinRect();
         try
         {
             if (!string.IsNullOrEmpty(image.SourcePath) && System.IO.File.Exists(image.SourcePath))
             {
-                var bitmap = CanvasBitmap.LoadAsync(ds.Device, image.SourcePath).GetAwaiter().GetResult();
+                CanvasBitmap? bitmap = null;
+                if (Path.GetExtension(image.SourcePath).Equals(".svg", StringComparison.OrdinalIgnoreCase))
+                {
+                    bitmap = GetCachedSvgBitmap(ds, svg, image.SourcePath, Math.Max(1, (int)b.Width), Math.Max(1, (int)b.Height));
+                }
+                else
+                {
+                    bitmap = CanvasBitmap.LoadAsync(ds.Device, image.SourcePath).GetAwaiter().GetResult();
+                }
+
+                if (bitmap == null)
+                    return;
+
                 var srcRect = new Rect(0, 0, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height);
                 var dstRect = b;
 
@@ -237,6 +281,8 @@ internal static class ElementRenderer
                 }
 
                 ds.DrawImage(bitmap, dstRect, srcRect, 1.0f, CanvasImageInterpolation.HighQualityCubic);
+                if (!Path.GetExtension(image.SourcePath).Equals(".svg", StringComparison.OrdinalIgnoreCase))
+                    bitmap.Dispose();
                 return;
             }
         }

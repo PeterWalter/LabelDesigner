@@ -3,6 +3,8 @@ using System.Text;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
+using SkiaSharp;
+using Svg.Skia;
 
 namespace LabelDesigner.Infrastructure.Export;
 
@@ -28,6 +30,48 @@ public sealed class SvgService : ISvgService
         sb.AppendLine("  <!-- SVG export stub: full element rendering will be implemented in a later phase. -->");
         sb.AppendLine("</svg>");
         return sb.ToString();
+    }
+
+    public byte[] RasterizeToPng(string svgFilePath, int pixelWidth, int pixelHeight)
+    {
+        if (string.IsNullOrWhiteSpace(svgFilePath))
+            throw new ArgumentException("SVG file path is required.", nameof(svgFilePath));
+        if (!File.Exists(svgFilePath))
+            throw new FileNotFoundException("SVG file was not found.", svgFilePath);
+        if (pixelWidth <= 0)
+            throw new ArgumentOutOfRangeException(nameof(pixelWidth), "Width must be > 0.");
+        if (pixelHeight <= 0)
+            throw new ArgumentOutOfRangeException(nameof(pixelHeight), "Height must be > 0.");
+
+        var svg = new SKSvg();
+        var picture = svg.Load(svgFilePath);
+        if (picture == null)
+            throw new InvalidOperationException($"Failed to parse SVG file '{svgFilePath}'.");
+
+        var sourceRect = picture.CullRect;
+        if (sourceRect.Width <= 0 || sourceRect.Height <= 0)
+            throw new InvalidOperationException($"SVG file '{svgFilePath}' has no drawable bounds.");
+
+        var info = new SKImageInfo(pixelWidth, pixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+        using var surface = SKSurface.Create(info);
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+
+        var scale = Math.Min(pixelWidth / sourceRect.Width, pixelHeight / sourceRect.Height);
+        var tx = (pixelWidth - sourceRect.Width * scale) / 2f - sourceRect.Left * scale;
+        var ty = (pixelHeight - sourceRect.Height * scale) / 2f - sourceRect.Top * scale;
+
+        canvas.Translate(tx, ty);
+        canvas.Scale(scale);
+        canvas.DrawPicture(picture);
+        canvas.Flush();
+
+        using var image = surface.Snapshot();
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        if (data == null)
+            throw new InvalidOperationException($"Failed to encode rasterized SVG '{svgFilePath}' to PNG.");
+
+        return data.ToArray();
     }
 
     private static string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);

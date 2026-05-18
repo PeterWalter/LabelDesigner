@@ -53,6 +53,9 @@
                         <ribbon:RibbonButton Content="Image" Command="{Binding Designer.AddImageCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="SVG" Command="{Binding Designer.AddSvgCommand}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB8C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
@@ -135,6 +138,12 @@
                                 <ComboBoxItem Content="cm" Tag="Centimeters"/>
                                 <ComboBoxItem Content="in" Tag="Inches"/>
                             </ComboBox>
+                            <TextBlock Text="Stock Preset" FontSize="11" Margin="0,6,0,4"/>
+                            <ComboBox Width="220"
+                                DisplayMemberPath="DisplayName"
+                                SelectedValuePath="Id"
+                                ItemsSource="{Binding Designer.LabelStockPresets}"
+                                SelectedValue="{Binding Designer.SelectedLabelStockPresetId, Mode=TwoWay}" />
                             <ToggleButton x:Name="SnapGridToggle" Content="Grid" IsChecked="True"
                                 Margin="0,4,0,0" Padding="6,2" FontSize="11"
                                 Checked="OnSnapGridToggled" Unchecked="OnSnapGridToggled"
