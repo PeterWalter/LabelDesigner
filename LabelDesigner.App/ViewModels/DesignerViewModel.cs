@@ -17,6 +17,7 @@ public partial class DesignerViewModel : ObservableObject
     private readonly ILabelPersistenceService _persistence;
     private readonly IDataSourceService _dataSource;
     private readonly IDataBindingService _dataBinding;
+    private readonly IElementInteractionService _interaction;
     private readonly PropertiesViewModel _properties;
 
     public PropertiesViewModel Properties => _properties;
@@ -29,13 +30,7 @@ public partial class DesignerViewModel : ObservableObject
     public PageSize CurrentPageSize { get; private set; } = PageSize.A4;
     public bool IsLandscape { get; private set; } = false;
 
-    private readonly ISnapService _snap;
-    private bool _isDragging;
     private bool _isShiftHeld;
-    private ResizeHandle _activeHandle = ResizeHandle.None;
-    private PointD _startPointD;
-    private RectD _originalBounds;
-    private double _rotationStartAngle;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CursorText))]
@@ -80,17 +75,17 @@ public partial class DesignerViewModel : ObservableObject
         ILabelPersistenceService persistence,
         IDataSourceService dataSource,
         IDataBindingService dataBinding,
-        PropertiesViewModel properties,
-        ISnapService snap)
+        IElementInteractionService interaction,
+        PropertiesViewModel properties)
     {
         _scene = scene;
         _undoRedo = undoRedo;
         _persistence = persistence;
         _dataSource = dataSource;
         _dataBinding = dataBinding;
+        _interaction = interaction;
         _properties = properties;
         _properties.RequestRedraw = () => RequestRedraw?.Invoke();
-        _snap = snap;
         Layers = new LayerPanelViewModel(scene);
 
         SetPage(PageSize.A4, false);
@@ -627,7 +622,6 @@ public partial class DesignerViewModel : ObservableObject
         Guides.Clear();
         var p = Viewport.ScreenToWorld(screenPoint);
         var pD = new PointD(p.X, p.Y);
-        _startPointD = pD;
 
         // Placement mode: place the pending element at cursor
         if (_placementMode == PlacementMode.PlaceOnce && _pendingElement != null)
@@ -666,17 +660,12 @@ public partial class DesignerViewModel : ObservableObject
             return;
         }
 
-        _isDragging = true;
-
         if (Selected != null)
         {
-            var rotRect = GetRotationHandleRect(Selected);
-            if (pD.X >= rotRect.X && pD.X <= rotRect.X + rotRect.Width &&
-                pD.Y >= rotRect.Y && pD.Y <= rotRect.Y + rotRect.Height)
+            var selectedHandle = _interaction.GetHoverHandle(Selected, pD, Viewport.Zoom);
+            if (selectedHandle == ResizeHandle.Rotate)
             {
-                _activeHandle = ResizeHandle.Rotate;
-                _originalBounds = Selected.Bounds;
-                _rotationStartAngle = Selected.Rotation;
+                _interaction.BeginDrag(pD, Selected, selectedHandle);
                 return;
             }
         }
@@ -687,7 +676,10 @@ public partial class DesignerViewModel : ObservableObject
         {
             _scene.ToggleSelect(hit.Id);
             Selected = _scene.SelectedIds.Count == 1 ? _scene.SingleSelected : null;
-            _activeHandle = ResizeHandle.Move;
+            if (Selected != null)
+            {
+                _interaction.BeginDrag(pD, Selected, ResizeHandle.Move);
+            }
             return;
         }
 
@@ -695,8 +687,7 @@ public partial class DesignerViewModel : ObservableObject
         {
             Selected = null;
             _scene.ClearSelection();
-            _activeHandle = ResizeHandle.None;
-            _isDragging = false;
+            _interaction.EndDrag();
             _properties.TrackElement(null);
             return;
         }
@@ -705,8 +696,8 @@ public partial class DesignerViewModel : ObservableObject
         _scene.Select(hit.Id);
         Selected = hit;
         _properties.TrackElement(hit);
-        _activeHandle = GetHoverHandle(pD);
-        _originalBounds = hit.Bounds;
+        var handle = _interaction.GetHoverHandle(hit, pD, Viewport.Zoom);
+        _interaction.BeginDrag(pD, hit, handle);
     }
 
     public void PointerMoved(Windows.Foundation.Point screenPoint)
@@ -717,68 +708,32 @@ public partial class DesignerViewModel : ObservableObject
         CursorWorldX = (int)pD.X;
         CursorWorldY = (int)pD.Y;
 
-        if (!_isDragging || Selected == null)
+        if (!_interaction.IsDragging || Selected == null)
             return;
 
-        var dx = pD.X - _startPointD.X;
-        var dy = pD.Y - _startPointD.Y;
+        var otherBounds = _scene.CurrentDocument.AllElements
+            .Where(e => e.Id != Selected.Id)
+            .Select(e => e.Bounds);
+        var update = _interaction.UpdateDrag(pD, Selected, otherBounds, GetPageRect());
 
-        if (_activeHandle == ResizeHandle.Rotate)
+        if (update.Rotation.HasValue)
         {
-            var centerX = Selected!.Bounds.X + Selected.Bounds.Width / 2;
-            var centerY = Selected.Bounds.Y + Selected.Bounds.Height / 2;
-            double cursorAngle = Math.Atan2(pD.Y - centerY, pD.X - centerX) * 180.0 / Math.PI;
-            double newAngle = _rotationStartAngle + (cursorAngle - Math.Atan2(_startPointD.Y - centerY, _startPointD.X - centerX) * 180.0 / Math.PI);
-            Selected.Rotation = newAngle % 360;
+            Selected.Rotation = update.Rotation.Value;
         }
-        else if (_activeHandle == ResizeHandle.None || _activeHandle == ResizeHandle.Move)
-        {
-            var otherBounds = _scene.CurrentDocument.AllElements
-                .Where(e => e.Id != Selected.Id)
-                .Select(e => e.Bounds);
 
-            var snappedBounds = _snap.Snap(_originalBounds.Translate(dx, dy), otherBounds, out var guides);
-            var clampedBounds = snappedBounds.ClampToBounds(GetPageRect());
-
-            Guides.Clear();
-            Guides.AddRange(guides);
-            Selected.Bounds = clampedBounds;
-        }
-        else
+        if (update.Bounds.HasValue)
         {
-            Guides.Clear();
-            Resize(dx, dy);
+            Selected.Bounds = update.Bounds.Value;
         }
+
+        Guides.Clear();
+        Guides.AddRange(update.Guides);
     }
 
     public void PointerReleased()
     {
-        _isDragging = false;
-        _activeHandle = ResizeHandle.None;
+        _interaction.EndDrag();
         Guides.Clear();
-    }
-
-    private void Resize(double dx, double dy)
-    {
-        var b = _originalBounds;
-        double minSize = 20;
-
-        switch (_activeHandle)
-        {
-            case ResizeHandle.TopLeft: b = new RectD(b.X + dx, b.Y + dy, b.Width - dx, b.Height - dy); break;
-            case ResizeHandle.Top: b = new RectD(b.X, b.Y + dy, b.Width, b.Height - dy); break;
-            case ResizeHandle.TopRight: b = new RectD(b.X, b.Y + dy, b.Width + dx, b.Height - dy); break;
-            case ResizeHandle.Right: b = new RectD(b.X, b.Y, b.Width + dx, b.Height); break;
-            case ResizeHandle.BottomRight: b = new RectD(b.X, b.Y, b.Width + dx, b.Height + dy); break;
-            case ResizeHandle.Bottom: b = new RectD(b.X, b.Y, b.Width, b.Height + dy); break;
-            case ResizeHandle.BottomLeft: b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height + dy); break;
-            case ResizeHandle.Left: b = new RectD(b.X + dx, b.Y, b.Width - dx, b.Height); break;
-        }
-
-        b = b
-            .EnsureMinimumSize(minSize, minSize)
-            .ClampToBounds(GetPageRect());
-        Selected!.Bounds = b;
     }
 
     private RectD GetPageRect()
@@ -788,48 +743,8 @@ public partial class DesignerViewModel : ObservableObject
             _scene.CurrentDocument.Page.HeightMm * 3.78);
     }
 
-    private RectD GetRotationHandleRect(DesignElement el)
-    {
-        var b = el.Bounds;
-        float zf = Math.Max((float)Viewport.Zoom, 0.25f);
-        float rotOff = 20f / zf;
-        return new RectD(b.X + b.Width / 2 - 8, b.Y - rotOff - 8, 16, 16);
-    }
-
     public ResizeHandle GetHoverHandle(PointD pD)
     {
-        if (Selected == null) return ResizeHandle.None;
-
-        var rotRect = GetRotationHandleRect(Selected);
-        if (pD.X >= rotRect.X && pD.X <= rotRect.X + rotRect.Width &&
-            pD.Y >= rotRect.Y && pD.Y <= rotRect.Y + rotRect.Height)
-            return ResizeHandle.Rotate;
-
-        var b = Selected.Bounds;
-        const double size = 8;
-
-        bool Near(double x, double y)
-            => Math.Abs(pD.X - x) < size && Math.Abs(pD.Y - y) < size;
-
-        if (Near(b.X, b.Y)) return ResizeHandle.TopLeft;
-        if (Near(b.X + b.Width, b.Y)) return ResizeHandle.TopRight;
-        if (Near(b.X + b.Width, b.Y + b.Height)) return ResizeHandle.BottomRight;
-        if (Near(b.X, b.Y + b.Height)) return ResizeHandle.BottomLeft;
-
-        const double edgeTolerance = 10;
-
-        if (Math.Abs(pD.Y - b.Y) <= edgeTolerance && pD.X >= b.X && pD.X <= b.X + b.Width)
-            return ResizeHandle.Top;
-        if (Math.Abs(pD.X - (b.X + b.Width)) <= edgeTolerance && pD.Y >= b.Y && pD.Y <= b.Y + b.Height)
-            return ResizeHandle.Right;
-        if (Math.Abs(pD.Y - (b.Y + b.Height)) <= edgeTolerance && pD.X >= b.X && pD.X <= b.X + b.Width)
-            return ResizeHandle.Bottom;
-        if (Math.Abs(pD.X - b.X) <= edgeTolerance && pD.Y >= b.Y && pD.Y <= b.Y + b.Height)
-            return ResizeHandle.Left;
-
-        if (pD.X >= b.X && pD.X <= b.X + b.Width && pD.Y >= b.Y && pD.Y <= b.Y + b.Height)
-            return ResizeHandle.Move;
-
-        return ResizeHandle.None;
+        return _interaction.GetHoverHandle(Selected, pD, Viewport.Zoom);
     }
 }
