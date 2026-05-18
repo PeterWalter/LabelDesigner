@@ -53,6 +53,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<IPrintService, PrintService>();
         services.AddSingleton<IDocumentRasterizer>(sp => (IDocumentRasterizer)sp.GetRequiredService<IPrintService>());
         services.AddSingleton<IPdfExportService, PdfExportService>();
+        services.AddSingleton<ISvgService, SvgService>();
         services.AddSingleton<Core.Interfaces.IDataSourceService, CsvDataSourceService>();
 
         // ViewModels

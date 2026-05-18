@@ -574,6 +574,143 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void CutSelected()
+    {
+        CopySelected();
+        DeleteSelected();
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void BringToFront()
+    {
+        var selectedElements = GetSelectedElements();
+        if (selectedElements.Count == 0) return;
+
+        var maxZ = _scene.CurrentDocument.AllElements.Max(e => e.ZIndex);
+        foreach (var element in selectedElements.OrderBy(e => e.ZIndex))
+        {
+            maxZ++;
+            _scene.ReorderElement(element.Id, maxZ);
+        }
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void SendToBack()
+    {
+        var selectedElements = GetSelectedElements();
+        if (selectedElements.Count == 0) return;
+
+        var minZ = _scene.CurrentDocument.AllElements.Min(e => e.ZIndex);
+        foreach (var element in selectedElements.OrderBy(e => e.ZIndex))
+        {
+            minZ--;
+            _scene.ReorderElement(element.Id, minZ);
+        }
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void AlignLeft()
+    {
+        var elements = GetSelectedElements();
+        if (elements.Count < 2) return;
+
+        var targetLeft = elements.Min(e => e.Bounds.X);
+        foreach (var element in elements)
+            MoveElementTo(element, targetLeft, element.Bounds.Y);
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void AlignCenter()
+    {
+        var elements = GetSelectedElements();
+        if (elements.Count < 2) return;
+
+        var targetCenter = (elements.Min(e => e.Bounds.X) + elements.Max(e => e.Bounds.X + e.Bounds.Width)) / 2.0;
+        foreach (var element in elements)
+            MoveElementTo(element, targetCenter - (element.Bounds.Width / 2.0), element.Bounds.Y);
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void AlignRight()
+    {
+        var elements = GetSelectedElements();
+        if (elements.Count < 2) return;
+
+        var targetRight = elements.Max(e => e.Bounds.X + e.Bounds.Width);
+        foreach (var element in elements)
+            MoveElementTo(element, targetRight - element.Bounds.Width, element.Bounds.Y);
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void AlignTop()
+    {
+        var elements = GetSelectedElements();
+        if (elements.Count < 2) return;
+
+        var targetTop = elements.Min(e => e.Bounds.Y);
+        foreach (var element in elements)
+            MoveElementTo(element, element.Bounds.X, targetTop);
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void AlignBottom()
+    {
+        var elements = GetSelectedElements();
+        if (elements.Count < 2) return;
+
+        var targetBottom = elements.Max(e => e.Bounds.Y + e.Bounds.Height);
+        foreach (var element in elements)
+            MoveElementTo(element, element.Bounds.X, targetBottom - element.Bounds.Height);
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void DistributeHorizontal()
+    {
+        var elements = GetSelectedElements().OrderBy(e => e.Bounds.X).ToList();
+        if (elements.Count < 3) return;
+
+        var left = elements.First().Bounds.X;
+        var right = elements.Last().Bounds.X;
+        var step = (right - left) / (elements.Count - 1);
+
+        for (var i = 1; i < elements.Count - 1; i++)
+            MoveElementTo(elements[i], left + (step * i), elements[i].Bounds.Y);
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    public void DistributeVertical()
+    {
+        var elements = GetSelectedElements().OrderBy(e => e.Bounds.Y).ToList();
+        if (elements.Count < 3) return;
+
+        var top = elements.First().Bounds.Y;
+        var bottom = elements.Last().Bounds.Y;
+        var step = (bottom - top) / (elements.Count - 1);
+
+        for (var i = 1; i < elements.Count - 1; i++)
+            MoveElementTo(elements[i], elements[i].Bounds.X, top + (step * i));
+
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
     private void SetTextTop() { if (Selected is BarcodeElement b) b.TextPosition = BarcodeTextPosition.Top; }
 
     [RelayCommand]
@@ -786,5 +923,35 @@ public partial class DesignerViewModel : ObservableObject
             MeasurementUnit.Inches => "in",
             _ => "mm"
         };
+    }
+
+    private List<DesignElement> GetSelectedElements()
+    {
+        var ids = _scene.SelectedIds.ToList();
+        if (ids.Count == 0 && Selected != null) ids.Add(Selected.Id);
+
+        return ids
+            .Select(id => _scene.GetElement(id))
+            .Where(el => el != null)
+            .Cast<DesignElement>()
+            .ToList();
+    }
+
+    private void MoveElementTo(DesignElement element, double x, double y)
+    {
+        var page = GetPageRect();
+        var target = new RectD(x, y, element.Bounds.Width, element.Bounds.Height).ClampToBounds(page);
+        var dx = target.X - element.Bounds.X;
+        var dy = target.Y - element.Bounds.Y;
+
+        if (element is LineElement line)
+        {
+            line.X1 += dx;
+            line.X2 += dx;
+            line.Y1 += dy;
+            line.Y2 += dy;
+        }
+
+        element.Bounds = target;
     }
 }
