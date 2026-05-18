@@ -102,6 +102,9 @@ public class ElementInteractionService : IElementInteractionService
             .EnsureMinimumSize(20, 20)
             .ClampToBounds(pageRect);
 
+        resizedBounds = SnapResizeToGrid(resizedBounds, _activeHandle)
+            .ClampToBounds(pageRect);
+
         return new InteractionUpdate(resizedBounds, null, Array.Empty<GuideLine>());
     }
 
@@ -132,5 +135,53 @@ public class ElementInteractionService : IElementInteractionService
             ResizeHandle.Left => new RectD(bounds.X + dx, bounds.Y, bounds.Width - dx, bounds.Height),
             _ => bounds
         };
+    }
+
+    private RectD SnapResizeToGrid(RectD bounds, ResizeHandle handle)
+    {
+        var grid = _snapService.GridSize;
+        if (grid <= 0)
+            return bounds;
+
+        double x = bounds.X;
+        double y = bounds.Y;
+        double right = bounds.Right;
+        double bottom = bounds.Bottom;
+
+        static double Snap(double value, double gridSize) => Math.Round(value / gridSize) * gridSize;
+
+        switch (handle)
+        {
+            case ResizeHandle.Left:
+                x = Snap(bounds.Left, grid);
+                break;
+            case ResizeHandle.Top:
+                y = Snap(bounds.Top, grid);
+                break;
+            case ResizeHandle.Right:
+                right = Snap(bounds.Right, grid);
+                break;
+            case ResizeHandle.Bottom:
+                bottom = Snap(bounds.Bottom, grid);
+                break;
+            case ResizeHandle.TopLeft:
+                x = Snap(bounds.Left, grid);
+                y = Snap(bounds.Top, grid);
+                break;
+            case ResizeHandle.TopRight:
+                y = Snap(bounds.Top, grid);
+                right = Snap(bounds.Right, grid);
+                break;
+            case ResizeHandle.BottomLeft:
+                x = Snap(bounds.Left, grid);
+                bottom = Snap(bounds.Bottom, grid);
+                break;
+            case ResizeHandle.BottomRight:
+                right = Snap(bounds.Right, grid);
+                bottom = Snap(bounds.Bottom, grid);
+                break;
+        }
+
+        return new RectD(x, y, Math.Max(20, right - x), Math.Max(20, bottom - y));
     }
 }

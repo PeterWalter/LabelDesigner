@@ -131,6 +131,7 @@ public partial class DesignerViewModel : ObservableObject
             {
                 _properties.TrackElement(Selected);
                 Layers.Refresh(Selected?.Id);
+                RequestRedraw?.Invoke();
             }
         };
         AppSettingsService.SettingsChanged += OnSettingsChanged;

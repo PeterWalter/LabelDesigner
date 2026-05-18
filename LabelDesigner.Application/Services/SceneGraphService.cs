@@ -139,10 +139,9 @@ public class SceneGraphService : ISceneGraphService
             foreach (var id in layer.ElementIds.OrderByDescending(id =>
                 _elements.TryGetValue(id, out var el) ? el.ZIndex : 0))
             {
-                if (_elements.TryGetValue(id, out var el) && el.Visible)
+                if (_elements.TryGetValue(id, out var el) && el.Visible && !el.Locked)
                 {
-                    var b = el.Bounds;
-                    if (p.X >= b.X && p.X <= b.X + b.Width && p.Y >= b.Y && p.Y <= b.Y + b.Height)
+                    if (el.HitTest(p))
                         hits.Add(el);
                 }
             }
@@ -402,13 +401,21 @@ public class SceneGraphService : ISceneGraphService
         public void Execute()
         {
             Owner._elements[Element.Id] = Element;
-            if (Owner._layers.TryGetValue(LayerId, out var l)) l.ElementIds.Add(Element.Id);
+            if (Owner._layers.TryGetValue(LayerId, out var l))
+            {
+                l.ElementIds.Add(Element.Id);
+                Owner.NormalizeLayerZIndices(l);
+            }
             Owner.CurrentDocument.AllElements.Add(Element);
         }
         public void Undo()
         {
             Owner._elements.Remove(Element.Id);
-            if (Owner._layers.TryGetValue(LayerId, out var l)) l.ElementIds.Remove(Element.Id);
+            if (Owner._layers.TryGetValue(LayerId, out var l))
+            {
+                l.ElementIds.Remove(Element.Id);
+                Owner.NormalizeLayerZIndices(l);
+            }
             Owner.CurrentDocument.AllElements.Remove(Element);
             Owner._selectedIds.Remove(Element.Id);
         }
@@ -420,14 +427,22 @@ public class SceneGraphService : ISceneGraphService
         public void Execute()
         {
             Owner._elements.Remove(Element.Id);
-            if (LayerId.HasValue && Owner._layers.TryGetValue(LayerId.Value, out var l)) l.ElementIds.Remove(Element.Id);
+            if (LayerId.HasValue && Owner._layers.TryGetValue(LayerId.Value, out var l))
+            {
+                l.ElementIds.Remove(Element.Id);
+                Owner.NormalizeLayerZIndices(l);
+            }
             Owner.CurrentDocument.AllElements.Remove(Element);
             Owner._selectedIds.Remove(Element.Id);
         }
         public void Undo()
         {
             Owner._elements[Element.Id] = Element;
-            if (LayerId.HasValue && Owner._layers.TryGetValue(LayerId.Value, out var l)) l.ElementIds.Add(Element.Id);
+            if (LayerId.HasValue && Owner._layers.TryGetValue(LayerId.Value, out var l))
+            {
+                l.ElementIds.Add(Element.Id);
+                Owner.NormalizeLayerZIndices(l);
+            }
             Owner.CurrentDocument.AllElements.Add(Element);
             if (WasSelected)
                 Owner._selectedIds.Add(Element.Id);
@@ -444,10 +459,16 @@ public class SceneGraphService : ISceneGraphService
             else if (To is Guid parentId)
             {
                 if (From is Guid oldParentId && Owner._layers.TryGetValue(oldParentId, out var oldLayer))
+                {
                     oldLayer.ElementIds.Remove(Id);
+                    Owner.NormalizeLayerZIndices(oldLayer);
+                }
                 el.ParentId = parentId;
                 if (Owner._layers.TryGetValue(parentId, out var newLayer))
+                {
                     newLayer.ElementIds.Add(Id);
+                    Owner.NormalizeLayerZIndices(newLayer);
+                }
             }
         }
         public void Undo()
@@ -457,10 +478,16 @@ public class SceneGraphService : ISceneGraphService
             else if (From is Guid oldParentId)
             {
                 if (To is Guid newParentId && Owner._layers.TryGetValue(newParentId, out var newLayer))
+                {
                     newLayer.ElementIds.Remove(Id);
+                    Owner.NormalizeLayerZIndices(newLayer);
+                }
                 el.ParentId = oldParentId;
                 if (Owner._layers.TryGetValue(oldParentId, out var oldLayer))
+                {
                     oldLayer.ElementIds.Add(Id);
+                    Owner.NormalizeLayerZIndices(oldLayer);
+                }
             }
         }
     }

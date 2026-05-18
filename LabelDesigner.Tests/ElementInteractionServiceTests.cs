@@ -62,4 +62,58 @@ public class ElementInteractionServiceTests
         Assert.Equal(20, update.Bounds!.Value.Width);
         Assert.Equal(20, update.Bounds!.Value.Height);
     }
+
+    [Fact]
+    public void GetHoverHandle_returns_rotation_when_pointer_is_over_rotation_grip()
+    {
+        var service = new ElementInteractionService(new SnapService());
+        var selected = new TextElement
+        {
+            Bounds = new RectD(10, 10, 100, 40)
+        };
+
+        var handle = service.GetHoverHandle(selected, new PointD(60, -10), zoom: 1.0);
+
+        Assert.Equal(ResizeHandle.Rotate, handle);
+    }
+
+    [Fact]
+    public void UpdateDrag_resize_snaps_to_grid()
+    {
+        var service = new ElementInteractionService(new SnapService { GridSize = 20, Threshold = 5 });
+        var selected = new TextElement
+        {
+            Bounds = new RectD(10, 10, 40, 20)
+        };
+
+        service.BeginDrag(new PointD(50, 20), selected, ResizeHandle.Right);
+        var update = service.UpdateDrag(
+            new PointD(87, 20),
+            selected,
+            Array.Empty<RectD>(),
+            new RectD(0, 0, 200, 200));
+
+        Assert.NotNull(update.Bounds);
+        Assert.Equal(70, update.Bounds!.Value.Width);
+    }
+
+    [Fact]
+    public void UpdateDrag_rotate_turns_around_center()
+    {
+        var service = new ElementInteractionService(new SnapService());
+        var selected = new TextElement
+        {
+            Bounds = new RectD(10, 10, 100, 40)
+        };
+
+        service.BeginDrag(new PointD(60, 0), selected, ResizeHandle.Rotate);
+        var update = service.UpdateDrag(
+            new PointD(90, 30),
+            selected,
+            Array.Empty<RectD>(),
+            new RectD(0, 0, 200, 200));
+
+        Assert.True(update.Rotation.HasValue);
+        Assert.Equal(90, update.Rotation.Value, precision: 0);
+    }
 }

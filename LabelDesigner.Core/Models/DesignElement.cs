@@ -35,7 +35,7 @@ public abstract class DesignElement
             Matrix3x2.CreateTranslation(-w / 2f, -h / 2f);
     }
 
-    public bool HitTest(PointD worldPoint)
+    public virtual bool HitTest(PointD worldPoint)
     {
         var mat = GetLocalTransform();
         if (!Matrix3x2.Invert(mat, out var inv)) return false;
@@ -44,7 +44,7 @@ public abstract class DesignElement
                local.Y >= 0 && local.Y <= (float)Bounds.Height;
     }
 
-    public bool HitTestMargin(PointD worldPoint, double margin)
+    public virtual bool HitTestMargin(PointD worldPoint, double margin)
     {
         var mat = GetLocalTransform();
         if (!Matrix3x2.Invert(mat, out var inv)) return false;
