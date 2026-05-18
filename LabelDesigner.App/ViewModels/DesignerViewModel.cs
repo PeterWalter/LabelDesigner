@@ -23,7 +23,7 @@ public partial class DesignerViewModel : ObservableObject
 
     private double GetPixelsPerMm()
     {
-        // Return cached value immediately (fast path)
+        // Return cached value immediately (fast path after first successful detection)
         if (_cachedPixelsPerMm.HasValue)
             return _cachedPixelsPerMm.Value;
 
@@ -33,34 +33,38 @@ public partial class DesignerViewModel : ObservableObject
             if (_cachedPixelsPerMm.HasValue)
                 return _cachedPixelsPerMm.Value;
 
-            // Start with default; override only if DPI detection succeeds
-            double dpiScale = 1.0;
-
-            try
-            {
-                // WinRT calls must happen on UI thread with CoreWindow
-                // Only attempt if DispatcherQueue is available
-                try
-                {
-                    var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
-                    dpiScale = displayInfo.RawPixelsPerViewPixel;
-                }
-                catch (COMException)
-                {
-                    // Not on UI thread or CoreWindow not ready—use default
-                }
-            }
-            catch
-            {
-                // Any other error—use default
-            }
-
-            _cachedPixelsPerMm = BASE_PpMm * dpiScale;
+            // Always start with base value; scale will be detected on first render
+            _cachedPixelsPerMm = BASE_PpMm;
             return _cachedPixelsPerMm.Value;
         }
     }
 
-    public double PixelsPerMm => GetPixelsPerMm();
+    public double PixelsPerMm
+    {
+        get
+        {
+            // Cached value exists and was detected from system DPI
+            if (_cachedPixelsPerMm.HasValue && _cachedPixelsPerMm.Value > BASE_PpMm * 0.9)
+                return _cachedPixelsPerMm.Value;
+
+            // Try to detect DPI from current context (safe for UI thread)
+            lock (_pixelsPerMmLock)
+            {
+                try
+                {
+                    var displayInfo = Windows.Graphics.Display.DisplayInformation.GetForCurrentView();
+                    double dpiScale = displayInfo.RawPixelsPerViewPixel;
+                    _cachedPixelsPerMm = BASE_PpMm * dpiScale;
+                    return _cachedPixelsPerMm.Value;
+                }
+                catch
+                {
+                    // Not on UI thread or CoreWindow not ready—use cached value or base
+                    return _cachedPixelsPerMm ?? BASE_PpMm;
+                }
+            }
+        }
+    }
 
     private readonly ISceneGraphService _scene;
     private readonly IUndoRedoService _undoRedo;
