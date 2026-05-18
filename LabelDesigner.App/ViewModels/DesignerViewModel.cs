@@ -450,7 +450,7 @@ public partial class DesignerViewModel : ObservableObject
         if (source is BarcodeElement b) return new BarcodeElement { Id = id ?? Guid.NewGuid(), Value = b.Value, TextPosition = b.TextPosition, Bounds = b.Bounds };
         if (source is TextElement t) return new TextElement { Id = id ?? Guid.NewGuid(), Text = t.Text, FontSize = t.FontSize, Bounds = t.Bounds };
         if (source is ShapeElement s) return new ShapeElement { Id = id ?? Guid.NewGuid(), Type = s.Type, Fill = s.Fill, Stroke = s.Stroke, StrokeWidth = s.StrokeWidth, Bounds = s.Bounds };
-        if (source is LineElement l) return new LineElement { Id = id ?? Guid.NewGuid(), X1 = l.X1, Y1 = l.Y1, X2 = l.X2, Y2 = l.Y2, Stroke = l.Stroke, StrokeWidth = l.StrokeWidth };
+        if (source is LineElement l) return new LineElement { Id = id ?? Guid.NewGuid(), X1 = l.X1, Y1 = l.Y1, X2 = l.X2, Y2 = l.Y2, Stroke = l.Stroke, StrokeWidth = l.StrokeWidth, Bounds = l.Bounds };
         if (source is ImageElement i) return new ImageElement { Id = id ?? Guid.NewGuid(), SourcePath = i.SourcePath, Stretch = i.Stretch, Bounds = i.Bounds };
         return null;
     }
@@ -586,6 +586,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var selectedElements = GetSelectedElements();
         if (selectedElements.Count == 0) return;
+        if (_scene.CurrentDocument.AllElements.Count == 0) return;
 
         var maxZ = _scene.CurrentDocument.AllElements.Max(e => e.ZIndex);
         foreach (var element in selectedElements.OrderBy(e => e.ZIndex))
@@ -602,6 +603,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var selectedElements = GetSelectedElements();
         if (selectedElements.Count == 0) return;
+        if (_scene.CurrentDocument.AllElements.Count == 0) return;
 
         var minZ = _scene.CurrentDocument.AllElements.Min(e => e.ZIndex);
         foreach (var element in selectedElements.OrderBy(e => e.ZIndex))
@@ -681,15 +683,18 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     public void DistributeHorizontal()
     {
-        var elements = GetSelectedElements().OrderBy(e => e.Bounds.X).ToList();
+        var elements = GetSelectedElements().OrderBy(e => e.Bounds.CenterX).ToList();
         if (elements.Count < 3) return;
 
-        var left = elements.First().Bounds.X;
-        var right = elements.Last().Bounds.X;
-        var step = (right - left) / (elements.Count - 1);
+        var firstCenter = elements.First().Bounds.CenterX;
+        var lastCenter = elements.Last().Bounds.CenterX;
+        var step = (lastCenter - firstCenter) / (elements.Count - 1);
 
         for (var i = 1; i < elements.Count - 1; i++)
-            MoveElementTo(elements[i], left + (step * i), elements[i].Bounds.Y);
+        {
+            var targetCenter = firstCenter + (step * i);
+            MoveElementTo(elements[i], targetCenter - (elements[i].Bounds.Width / 2.0), elements[i].Bounds.Y);
+        }
 
         RequestRedraw?.Invoke();
     }
@@ -697,15 +702,18 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     public void DistributeVertical()
     {
-        var elements = GetSelectedElements().OrderBy(e => e.Bounds.Y).ToList();
+        var elements = GetSelectedElements().OrderBy(e => e.Bounds.CenterY).ToList();
         if (elements.Count < 3) return;
 
-        var top = elements.First().Bounds.Y;
-        var bottom = elements.Last().Bounds.Y;
-        var step = (bottom - top) / (elements.Count - 1);
+        var firstCenter = elements.First().Bounds.CenterY;
+        var lastCenter = elements.Last().Bounds.CenterY;
+        var step = (lastCenter - firstCenter) / (elements.Count - 1);
 
         for (var i = 1; i < elements.Count - 1; i++)
-            MoveElementTo(elements[i], elements[i].Bounds.X, top + (step * i));
+        {
+            var targetCenter = firstCenter + (step * i);
+            MoveElementTo(elements[i], elements[i].Bounds.X, targetCenter - (elements[i].Bounds.Height / 2.0));
+        }
 
         RequestRedraw?.Invoke();
     }
@@ -950,6 +958,12 @@ public partial class DesignerViewModel : ObservableObject
             line.X2 += dx;
             line.Y1 += dy;
             line.Y2 += dy;
+            var minX = Math.Min(line.X1, line.X2);
+            var minY = Math.Min(line.Y1, line.Y2);
+            var maxX = Math.Max(line.X1, line.X2);
+            var maxY = Math.Max(line.Y1, line.Y2);
+            line.Bounds = new RectD(minX, minY, maxX - minX, maxY - minY);
+            return;
         }
 
         element.Bounds = target;
