@@ -49,7 +49,13 @@ public class PdfExportService : IPdfExportService
         }
         else if (el is TextElement text)
         {
-            graphics.DrawString(text.Text, new PdfStandardFont(PdfFontFamily.Helvetica, (float)text.FontSize * scale),
+            var style = (text.Bold && text.Italic) ? PdfFontStyle.Bold | PdfFontStyle.Italic
+                      : text.Bold   ? PdfFontStyle.Bold
+                      : text.Italic ? PdfFontStyle.Italic
+                      : PdfFontStyle.Regular;
+
+            var font = new PdfStandardFont(PdfFontFamily.Helvetica, (float)text.FontSize * scale, style);
+            graphics.DrawString(text.Text, font,
                 PdfBrushes.Black, new Syncfusion.Drawing.PointF((float)bounds.X, (float)bounds.Y));
         }
         else if (el is ShapeElement shape)
