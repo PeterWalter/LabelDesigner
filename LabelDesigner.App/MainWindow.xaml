@@ -176,7 +176,7 @@
             <controls:RulerControl Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
                 Viewport="{Binding Designer.Viewport}" Background="#F5F5F5"/>
 
-            <Border Grid.Column="2" x:Name="SplitterLeft" Width="4" Background="Transparent" Cursor="SizeWestEast"
+            <Border Grid.Column="2" x:Name="SplitterLeft" Width="6" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
@@ -213,7 +213,7 @@
 
             <views:DesignerCanvasView Grid.Column="3"/>
 
-            <Border Grid.Column="4" x:Name="SplitterRight" Width="4" Background="Transparent" Cursor="SizeWestEast"
+            <Border Grid.Column="4" x:Name="SplitterRight" Width="6" Background="#F0F2F5" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 

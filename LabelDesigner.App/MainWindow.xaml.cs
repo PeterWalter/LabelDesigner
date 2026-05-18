@@ -20,6 +20,10 @@ public sealed partial class MainWindow : Window
 
         ViewModel.Designer.Layers.Refresh();
 
+        // Set splitter cursors
+        SplitterLeft.ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
+        SplitterRight.ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast);
+
         var appWindow = this.AppWindow;
         if (appWindow != null)
             appWindow.Resize(new Windows.Graphics.SizeInt32(1400, 900));
