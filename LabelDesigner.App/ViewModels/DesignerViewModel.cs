@@ -191,8 +191,57 @@ public partial class DesignerViewModel : ObservableObject
     public partial string? SelectedPrinter { get; set; }
 
     public ObservableCollection<string> AvailableDataFields { get; } = new();
-
     public bool HasDataFields => AvailableDataFields.Count > 0;
+
+    // ── Merge preview ──────────────────────────────────────────────────────
+    private List<IReadOnlyDictionary<string, string>> _csvRecords = new();
+    private SceneDocument? _previewDocument;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewRecordText))]
+    [NotifyPropertyChangedFor(nameof(IsPreviewMode))]
+    public partial int PreviewRecordIndex { get; set; } = -1;
+
+    public int PreviewRecordCount => _csvRecords.Count;
+    public bool IsPreviewMode => PreviewRecordIndex >= 0 && _csvRecords.Count > 0;
+    public string PreviewRecordText => IsPreviewMode
+        ? $"Merge Preview: Record {PreviewRecordIndex + 1} of {_csvRecords.Count}"
+        : "";
+
+    /// <summary>Returns the merge-preview document when active, otherwise the live scene document.</summary>
+    public SceneDocument ActiveRenderDocument => IsPreviewMode && _previewDocument != null
+        ? _previewDocument
+        : _scene.CurrentDocument;
+
+    partial void OnPreviewRecordIndexChanged(int value)
+    {
+        if (value >= 0 && value < _csvRecords.Count)
+            _previewDocument = _dataBinding.ApplyRecord(_scene.CurrentDocument, _csvRecords[value]);
+        else
+            _previewDocument = null;
+        RequestRedraw?.Invoke();
+    }
+
+    [RelayCommand]
+    private void NextPreviewRecord()
+    {
+        if (_csvRecords.Count == 0) return;
+        PreviewRecordIndex = (PreviewRecordIndex + 1) % _csvRecords.Count;
+    }
+
+    [RelayCommand]
+    private void PreviousPreviewRecord()
+    {
+        if (_csvRecords.Count == 0) return;
+        PreviewRecordIndex = PreviewRecordIndex <= 0 ? _csvRecords.Count - 1 : PreviewRecordIndex - 1;
+    }
+
+    [RelayCommand]
+    private void ExitPreviewMode()
+    {
+        PreviewRecordIndex = -1;
+    }
+    // ───────────────────────────────────────────────────────────────────────
 
     public int DefaultBarcodeTextPositionIndex
     {
@@ -998,7 +1047,11 @@ public partial class DesignerViewModel : ObservableObject
             if (records.Count > 0)
                 foreach (var key in records[0].Keys)
                     AvailableDataFields.Add(key);
+
+            _csvRecords = records.ToList();
             OnPropertyChanged(nameof(HasDataFields));
+            OnPropertyChanged(nameof(PreviewRecordCount));
+            PreviewRecordIndex = _csvRecords.Count > 0 ? 0 : -1;
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (Exception ex)

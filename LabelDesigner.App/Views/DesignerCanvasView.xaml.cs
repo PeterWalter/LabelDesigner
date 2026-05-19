@@ -196,7 +196,7 @@ public sealed partial class DesignerCanvasView : UserControl
         var viewport = new RectD(VM.Viewport.OffsetX, VM.Viewport.OffsetY,
             sender.ActualWidth, sender.ActualHeight);
         VM.RenderService.RenderScene(
-            ds, VM.Scene.CurrentDocument, VM.Scene.SelectedIds,
+            ds, VM.ActiveRenderDocument, VM.Scene.SelectedIds,
             _hoveredIds, (float)VM.Viewport.Zoom, viewport,
             pixelsPerMm, LabelDesigner.App.Services.AppSettingsService.ShowSnapGrid,
             VM.Guides);

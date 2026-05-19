@@ -430,6 +430,27 @@
                     Command="{Binding Designer.OpenSelectedRecentCommand}"
                     Padding="6,2"
                     ToolTipService.ToolTip="Open the selected recent file"/>
+
+                <!-- ── Merge Preview Navigator (visible when CSV loaded) ── -->
+                <Border Width="1" Background="{ThemeResource AppBorderBrush}"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    Margin="4,2"/>
+                <Button Content="◄" Command="{Binding Designer.PreviousPreviewRecordCommand}"
+                    Padding="6,2" FontSize="12"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    ToolTipService.ToolTip="Previous CSV record"/>
+                <TextBlock Text="{Binding Designer.PreviewRecordText}"
+                    VerticalAlignment="Center" FontSize="11"
+                    Foreground="{ThemeResource AppAccentBrush}"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"/>
+                <Button Content="►" Command="{Binding Designer.NextPreviewRecordCommand}"
+                    Padding="6,2" FontSize="12"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    ToolTipService.ToolTip="Next CSV record"/>
+                <Button Content="✕ Preview" Command="{Binding Designer.ExitPreviewModeCommand}"
+                    Padding="6,2" FontSize="11"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    ToolTipService.ToolTip="Exit merge preview mode"/>
             </StackPanel>
         </Border>
 
