@@ -190,6 +190,10 @@ public partial class DesignerViewModel : ObservableObject
     [ObservableProperty]
     public partial string? SelectedPrinter { get; set; }
 
+    public ObservableCollection<string> AvailableDataFields { get; } = new();
+
+    public bool HasDataFields => AvailableDataFields.Count > 0;
+
     public int DefaultBarcodeTextPositionIndex
     {
         get => (int)Defaults.BarcodeTextPosition;
@@ -981,7 +985,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            _ = await _dataSource.LoadAsync(file.Path);
+            var records = await _dataSource.LoadAsync(file.Path);
 
             _scene.CurrentDocument.DataSource = new DataSourceConfig
             {
@@ -989,6 +993,12 @@ public partial class DesignerViewModel : ObservableObject
                 Path = file.Path,
                 MergeMode = nameof(DataMergeMode.OneRecordPerPage)
             };
+
+            AvailableDataFields.Clear();
+            if (records.Count > 0)
+                foreach (var key in records[0].Keys)
+                    AvailableDataFields.Add(key);
+            OnPropertyChanged(nameof(HasDataFields));
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (Exception ex)
@@ -1965,6 +1975,26 @@ public partial class DesignerViewModel : ObservableObject
 
         _scene.CurrentDocument.DataSource.MergeMode = nameof(DataMergeMode.MultipleRecordsPerPage);
         OnPropertyChanged(nameof(DataMergeModeIndex));
+    }
+
+    /// <summary>Sets barcode Value to {{fieldName}} template token, binding it to the named CSV column.</summary>
+    [RelayCommand]
+    private void BindBarcodeToField(string? fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName) || Selected is not BarcodeElement b) return;
+        b.Value = $"{{{{{fieldName}}}}}";
+        _properties.TrackElement(b);
+        RequestRedraw?.Invoke();
+    }
+
+    /// <summary>Sets text element Text to {{fieldName}} template token, binding it to the named CSV column.</summary>
+    [RelayCommand]
+    private void BindTextToField(string? fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName) || Selected is not TextElement t) return;
+        t.Text = $"{{{{{fieldName}}}}}";
+        _properties.TrackElement(t);
+        RequestRedraw?.Invoke();
     }
 
     private DataMergeMode GetDataMergeMode()

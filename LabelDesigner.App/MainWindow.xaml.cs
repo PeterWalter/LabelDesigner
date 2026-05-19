@@ -220,4 +220,22 @@ public sealed partial class MainWindow : Window
         if (Content is FrameworkElement root)
             root.RequestedTheme = AppSettingsService.AppTheme;
     }
+
+    private void OnBarcodeFieldSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox cb && cb.SelectedItem is string fieldName)
+        {
+            ViewModel.Designer.BindBarcodeToFieldCommand.Execute(fieldName);
+            cb.SelectedItem = null; // reset after binding
+        }
+    }
+
+    private void OnTextFieldSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox cb && cb.SelectedItem is string fieldName)
+        {
+            ViewModel.Designer.BindTextToFieldCommand.Execute(fieldName);
+            cb.SelectedItem = null;
+        }
+    }
 }

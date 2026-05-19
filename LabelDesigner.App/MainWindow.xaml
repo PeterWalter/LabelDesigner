@@ -312,6 +312,27 @@
             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}">
                     <ribbon:RibbonContextualTabGroup.Tabs>
                         <ribbon:RibbonTab Header="Barcode">
+                            <ribbon:RibbonGroup Header="Symbology">
+                                <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
+                                    <TextBlock Text="Barcode Type" FontSize="10"
+                                        Foreground="{ThemeResource AppMutedTextBrush}"/>
+                                    <ComboBox x:Name="RibbonBarcodeSymbologyCombo"
+                                        Width="120"
+                                        SelectedIndex="{Binding Designer.Properties.BarcodeSymbologyIndex, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="Select barcode symbology (Code128, QR, EAN, etc.)">
+                                        <ComboBoxItem Content="Code 128"/>
+                                        <ComboBoxItem Content="Code 39"/>
+                                        <ComboBoxItem Content="QR Code"/>
+                                        <ComboBoxItem Content="EAN-13"/>
+                                        <ComboBoxItem Content="EAN-8"/>
+                                        <ComboBoxItem Content="UPC-A"/>
+                                        <ComboBoxItem Content="DataMatrix"/>
+                                        <ComboBoxItem Content="PDF417"/>
+                                        <ComboBoxItem Content="Aztec"/>
+                                        <ComboBoxItem Content="ITF"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </ribbon:RibbonGroup>
                             <ribbon:RibbonGroup Header="Text Position">
                                 <ribbon:RibbonButton Content="Top" Command="{Binding Designer.SetTextTopCommand}"
                                     ToolTipService.ToolTip="Place barcode text above bars">
@@ -329,6 +350,38 @@
                                     ToolTipService.ToolTip="Place barcode text to the right">
                                     <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                                 </ribbon:RibbonButton>
+                            </ribbon:RibbonGroup>
+                            <ribbon:RibbonGroup Header="Data Merge">
+                                <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
+                                    <TextBlock Text="Bind to CSV Field" FontSize="10"
+                                        Foreground="{ThemeResource AppMutedTextBrush}"/>
+                                    <ComboBox x:Name="BarcodeFieldCombo"
+                                        Width="150"
+                                        ItemsSource="{Binding Designer.AvailableDataFields}"
+                                        PlaceholderText="Select field..."
+                                        SelectionChanged="OnBarcodeFieldSelected"
+                                        ToolTipService.ToolTip="Set barcode value to {{FieldName}} — replaced per CSV row at print time"/>
+                                </StackPanel>
+                            </ribbon:RibbonGroup>
+                        </ribbon:RibbonTab>
+                    </ribbon:RibbonContextualTabGroup.Tabs>
+                </ribbon:RibbonContextualTabGroup>
+
+                <ribbon:RibbonContextualTabGroup
+            Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}">
+                    <ribbon:RibbonContextualTabGroup.Tabs>
+                        <ribbon:RibbonTab Header="Text">
+                            <ribbon:RibbonGroup Header="Data Merge">
+                                <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
+                                    <TextBlock Text="Bind to CSV Field" FontSize="10"
+                                        Foreground="{ThemeResource AppMutedTextBrush}"/>
+                                    <ComboBox x:Name="TextFieldCombo"
+                                        Width="150"
+                                        ItemsSource="{Binding Designer.AvailableDataFields}"
+                                        PlaceholderText="Select field..."
+                                        SelectionChanged="OnTextFieldSelected"
+                                        ToolTipService.ToolTip="Set text to {{FieldName}} — replaced per CSV row at print time"/>
+                                </StackPanel>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
                     </ribbon:RibbonContextualTabGroup.Tabs>
