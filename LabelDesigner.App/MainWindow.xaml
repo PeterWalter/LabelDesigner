@@ -441,7 +441,7 @@
                     ToolTipService.ToolTip="Previous CSV record"/>
                 <TextBlock Text="{Binding Designer.PreviewRecordText}"
                     VerticalAlignment="Center" FontSize="11"
-                    Foreground="{ThemeResource AppAccentBrush}"
+                    Foreground="{ThemeResource AppActiveLayerAccentBrush}"
                     Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"/>
                 <Button Content="►" Command="{Binding Designer.NextPreviewRecordCommand}"
                     Padding="6,2" FontSize="12"
