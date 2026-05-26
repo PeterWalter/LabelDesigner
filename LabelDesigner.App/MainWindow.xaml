@@ -400,6 +400,50 @@
             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}">
                     <ribbon:RibbonContextualTabGroup.Tabs>
                         <ribbon:RibbonTab Header="Text">
+                            <ribbon:RibbonGroup Header="Typography">
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Padding="4,0">
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="Font" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                                        <TextBox Width="130"
+                                            Text="{Binding Designer.Properties.FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            PlaceholderText="Segoe UI"
+                                            ToolTipService.ToolTip="Text font family"/>
+                                    </StackPanel>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="Size" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                                        <TextBox Width="56"
+                                            Text="{Binding Designer.Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTipService.ToolTip="Text font size"/>
+                                    </StackPanel>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="Color" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                                        <TextBox Width="88"
+                                            Text="{Binding Designer.Properties.ForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            PlaceholderText="#RRGGBB"
+                                            ToolTipService.ToolTip="Text color hex"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ribbon:RibbonGroup>
+                            <ribbon:RibbonGroup Header="Style &amp; Align">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Padding="4,0">
+                                    <ToggleButton Content="B" FontWeight="Bold" Width="30" Height="26"
+                                        IsChecked="{Binding Designer.Properties.IsBold, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="Bold"/>
+                                    <ToggleButton Content="I" FontStyle="Italic" Width="30" Height="26"
+                                        IsChecked="{Binding Designer.Properties.IsItalic, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="Italic"/>
+                                    <ToggleButton Content="U" Width="30" Height="26"
+                                        IsChecked="{Binding Designer.Properties.IsUnderline, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="Underline"/>
+                                    <ComboBox Width="96"
+                                        SelectedIndex="{Binding Designer.Properties.TextAlignmentIndex, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="Text alignment">
+                                        <ComboBoxItem Content="Left"/>
+                                        <ComboBoxItem Content="Center"/>
+                                        <ComboBoxItem Content="Right"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </ribbon:RibbonGroup>
                             <ribbon:RibbonGroup Header="Data Merge">
                                 <ribbon:RibbonButton Content="Bind Column"
                                     Command="{Binding Designer.BindSelectedFieldToTextCommand}"
