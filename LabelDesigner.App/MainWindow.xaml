@@ -31,6 +31,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
@@ -66,6 +67,11 @@
                             AllowedSizeModes="Large"
                             ToolTipService.ToolTip="Select CSV data source file">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Data Merge" Command="{Binding Designer.ToggleDataMergePaneCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Show or hide the data merge editor">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Recent">
@@ -352,15 +358,22 @@
                                 </ribbon:RibbonButton>
                             </ribbon:RibbonGroup>
                             <ribbon:RibbonGroup Header="Data Merge">
+                                <ribbon:RibbonButton Content="Bind Column"
+                                    Command="{Binding Designer.BindSelectedFieldToBarcodeCommand}"
+                                    IsEnabled="{Binding Designer.CanBindSelectedDataFieldToBarcode}"
+                                    ToolTipService.ToolTip="Bind the selected Data Merge column to the selected barcode">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
+                                <ribbon:RibbonButton Content="Merge Panel"
+                                    Command="{Binding Designer.ShowDataMergePaneCommand}"
+                                    ToolTipService.ToolTip="Open the data merge editor">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
                                 <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
-                                    <TextBlock Text="Bind to CSV Field" FontSize="10"
+                                    <TextBlock Text="Selected Column" FontSize="10"
                                         Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                    <ComboBox x:Name="BarcodeFieldCombo"
-                                        Width="150"
-                                        ItemsSource="{Binding Designer.AvailableDataFields}"
-                                        PlaceholderText="Select field..."
-                                        SelectionChanged="OnBarcodeFieldSelected"
-                                        ToolTipService.ToolTip="Set barcode value to {{FieldName}} — replaced per CSV row at print time"/>
+                                    <TextBlock Text="{Binding Designer.SelectedDataField}"
+                                        Foreground="{ThemeResource AppTextBrush}"/>
                                 </StackPanel>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
@@ -372,15 +385,22 @@
                     <ribbon:RibbonContextualTabGroup.Tabs>
                         <ribbon:RibbonTab Header="Text">
                             <ribbon:RibbonGroup Header="Data Merge">
+                                <ribbon:RibbonButton Content="Bind Column"
+                                    Command="{Binding Designer.BindSelectedFieldToTextCommand}"
+                                    IsEnabled="{Binding Designer.CanBindSelectedDataFieldToText}"
+                                    ToolTipService.ToolTip="Bind the selected Data Merge column to the selected text element">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
+                                <ribbon:RibbonButton Content="Merge Panel"
+                                    Command="{Binding Designer.ShowDataMergePaneCommand}"
+                                    ToolTipService.ToolTip="Open the data merge editor">
+                                    <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                                </ribbon:RibbonButton>
                                 <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
-                                    <TextBlock Text="Bind to CSV Field" FontSize="10"
+                                    <TextBlock Text="Selected Column" FontSize="10"
                                         Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                    <ComboBox x:Name="TextFieldCombo"
-                                        Width="150"
-                                        ItemsSource="{Binding Designer.AvailableDataFields}"
-                                        PlaceholderText="Select field..."
-                                        SelectionChanged="OnTextFieldSelected"
-                                        ToolTipService.ToolTip="Set text to {{FieldName}} — replaced per CSV row at print time"/>
+                                    <TextBlock Text="{Binding Designer.SelectedDataField}"
+                                        Foreground="{ThemeResource AppTextBrush}"/>
                                 </StackPanel>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
@@ -507,7 +527,9 @@
             <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
         </Grid>
 
-        <Border Grid.Row="3" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
+        <views:DataMergePaneView Grid.Row="3"/>
+
+        <Border Grid.Row="4" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
             AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>

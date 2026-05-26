@@ -62,7 +62,15 @@ public class DataBindingServiceTests
             ParentId = layerId,
             ZIndex = 4,
             Text = "Hello {{ name }}",
-            FontSize = 18
+            FontSize = 18,
+            FontFamily = "Consolas",
+            Bold = true,
+            Italic = true,
+            Underline = true,
+            TextAlignment = TextAlignmentType.Center,
+            IsMultiline = true,
+            LineSpacing = 1.5,
+            ForeColor = "#112233"
         };
         element.Metadata["tag"] = "meta";
         doc.AllElements.Add(element);
@@ -83,6 +91,14 @@ public class DataBindingServiceTests
         Assert.Equal(element.Visible, boundText.Visible);
         Assert.Equal(element.ParentId, boundText.ParentId);
         Assert.Equal(element.ZIndex, boundText.ZIndex);
+        Assert.Equal(element.FontFamily, boundText.FontFamily);
+        Assert.Equal(element.Bold, boundText.Bold);
+        Assert.Equal(element.Italic, boundText.Italic);
+        Assert.Equal(element.Underline, boundText.Underline);
+        Assert.Equal(element.TextAlignment, boundText.TextAlignment);
+        Assert.Equal(element.IsMultiline, boundText.IsMultiline);
+        Assert.Equal(element.LineSpacing, boundText.LineSpacing);
+        Assert.Equal(element.ForeColor, boundText.ForeColor);
         Assert.Equal("meta", boundText.Metadata["tag"]);
 
         var boundLayer = Assert.Single(bound.Layers);

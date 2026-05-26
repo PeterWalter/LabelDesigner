@@ -13,6 +13,7 @@ using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
 using System.Runtime.InteropServices;
 
 namespace LabelDesigner.App.ViewModels;
@@ -192,10 +193,30 @@ public partial class DesignerViewModel : ObservableObject
 
     public ObservableCollection<string> AvailableDataFields { get; } = new();
     public bool HasDataFields => AvailableDataFields.Count > 0;
+    public object? DataMergeItemsSource => _dataMergeTable?.DefaultView;
+    public bool HasLoadedDataSource => _dataMergeTable != null;
+    public bool HasSelectedDataField => !string.IsNullOrWhiteSpace(SelectedDataField);
+    public bool CanBindSelectedDataFieldToBarcode => HasSelectedDataField && IsBarcodeSelected;
+    public bool CanBindSelectedDataFieldToText => HasSelectedDataField && IsTextSelected;
+    public string DataSourceSummary => string.IsNullOrWhiteSpace(_loadedDataSourcePath)
+        ? "No data source loaded"
+        : $"{Path.GetFileName(_loadedDataSourcePath)} ({_csvRecords.Count} row{(_csvRecords.Count == 1 ? string.Empty : "s")})";
 
     // ── Merge preview ──────────────────────────────────────────────────────
     private List<IReadOnlyDictionary<string, string>> _csvRecords = new();
+    private DataTable? _dataMergeTable;
     private SceneDocument? _previewDocument;
+    private string? _loadedDataSourcePath;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLoadedDataSource))]
+    public partial bool IsDataMergePaneOpen { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedDataField))]
+    [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToBarcode))]
+    [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToText))]
+    public partial string? SelectedDataField { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewRecordText))]
@@ -215,11 +236,7 @@ public partial class DesignerViewModel : ObservableObject
 
     partial void OnPreviewRecordIndexChanged(int value)
     {
-        if (value >= 0 && value < _csvRecords.Count)
-            _previewDocument = _dataBinding.ApplyRecord(_scene.CurrentDocument, _csvRecords[value]);
-        else
-            _previewDocument = null;
-        RequestRedraw?.Invoke();
+        RefreshPreviewDocument();
     }
 
     [RelayCommand]
@@ -418,6 +435,8 @@ public partial class DesignerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsBarcodeSelected))]
     [NotifyPropertyChangedFor(nameof(IsTextSelected))]
     [NotifyPropertyChangedFor(nameof(IsElementSelected))]
+    [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToBarcode))]
+    [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToText))]
     public partial DesignElement? Selected { get; set; }
 
     [ObservableProperty]
@@ -810,6 +829,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(DefaultTextAlignmentIndex));
         OnPropertyChanged(nameof(DefaultTextMultiline));
         OnPropertyChanged(nameof(DefaultTextLineSpacing));
+        ClearDataMergeState();
         UpdatePageBounds();
         ClearMarqueeSelection();
         SetInteractionState(InteractionState.Idle);
@@ -1036,22 +1056,15 @@ public partial class DesignerViewModel : ObservableObject
         {
             var records = await _dataSource.LoadAsync(file.Path);
 
+            var mergeMode = _scene.CurrentDocument.DataSource?.MergeMode ?? nameof(DataMergeMode.OneRecordPerPage);
             _scene.CurrentDocument.DataSource = new DataSourceConfig
             {
                 Type = Path.GetExtension(file.Path).TrimStart('.'),
                 Path = file.Path,
-                MergeMode = nameof(DataMergeMode.OneRecordPerPage)
+                MergeMode = mergeMode
             };
 
-            AvailableDataFields.Clear();
-            if (records.Count > 0)
-                foreach (var key in records[0].Keys)
-                    AvailableDataFields.Add(key);
-
-            _csvRecords = records.ToList();
-            OnPropertyChanged(nameof(HasDataFields));
-            OnPropertyChanged(nameof(PreviewRecordCount));
-            PreviewRecordIndex = _csvRecords.Count > 0 ? 0 : -1;
+            LoadDataMergeRecords(records, file.Path);
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (Exception ex)
@@ -1068,7 +1081,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var records = await _dataSource.LoadAsync(ds.Path);
+            var records = await GetActiveMergeRecordsAsync(ds);
             if (records.Count == 0) { await Print(); return; }
 
             var originalDoc = _scene.CurrentDocument;
@@ -1105,7 +1118,7 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task PreviewPrint()
     {
-        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 150);
+        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(ActiveRenderDocument, 150);
         var source = new SoftwareBitmapSource();
         await source.SetBitmapAsync(bitmap);
 
@@ -1150,7 +1163,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
+            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(ActiveRenderDocument, 200);
 
             using var fileStream = await file.OpenStreamForWriteAsync();
             var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
@@ -2050,6 +2063,30 @@ public partial class DesignerViewModel : ObservableObject
         RequestRedraw?.Invoke();
     }
 
+    [RelayCommand]
+    private void ToggleDataMergePane()
+    {
+        IsDataMergePaneOpen = !IsDataMergePaneOpen;
+    }
+
+    [RelayCommand]
+    private void ShowDataMergePane()
+    {
+        IsDataMergePaneOpen = true;
+    }
+
+    [RelayCommand]
+    private void BindSelectedFieldToBarcode()
+    {
+        BindBarcodeToField(SelectedDataField);
+    }
+
+    [RelayCommand]
+    private void BindSelectedFieldToText()
+    {
+        BindTextToField(SelectedDataField);
+    }
+
     private DataMergeMode GetDataMergeMode()
     {
         var modeText = _scene.CurrentDocument.DataSource?.MergeMode;
@@ -2213,6 +2250,7 @@ public partial class DesignerViewModel : ObservableObject
             _currentFilePath = filePath;
             AppSettingsService.AddRecentFile(filePath);
             SelectedRecentFile = filePath;
+            await RestoreLoadedDataSourceAsync(doc.DataSource);
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (FileNotFoundException ex)
@@ -2231,6 +2269,186 @@ public partial class DesignerViewModel : ObservableObject
         {
             ShowErrorDialog("Error Opening File", $"An error occurred while opening the file: {ex.Message}");
         }
+    }
+
+    private void LoadDataMergeRecords(IReadOnlyList<IReadOnlyDictionary<string, string>> records, string sourcePath)
+    {
+        var columns = records
+            .SelectMany(record => record.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        ReplaceDataMergeTable(BuildDataMergeTable(columns, records));
+
+        AvailableDataFields.Clear();
+        foreach (var column in columns)
+            AvailableDataFields.Add(column);
+
+        if (string.IsNullOrWhiteSpace(SelectedDataField) || !AvailableDataFields.Contains(SelectedDataField))
+            SelectedDataField = AvailableDataFields.FirstOrDefault();
+
+        _loadedDataSourcePath = sourcePath;
+        SyncRecordsFromDataMergeTable();
+        IsDataMergePaneOpen = true;
+
+        OnPropertyChanged(nameof(HasDataFields));
+        OnPropertyChanged(nameof(DataMergeItemsSource));
+        OnPropertyChanged(nameof(HasLoadedDataSource));
+        OnPropertyChanged(nameof(DataSourceSummary));
+    }
+
+    private void ClearDataMergeState()
+    {
+        ReplaceDataMergeTable(null);
+        AvailableDataFields.Clear();
+        _csvRecords = new();
+        _loadedDataSourcePath = null;
+        SelectedDataField = null;
+        PreviewRecordIndex = -1;
+        IsDataMergePaneOpen = false;
+        RefreshPreviewDocument();
+
+        OnPropertyChanged(nameof(HasDataFields));
+        OnPropertyChanged(nameof(DataMergeItemsSource));
+        OnPropertyChanged(nameof(HasLoadedDataSource));
+        OnPropertyChanged(nameof(DataSourceSummary));
+        OnPropertyChanged(nameof(PreviewRecordCount));
+        OnPropertyChanged(nameof(PreviewRecordText));
+    }
+
+    private void ReplaceDataMergeTable(DataTable? table)
+    {
+        if (_dataMergeTable != null)
+        {
+            _dataMergeTable.ColumnChanged -= OnDataMergeTableColumnChanged;
+            _dataMergeTable.RowChanged -= OnDataMergeTableRowChanged;
+            _dataMergeTable.RowDeleted -= OnDataMergeTableRowChanged;
+        }
+
+        _dataMergeTable = table;
+
+        if (_dataMergeTable != null)
+        {
+            _dataMergeTable.ColumnChanged += OnDataMergeTableColumnChanged;
+            _dataMergeTable.RowChanged += OnDataMergeTableRowChanged;
+            _dataMergeTable.RowDeleted += OnDataMergeTableRowChanged;
+        }
+    }
+
+    private static DataTable BuildDataMergeTable(
+        IReadOnlyList<string> columns,
+        IReadOnlyList<IReadOnlyDictionary<string, string>> records)
+    {
+        var table = new DataTable("MergeData");
+
+        foreach (var column in columns)
+            table.Columns.Add(column, typeof(string));
+
+        foreach (var record in records)
+        {
+            var row = table.NewRow();
+            foreach (var column in columns)
+                row[column] = record.TryGetValue(column, out var value) ? value : string.Empty;
+            table.Rows.Add(row);
+        }
+
+        return table;
+    }
+
+    private void OnDataMergeTableColumnChanged(object? sender, DataColumnChangeEventArgs e)
+    {
+        SyncRecordsFromDataMergeTable();
+    }
+
+    private void OnDataMergeTableRowChanged(object? sender, DataRowChangeEventArgs e)
+    {
+        if (e.Action == DataRowAction.Nothing)
+            return;
+
+        SyncRecordsFromDataMergeTable();
+    }
+
+    private void SyncRecordsFromDataMergeTable()
+    {
+        if (_dataMergeTable == null)
+            return;
+
+        _csvRecords = _dataMergeTable.Rows
+            .Cast<DataRow>()
+            .Where(row => row.RowState != DataRowState.Deleted)
+            .Select(row => (IReadOnlyDictionary<string, string>)_dataMergeTable.Columns
+                .Cast<DataColumn>()
+                .ToDictionary(column => column.ColumnName, column => row[column]?.ToString() ?? string.Empty))
+            .ToList();
+
+        OnPropertyChanged(nameof(PreviewRecordCount));
+        OnPropertyChanged(nameof(PreviewRecordText));
+        OnPropertyChanged(nameof(DataSourceSummary));
+
+        if (_csvRecords.Count == 0)
+        {
+            PreviewRecordIndex = -1;
+            return;
+        }
+
+        if (PreviewRecordIndex < 0)
+        {
+            PreviewRecordIndex = 0;
+            return;
+        }
+
+        if (PreviewRecordIndex >= _csvRecords.Count)
+        {
+            PreviewRecordIndex = _csvRecords.Count - 1;
+            return;
+        }
+
+        RefreshPreviewDocument();
+    }
+
+    private async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> GetActiveMergeRecordsAsync(DataSourceConfig ds)
+    {
+        if (!string.IsNullOrWhiteSpace(_loadedDataSourcePath) &&
+            string.Equals(_loadedDataSourcePath, ds.Path, StringComparison.OrdinalIgnoreCase))
+        {
+            SyncRecordsFromDataMergeTable();
+            return _csvRecords;
+        }
+
+        var records = await _dataSource.LoadAsync(ds.Path);
+        LoadDataMergeRecords(records, ds.Path);
+        return _csvRecords;
+    }
+
+    private async Task RestoreLoadedDataSourceAsync(DataSourceConfig? dataSource)
+    {
+        if (dataSource == null || string.IsNullOrWhiteSpace(dataSource.Path) || !File.Exists(dataSource.Path))
+        {
+            ClearDataMergeState();
+            return;
+        }
+
+        try
+        {
+            var records = await _dataSource.LoadAsync(dataSource.Path);
+            LoadDataMergeRecords(records, dataSource.Path);
+        }
+        catch
+        {
+            ClearDataMergeState();
+        }
+    }
+
+    private void RefreshPreviewDocument()
+    {
+        if (PreviewRecordIndex >= 0 && PreviewRecordIndex < _csvRecords.Count)
+            _previewDocument = _dataBinding.ApplyRecord(_scene.CurrentDocument, _csvRecords[PreviewRecordIndex]);
+        else
+            _previewDocument = null;
+
+        OnPropertyChanged(nameof(IsPreviewMode));
+        OnPropertyChanged(nameof(PreviewRecordText));
+        RequestRedraw?.Invoke();
     }
 
     private string FormatMeasurement(double pixels)

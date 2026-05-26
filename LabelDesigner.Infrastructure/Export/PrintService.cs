@@ -34,10 +34,12 @@ public class PrintService : IPrintService, IDocumentRasterizer
     {
         double pageWidthPx  = document.Page.WidthMm  * dpi / 25.4;
         double pageHeightPx = document.Page.HeightMm * dpi / 25.4;
+        int width = Math.Max(1, (int)Math.Ceiling(pageWidthPx));
+        int height = Math.Max(1, (int)Math.Ceiling(pageHeightPx));
 
         using var device = CanvasDevice.GetSharedDevice();
         using var renderTarget = new CanvasRenderTarget(device,
-            (int)pageWidthPx, (int)pageHeightPx, dpi);
+            width, height, dpi);
 
         using var ds = renderTarget.CreateDrawingSession();
         ds.Clear(Colors.White);
@@ -60,6 +62,8 @@ public class PrintService : IPrintService, IDocumentRasterizer
         stream.Seek(0);
 
         var decoder = await BitmapDecoder.CreateAsync(stream);
-        return await decoder.GetSoftwareBitmapAsync();
+        return await decoder.GetSoftwareBitmapAsync(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Premultiplied);
     }
 }

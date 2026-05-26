@@ -88,7 +88,10 @@ public class DataBindingService : IDataBindingService
                     Id = barcode.Id,
                     Value = ResolveTemplate(barcode.Value, record),
                     Symbology = barcode.Symbology,
-                    TextPosition = barcode.TextPosition
+                    TextPosition = barcode.TextPosition,
+                    TextFontFamily = barcode.TextFontFamily,
+                    TextFontSize = barcode.TextFontSize,
+                    TextColor = barcode.TextColor
                 }),
             TextElement text => CloneElement(
                 text,
@@ -96,7 +99,15 @@ public class DataBindingService : IDataBindingService
                 {
                     Id = text.Id,
                     Text = ResolveTemplate(text.Text, record),
-                    FontSize = text.FontSize
+                    FontSize = text.FontSize,
+                    FontFamily = text.FontFamily,
+                    Bold = text.Bold,
+                    Italic = text.Italic,
+                    Underline = text.Underline,
+                    TextAlignment = text.TextAlignment,
+                    IsMultiline = text.IsMultiline,
+                    LineSpacing = text.LineSpacing,
+                    ForeColor = text.ForeColor
                 }),
             ShapeElement shape => CloneElement(
                 shape,
