@@ -232,8 +232,7 @@ public partial class DesignerViewModel : ObservableObject
     private string? _loadedDataSourcePath;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasLoadedDataSource))]
-    public partial bool IsDataMergePaneOpen { get; set; }
+    public partial int WorkspaceTabIndex { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedDataField))]
@@ -2125,13 +2124,19 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private void ToggleDataMergePane()
     {
-        IsDataMergePaneOpen = !IsDataMergePaneOpen;
+        WorkspaceTabIndex = WorkspaceTabIndex == 1 ? 0 : 1;
     }
 
     [RelayCommand]
     private void ShowDataMergePane()
     {
-        IsDataMergePaneOpen = true;
+        WorkspaceTabIndex = 1;
+    }
+
+    [RelayCommand]
+    private void ShowDesignerWorkspace()
+    {
+        WorkspaceTabIndex = 0;
     }
 
     [RelayCommand]
@@ -2348,7 +2353,7 @@ public partial class DesignerViewModel : ObservableObject
 
         _loadedDataSourcePath = sourcePath;
         SyncRecordsFromDataMergeTable();
-        IsDataMergePaneOpen = true;
+        WorkspaceTabIndex = 1;
 
         OnPropertyChanged(nameof(HasDataFields));
         OnPropertyChanged(nameof(DataMergeItemsSource));
@@ -2365,7 +2370,7 @@ public partial class DesignerViewModel : ObservableObject
         _loadedDataSourcePath = null;
         SelectedDataField = null;
         PreviewRecordIndex = -1;
-        IsDataMergePaneOpen = false;
+        WorkspaceTabIndex = 0;
         RefreshPreviewDocument();
 
         OnPropertyChanged(nameof(HasDataFields));

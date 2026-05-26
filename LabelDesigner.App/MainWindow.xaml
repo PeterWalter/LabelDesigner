@@ -31,7 +31,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
@@ -474,62 +473,64 @@
             </StackPanel>
         </Border>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="LayerColumn" Width="180"/>
-                <ColumnDefinition Width="4"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="4"/>
-                <ColumnDefinition x:Name="PropertiesColumn" Width="220"/>
-            </Grid.ColumnDefinitions>
+        <TabView Grid.Row="2"
+            SelectedIndex="{Binding Designer.WorkspaceTabIndex, Mode=TwoWay}">
+            <TabViewItem Header="Designer" IsClosable="False">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="LayerColumn" Width="180"/>
+                        <ColumnDefinition Width="4"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="4"/>
+                        <ColumnDefinition x:Name="PropertiesColumn" Width="220"/>
+                    </Grid.ColumnDefinitions>
 
-            <views:LayersPaneView Grid.Column="0" x:Name="LayersPane"
-                AutomationProperties.Name="Layers panel"/>
+                    <views:LayersPaneView Grid.Column="0" x:Name="LayersPane"
+                        AutomationProperties.Name="Layers panel"/>
 
-            <Border Grid.Column="1" x:Name="SplitterLeft" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,0"
-                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                AutomationProperties.Name="Resize Layers panel"
-                PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
+                    <Border Grid.Column="1" x:Name="SplitterLeft" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,0"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        AutomationProperties.Name="Resize Layers panel"
+                        PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-            <!-- Canvas zone: rulers wrap the canvas -->
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="20"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="20"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                <!-- top-left corner spacer -->
-                <Border Grid.Row="0" Grid.Column="0" Background="{ThemeResource AppSurfaceSubtleBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,1"/>
+                        <Border Grid.Row="0" Grid.Column="0" Background="{ThemeResource AppSurfaceSubtleBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,1"/>
 
-                <!-- horizontal ruler -->
-                <controls:RulerControl Grid.Row="0" Grid.Column="1" x:Name="HorizontalRuler"
-                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
+                        <controls:RulerControl Grid.Row="0" Grid.Column="1" x:Name="HorizontalRuler"
+                            Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
 
-                <!-- vertical ruler -->
-                <controls:RulerControl Grid.Row="1" Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
-                    Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
+                        <controls:RulerControl Grid.Row="1" Grid.Column="0" x:Name="LeftRuler" IsVertical="True"
+                            Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
 
-                <!-- canvas -->
-                <views:DesignerCanvasView Grid.Row="1" Grid.Column="1"
-                    AutomationProperties.Name="Label design canvas"
-                    AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
-            </Grid>
+                        <views:DesignerCanvasView Grid.Row="1" Grid.Column="1"
+                            AutomationProperties.Name="Label design canvas"
+                            AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
+                    </Grid>
 
-            <Border Grid.Column="3" x:Name="SplitterRight" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="1,0,0,0"
-                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                AutomationProperties.Name="Resize Properties panel"
-                PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
+                    <Border Grid.Column="3" x:Name="SplitterRight" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="1,0,0,0"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        AutomationProperties.Name="Resize Properties panel"
+                        PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-            <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
-        </Grid>
+                    <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
+                </Grid>
+            </TabViewItem>
 
-        <views:DataMergePaneView Grid.Row="3"/>
+            <TabViewItem Header="Data Merge" IsClosable="False">
+                <views:DataMergePaneView/>
+            </TabViewItem>
+        </TabView>
 
-        <Border Grid.Row="4" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
+        <Border Grid.Row="3" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
             AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>
