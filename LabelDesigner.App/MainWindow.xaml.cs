@@ -22,6 +22,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ViewModel = vm;
         RootGrid.DataContext = ViewModel;
+        SetTitleBar(AppRibbon);
         ApplyLocalization();
         ApplyThemeFromSettings();
         AppSettingsService.SettingsChanged += ApplyThemeFromSettings;

@@ -34,7 +34,7 @@
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
-        <ribbon:SfRibbon Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1">
+        <ribbon:SfRibbon x:Name="AppRibbon" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1">
 
             <ribbon:SfRibbon.Tabs>
  
