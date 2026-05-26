@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using LabelDesigner.Core.Enums;
-using LabelDesigner.Core.ValueObjects;
+﻿using LabelDesigner.Core.Enums;
 
 namespace LabelDesigner.Core.Models;
 
 public class BarcodeElement : DesignElement
 {
-    public string Value { get; set; } = "123456789";
+    public string Value { get; set; } = "0123456789";
 
     public BarcodeSymbology Symbology { get; set; } = BarcodeSymbology.Code128;
 
