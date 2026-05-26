@@ -49,8 +49,16 @@ public sealed partial class DesignerCanvasView : UserControl
     {
         WireViewModel();
         _canvas = FindName("Canvas") as CanvasControl;
-        if (_canvas != null && _canvas.ActualWidth > 0)
-            DoZoomToFit(_canvas);
+        if (_canvas != null)
+        {
+            _canvas.KeyDown -= OnCanvasKeyDown;
+            _canvas.KeyUp -= OnCanvasKeyUp;
+            _canvas.KeyDown += OnCanvasKeyDown;
+            _canvas.KeyUp += OnCanvasKeyUp;
+
+            if (_canvas.ActualWidth > 0)
+                DoZoomToFit(_canvas);
+        }
         UpdateScrollBars();
     }
 
@@ -216,6 +224,8 @@ public sealed partial class DesignerCanvasView : UserControl
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
+        _canvas?.Focus(FocusState.Programmatic);
+
         var point = e.GetCurrentPoint((UIElement)sender).Position;
         var worldPoint = VM?.Viewport.ScreenToWorld(point) ?? point;
         var pD = new PointD(worldPoint.X, worldPoint.Y);

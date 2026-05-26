@@ -70,7 +70,9 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         foreach (var document in documents)
         {
-            var bitmap = await RenderDocumentToBitmapAsync(document, 150f);
+            // Use the same 96-DPI coordinate space as the designer canvas for
+            // predictable page composition in print preview.
+            var bitmap = await RenderDocumentToBitmapAsync(document, 96f);
             var imageSource = new SoftwareBitmapSource();
             await imageSource.SetBitmapAsync(bitmap);
             sources.Add(imageSource);

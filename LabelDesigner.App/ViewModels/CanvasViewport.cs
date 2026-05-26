@@ -38,10 +38,11 @@ public partial class CanvasViewport : ObservableObject
         double fitX = (canvasWidth - margin * 2) / pageWidth;
         double fitY = (canvasHeight - margin * 2) / pageHeight;
         Zoom = Math.Min(fitX, fitY);
-        // Screen = World * Zoom - Offset, so a positive left/top margin requires
-        // a negative offset. Using the wrong sign pushes the page off-canvas.
-        OffsetX = (pageWidth * Zoom - canvasWidth) / 2;
-        OffsetY = (pageHeight * Zoom - canvasHeight) / 2;
+        // Screen = (World - Offset) * Zoom. Offset is in world units.
+        // Convert centered screen margins back into world-space by dividing by Zoom.
+        var safeZoom = Math.Max(Zoom, MinZoom);
+        OffsetX = (pageWidth * Zoom - canvasWidth) / (2 * safeZoom);
+        OffsetY = (pageHeight * Zoom - canvasHeight) / (2 * safeZoom);
     }
 
     private Matrix3x2 GetViewportTransform() =>

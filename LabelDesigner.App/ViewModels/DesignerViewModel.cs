@@ -759,6 +759,8 @@ public partial class DesignerViewModel : ObservableObject
     {
         _undoRedo.Undo();
         Selected = _scene.SingleSelected;
+        NotifyElementsChanged();
+        RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
@@ -766,6 +768,8 @@ public partial class DesignerViewModel : ObservableObject
     {
         _undoRedo.Redo();
         Selected = _scene.SingleSelected;
+        NotifyElementsChanged();
+        RequestRedraw?.Invoke();
     }
 
     public void NotifyElementsChanged()
@@ -1592,6 +1596,7 @@ public partial class DesignerViewModel : ObservableObject
             foreach (var id in _scene.SelectedIds.ToList())
                 _scene.RemoveElement(id);
         NotifyElementsChanged();
+        RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
