@@ -9,6 +9,7 @@ using LabelDesigner.App.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using System.Collections.ObjectModel;
@@ -244,6 +245,10 @@ public partial class DesignerViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewRecordText))]
+    public partial DataRowView? SelectedDataMergeRow { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewRecordText))]
     [NotifyPropertyChangedFor(nameof(IsPreviewMode))]
     public partial int PreviewRecordIndex { get; set; } = -1;
 
@@ -252,6 +257,7 @@ public partial class DesignerViewModel : ObservableObject
     public string PreviewRecordText => IsPreviewMode
         ? $"Merge Preview: Record {PreviewRecordIndex + 1} of {_csvRecords.Count}"
         : "";
+    public ImageSource? MergePreviewImage { get; private set; }
 
     /// <summary>Returns the merge-preview document when active, otherwise the live scene document.</summary>
     public SceneDocument ActiveRenderDocument => IsPreviewMode && _previewDocument != null
@@ -261,6 +267,18 @@ public partial class DesignerViewModel : ObservableObject
     partial void OnPreviewRecordIndexChanged(int value)
     {
         RefreshPreviewDocument();
+    }
+
+    partial void OnSelectedDataMergeRowChanged(DataRowView? value)
+    {
+        if (_dataMergeTable == null || value == null)
+        {
+            PreviewRecordIndex = -1;
+            return;
+        }
+
+        var index = _dataMergeTable.Rows.IndexOf(value.Row);
+        PreviewRecordIndex = index >= 0 ? index : -1;
     }
 
     [RelayCommand]
@@ -1166,8 +1184,32 @@ public partial class DesignerViewModel : ObservableObject
             var documents = ds == null
                 ? BuildCurrentPrintDocuments()
                 : await BuildMailMergePrintDocumentsAsync(ds);
+            var previewDocument = documents.Count > 0 ? documents[0] : _scene.CurrentDocument;
+            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(previewDocument, 150);
+            var source = new SoftwareBitmapSource();
+            await source.SetBitmapAsync(bitmap);
 
-            await _printService.ShowPrintPreviewAsync(documents, hwnd, BuildMailMergeJobTitle(ds, documents.Count));
+            var image = new Image
+            {
+                Source = source,
+                Stretch = Stretch.Uniform,
+                MaxWidth = 900,
+                MaxHeight = 700
+            };
+
+            var previewTitle = BuildMailMergeJobTitle(ds, documents.Count);
+            var xamlRoot = App.MainWindow?.Content.XamlRoot;
+            if (xamlRoot == null)
+                return;
+
+            var dialog = new ContentDialog
+            {
+                Title = previewTitle,
+                Content = new ScrollViewer { Content = image },
+                CloseButtonText = "Close",
+                XamlRoot = xamlRoot
+            };
+            await dialog.ShowAsync();
         }
         catch (Exception ex)
         {
@@ -1177,7 +1219,7 @@ public partial class DesignerViewModel : ObservableObject
 
     private IReadOnlyList<SceneDocument> BuildCurrentPrintDocuments()
     {
-        return new[] { ActiveRenderDocument };
+        return new[] { _scene.CurrentDocument };
     }
 
     private async Task<IReadOnlyList<SceneDocument>> BuildMailMergePrintDocumentsAsync(DataSourceConfig dataSource)
@@ -1226,7 +1268,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(ActiveRenderDocument, 200);
+            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
 
             using var fileStream = await file.OpenStreamForWriteAsync();
             var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
@@ -2357,7 +2399,10 @@ public partial class DesignerViewModel : ObservableObject
             SelectedDataField = AvailableDataFields.FirstOrDefault();
 
         _loadedDataSourcePath = sourcePath;
-        PreviewRecordIndex = -1;
+        PreviewRecordIndex = _dataMergeTable?.Rows.Count > 0 ? 0 : -1;
+        SelectedDataMergeRow = _dataMergeTable?.DefaultView.Count > 0
+            ? _dataMergeTable.DefaultView[0] as DataRowView
+            : null;
         SyncRecordsFromDataMergeTable();
         WorkspaceTabIndex = 1;
 
@@ -2375,6 +2420,7 @@ public partial class DesignerViewModel : ObservableObject
         _csvRecords = new();
         _loadedDataSourcePath = null;
         SelectedDataField = null;
+        SelectedDataMergeRow = null;
         PreviewRecordIndex = -1;
         WorkspaceTabIndex = 0;
         RefreshPreviewDocument();
@@ -2514,7 +2560,25 @@ public partial class DesignerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(IsPreviewMode));
         OnPropertyChanged(nameof(PreviewRecordText));
-        RequestRedraw?.Invoke();
+        _ = RefreshMergePreviewImageAsync();
+    }
+
+    private async Task RefreshMergePreviewImageAsync()
+    {
+        var document = _previewDocument ?? _scene.CurrentDocument;
+        if (document == null)
+        {
+            MergePreviewImage = null;
+            OnPropertyChanged(nameof(MergePreviewImage));
+            return;
+        }
+
+        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(document, 150);
+        var source = new SoftwareBitmapSource();
+        await source.SetBitmapAsync(bitmap);
+
+        MergePreviewImage = source;
+        OnPropertyChanged(nameof(MergePreviewImage));
     }
 
     private string FormatMeasurement(double pixels)

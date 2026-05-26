@@ -16,6 +16,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -90,7 +91,45 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="2" Padding="10,8">
+            <Border Grid.Row="2"
+                    Margin="10,10,10,0"
+                    Padding="10"
+                    Background="{ThemeResource AppSurfaceAltBrush}"
+                    BorderBrush="{ThemeResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Merged canvas preview"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{ThemeResource AppTextBrush}"/>
+                        <TextBlock Text="Select a row to preview the merged label on the canvas below."
+                                   TextWrapping="WrapWholeWords"
+                                   Foreground="{ThemeResource AppMutedTextBrush}"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="1"
+                            Background="White"
+                            BorderBrush="{ThemeResource AppBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="8">
+                        <Image Source="{Binding Designer.MergePreviewImage}"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"
+                               MinHeight="180"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="3" Padding="10,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="220"/>
@@ -137,9 +176,10 @@
                             Foreground="{ThemeResource AppMutedTextBrush}"/>
             </Grid>
 
-            <sfgrid:SfDataGrid Grid.Row="3"
+            <sfgrid:SfDataGrid Grid.Row="4"
                                Margin="10,0,10,10"
                                ItemsSource="{Binding Designer.DataMergeItemsSource}"
+                               SelectedItem="{Binding Designer.SelectedDataMergeRow, Mode=TwoWay}"
                                AllowEditing="True"
                                AllowFiltering="True"
                                ShowGroupDropArea="True"
