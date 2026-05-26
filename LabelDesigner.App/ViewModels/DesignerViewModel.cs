@@ -2471,11 +2471,14 @@ public partial class DesignerViewModel : ObservableObject
         MergeBindings.Clear();
         if (!HasLoadedDataSource) return;
 
+        var doc = _scene?.CurrentDocument;
+        if (doc == null) return;
+
         var columns = new List<string>(AvailableDataFields.Count + 1) { "(none)" };
         foreach (var c in AvailableDataFields)
             columns.Add(c);
 
-        foreach (var el in _scene.CurrentDocument.AllElements)
+        foreach (var el in doc.AllElements)
         {
             string type, name;
             string? boundCol;

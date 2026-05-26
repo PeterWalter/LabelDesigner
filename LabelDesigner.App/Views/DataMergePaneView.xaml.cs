@@ -37,7 +37,8 @@ public sealed partial class DataMergePaneView : UserControl
         if (_vm != null)
         {
             _vm.PropertyChanged += OnVmPropertyChanged;
-            RefreshDataGrid();
+            // Defer DataGrid refresh until after layout to avoid SfDataGrid timing issues
+            DispatcherQueue.TryEnqueue(RefreshDataGrid);
         }
     }
 
@@ -53,14 +54,21 @@ public sealed partial class DataMergePaneView : UserControl
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DesignerViewModel.DataMergeView))
-            RefreshDataGrid();
+            DispatcherQueue.TryEnqueue(RefreshDataGrid);
     }
 
     private void RefreshDataGrid()
     {
-        if (_vm == null) return;
-        // Force SfDataGrid to rebuild columns by resetting ItemsSource
-        CsvDataGrid.ItemsSource = null;
-        CsvDataGrid.ItemsSource = _vm.DataMergeView;
+        try
+        {
+            if (_vm == null) return;
+            // Force SfDataGrid to rebuild columns by resetting ItemsSource
+            CsvDataGrid.ItemsSource = null;
+            CsvDataGrid.ItemsSource = _vm.DataMergeView;
+        }
+        catch
+        {
+            // SfDataGrid can throw during column regeneration; suppress to prevent app crash
+        }
     }
 }
