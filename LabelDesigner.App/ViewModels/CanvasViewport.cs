@@ -19,7 +19,7 @@ public partial class CanvasViewport : ObservableObject
     [NotifyPropertyChangedFor(nameof(ZoomPercent))]
     public partial double ZoomPercentValue { get; set; } = 100;
 
-    public const double MinZoom = 0.25;
+    public const double MinZoom = 0.05;
     public const double MaxZoom = 4.0;
 
     public int ZoomPercent => (int)Math.Round(Zoom * 100);
