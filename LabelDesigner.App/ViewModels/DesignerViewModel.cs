@@ -191,6 +191,10 @@ public partial class DesignerViewModel : ObservableObject
     [ObservableProperty]
     public partial string? SelectedPrinter { get; set; }
 
+    public string PrinterListSummary => AvailablePrinters.Count == 0
+        ? "No installed printers detected. Connect a printer and click Refresh."
+        : $"Installed printers: {AvailablePrinters.Count}. Preview or Print opens the Windows print window where you choose the target printer.";
+
     public ObservableCollection<string> AvailableDataFields { get; } = new();
     public bool HasDataFields => AvailableDataFields.Count > 0;
     public DataTable? DataMergeItemsSource => _dataMergeTable;
@@ -198,6 +202,25 @@ public partial class DesignerViewModel : ObservableObject
     public bool HasSelectedDataField => !string.IsNullOrWhiteSpace(SelectedDataField);
     public bool CanBindSelectedDataFieldToBarcode => HasSelectedDataField && IsBarcodeSelected;
     public bool CanBindSelectedDataFieldToText => HasSelectedDataField && IsTextSelected;
+    public string SelectedDataFieldToken => string.IsNullOrWhiteSpace(SelectedDataField)
+        ? "{{ColumnName}}"
+        : $"{{{{{SelectedDataField}}}}}";
+    public string DataMergeTargetSummary => Selected switch
+    {
+        BarcodeElement => "Selected target: Barcode value",
+        TextElement => "Selected target: Text content",
+        _ => "Selected target: none. Select a Barcode or Text element on the canvas."
+    };
+    public string DataMergeActionSummary => !HasLoadedDataSource
+        ? "1. Load a CSV file. 2. Select a column. 3. Select a Barcode or Text element on the canvas. 4. Click the matching Bind button. 5. Use Preview or Print All to review the merged output."
+        : string.IsNullOrWhiteSpace(SelectedDataField)
+            ? "Choose a CSV column, then select a Barcode or Text element to insert its merge token."
+            : Selected switch
+            {
+                BarcodeElement => $"Click Bind to Barcode to set the barcode value to {SelectedDataFieldToken}.",
+                TextElement => $"Click Bind to Text to set the text content to {SelectedDataFieldToken}.",
+                _ => $"Choose a Barcode or Text element to bind {SelectedDataFieldToken}."
+            };
     public string DataSourceSummary => string.IsNullOrWhiteSpace(_loadedDataSourcePath)
         ? "No data source loaded"
         : $"{Path.GetFileName(_loadedDataSourcePath)} ({_csvRecords.Count} row{(_csvRecords.Count == 1 ? string.Empty : "s")})";
@@ -216,6 +239,8 @@ public partial class DesignerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasSelectedDataField))]
     [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToBarcode))]
     [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToText))]
+    [NotifyPropertyChangedFor(nameof(SelectedDataFieldToken))]
+    [NotifyPropertyChangedFor(nameof(DataMergeActionSummary))]
     public partial string? SelectedDataField { get; set; }
 
     [ObservableProperty]
@@ -437,6 +462,8 @@ public partial class DesignerViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsElementSelected))]
     [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToBarcode))]
     [NotifyPropertyChangedFor(nameof(CanBindSelectedDataFieldToText))]
+    [NotifyPropertyChangedFor(nameof(DataMergeTargetSummary))]
+    [NotifyPropertyChangedFor(nameof(DataMergeActionSummary))]
     public partial DesignElement? Selected { get; set; }
 
     [ObservableProperty]
@@ -582,6 +609,14 @@ public partial class DesignerViewModel : ObservableObject
         {
             AvailablePrinters.Clear();
         }
+
+        OnPropertyChanged(nameof(PrinterListSummary));
+    }
+
+    [RelayCommand]
+    private async Task RefreshPrinters()
+    {
+        await LoadAvailablePrintersAsync();
     }
 
     partial void OnSelectedLabelStockPresetIdChanged(string? value)
@@ -1004,7 +1039,20 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task Print()
     {
-        await _printService.PrintAsync(_scene.CurrentDocument);
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Print Error", "Could not access the application window.");
+            return;
+        }
+
+        try
+        {
+            await _printService.PrintAsync(BuildCurrentPrintDocuments(), hwnd, "Label");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -1076,30 +1124,19 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task PrintWithData()
     {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Print Error", "Could not access the application window.");
+            return;
+        }
+
         var ds = _scene.CurrentDocument.DataSource;
         if (ds == null) { await Print(); return; }
 
         try
         {
-            var records = await GetActiveMergeRecordsAsync(ds);
-            if (records.Count == 0) { await Print(); return; }
-
-            var originalDoc = _scene.CurrentDocument;
-            if (GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage)
-            {
-                foreach (var page in BuildMergedPages(originalDoc, records))
-                {
-                    await _printService.PrintAsync(page);
-                }
-            }
-            else
-            {
-                foreach (var record in records)
-                {
-                    var boundDoc = _dataBinding.ApplyRecord(originalDoc, record);
-                    await _printService.PrintAsync(boundDoc);
-                }
-            }
+            var documents = await BuildMailMergePrintDocumentsAsync(ds);
+            await _printService.PrintAsync(documents, hwnd, BuildMailMergeJobTitle(ds, documents.Count));
         }
         catch (FileNotFoundException ex)
         {
@@ -1111,37 +1148,59 @@ public partial class DesignerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowErrorDialog("Error Loading Data", $"An error occurred while loading the data source: {ex.Message}");
+            ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.Message}");
         }
     }
 
     [RelayCommand]
     private async Task PreviewPrint()
     {
-        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(ActiveRenderDocument, 150);
-        var source = new SoftwareBitmapSource();
-        await source.SetBitmapAsync(bitmap);
-
-        var image = new Image
+        if (!TryGetWindowHandle(out var hwnd))
         {
-            Source = source,
-            Stretch = Microsoft.UI.Xaml.Media.Stretch.Uniform,
-            MaxWidth = 900,
-            MaxHeight = 700
-        };
-
-        var xamlRoot = App.MainWindow?.Content.XamlRoot;
-        if (xamlRoot == null)
+            ShowErrorDialog("Preview Error", "Could not access the application window.");
             return;
+        }
 
-        var dialog = new ContentDialog
+        try
         {
-            Title = "Print Preview",
-            Content = new ScrollViewer { Content = image },
-            CloseButtonText = "Close",
-            XamlRoot = xamlRoot
-        };
-        await dialog.ShowAsync();
+            await _printService.ShowPrintPreviewAsync(BuildCurrentPrintDocuments(), hwnd, "Label Preview");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Preview Error", $"Could not open the Windows print preview: {ex.Message}");
+        }
+    }
+
+    private IReadOnlyList<SceneDocument> BuildCurrentPrintDocuments()
+    {
+        return new[] { ActiveRenderDocument };
+    }
+
+    private async Task<IReadOnlyList<SceneDocument>> BuildMailMergePrintDocumentsAsync(DataSourceConfig dataSource)
+    {
+        var records = await GetActiveMergeRecordsAsync(dataSource);
+        if (records.Count == 0)
+            return BuildCurrentPrintDocuments();
+
+        var originalDoc = _scene.CurrentDocument;
+        if (GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage)
+        {
+            var pages = BuildMergedPages(originalDoc, records);
+            return pages.Count == 0 ? BuildCurrentPrintDocuments() : pages;
+        }
+
+        return records
+            .Select(record => _dataBinding.ApplyRecord(originalDoc, record))
+            .ToList();
+    }
+
+    private string BuildMailMergeJobTitle(DataSourceConfig dataSource, int pageCount)
+    {
+        var name = string.IsNullOrWhiteSpace(dataSource.Path)
+            ? "Mail Merge"
+            : $"Mail Merge - {Path.GetFileNameWithoutExtension(dataSource.Path)}";
+
+        return pageCount <= 1 ? name : $"{name} ({pageCount} pages)";
     }
 
     [RelayCommand]
@@ -2295,6 +2354,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(DataMergeItemsSource));
         OnPropertyChanged(nameof(HasLoadedDataSource));
         OnPropertyChanged(nameof(DataSourceSummary));
+        OnPropertyChanged(nameof(DataMergeActionSummary));
     }
 
     private void ClearDataMergeState()
@@ -2314,6 +2374,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(PreviewRecordCount));
         OnPropertyChanged(nameof(PreviewRecordText));
+        OnPropertyChanged(nameof(DataMergeActionSummary));
     }
 
     private void ReplaceDataMergeTable(DataTable? table)

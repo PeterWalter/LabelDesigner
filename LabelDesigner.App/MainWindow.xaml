@@ -285,19 +285,19 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Print All" Command="{Binding Designer.PrintWithDataCommand}"
-                            ToolTipService.ToolTip="Print all CSV records using current merge mode">
+                            ToolTipService.ToolTip="Open Windows print preview for all CSV records using the current merge mode">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Preview">
                         <ribbon:RibbonButton Content="Preview" Command="{Binding Designer.PreviewPrintCommand}"
-                            ToolTipService.ToolTip="Show print preview">
+                            ToolTipService.ToolTip="Open the Windows print preview window for the current page">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Export">
                         <ribbon:RibbonButton Content="Print" Command="{Binding Designer.PrintCommand}"
-                            ToolTipService.ToolTip="Print label to printer">
+                            ToolTipService.ToolTip="Open the Windows print window for the current page">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="PDF" Command="{Binding Designer.ExportPdfCommand}"

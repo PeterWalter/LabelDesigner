@@ -78,12 +78,20 @@
                             <TextBox Text="{Binding Designer.MarginLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Text="Printer" FontWeight="SemiBold" FontSize="11" Foreground="{ThemeResource AppTextBrush}" Margin="0,8,0,4"/>
+                    <TextBlock Text="Installed Printers" FontWeight="SemiBold" FontSize="11" Foreground="{ThemeResource AppTextBrush}" Margin="0,8,0,4"/>
                     <ComboBox ItemsSource="{Binding Designer.AvailablePrinters}"
                         SelectedItem="{Binding Designer.SelectedPrinter, Mode=TwoWay}"
                         HorizontalAlignment="Stretch"
                         PlaceholderText="Select printer..."
-                        ToolTipService.ToolTip="Select the printer to use when printing"/>
+                        ToolTipService.ToolTip="Installed printers detected on this computer"/>
+                    <Button Content="Refresh Printers" Command="{Binding Designer.RefreshPrintersCommand}"
+                        HorizontalAlignment="Left" Padding="8,4" Margin="0,4,0,0"
+                        ToolTipService.ToolTip="Refresh the list of installed printers"/>
+                    <TextBlock Text="{Binding Designer.PrinterListSummary}"
+                        TextWrapping="WrapWholeWords"
+                        FontSize="11"
+                        Foreground="{ThemeResource AppMutedTextBrush}"
+                        Margin="0,4,0,0"/>
                     <Button Content="Save Template" Command="{Binding Designer.SaveTemplateCommand}"
                         HorizontalAlignment="Left" Padding="8,4" Margin="0,4,0,0"
                         ToolTipService.ToolTip="Save the current label design as a reusable template"/>
