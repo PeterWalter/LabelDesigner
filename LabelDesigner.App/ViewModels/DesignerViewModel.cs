@@ -193,7 +193,7 @@ public partial class DesignerViewModel : ObservableObject
 
     public ObservableCollection<string> AvailableDataFields { get; } = new();
     public bool HasDataFields => AvailableDataFields.Count > 0;
-    public object? DataMergeItemsSource => _dataMergeTable?.DefaultView;
+    public DataTable? DataMergeItemsSource => _dataMergeTable;
     public bool HasLoadedDataSource => _dataMergeTable != null;
     public bool HasSelectedDataField => !string.IsNullOrWhiteSpace(SelectedDataField);
     public bool CanBindSelectedDataFieldToBarcode => HasSelectedDataField && IsBarcodeSelected;

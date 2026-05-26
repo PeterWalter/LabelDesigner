@@ -58,7 +58,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
         }
 
         var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
-        await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Bmp);
+        await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
         stream.Seek(0);
 
         var decoder = await BitmapDecoder.CreateAsync(stream);
