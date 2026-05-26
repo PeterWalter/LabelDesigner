@@ -1172,12 +1172,6 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     private async Task PreviewPrint()
     {
-        if (!TryGetWindowHandle(out var hwnd))
-        {
-            ShowErrorDialog("Preview Error", "Could not access the application window.");
-            return;
-        }
-
         try
         {
             var ds = _scene.CurrentDocument.DataSource;
@@ -1200,7 +1194,7 @@ public partial class DesignerViewModel : ObservableObject
             var previewTitle = BuildMailMergeJobTitle(ds, documents.Count);
             var xamlRoot = App.MainWindow?.Content.XamlRoot;
             if (xamlRoot == null)
-                return;
+                throw new InvalidOperationException("Could not open the preview window.");
 
             var dialog = new ContentDialog
             {
