@@ -198,10 +198,14 @@ public partial class DesignerViewModel : ObservableObject
         : $"Installed printers: {AvailablePrinters.Count}. Preview or Print opens the Windows print window where you choose the target printer.";
 
     public ObservableCollection<string> AvailableDataFields { get; } = new();
+    public ObservableCollection<MergeBindingItem> MergeBindings { get; } = new();
     public bool HasDataFields => AvailableDataFields.Count > 0;
+    public bool HasMergeBindings => MergeBindings.Count > 0;
+    public bool HasNoMergeBindings => !HasMergeBindings;
     public DataTable? DataMergeItemsSource => _dataMergeTable;
     public System.Data.DataView? DataMergeView => _dataMergeTable?.DefaultView;
     public bool HasLoadedDataSource => _dataMergeTable != null;
+    public bool HasNoLoadedDataSource => !HasLoadedDataSource;
     public bool HasSelectedDataField => !string.IsNullOrWhiteSpace(SelectedDataField);
     public bool CanBindSelectedDataFieldToBarcode => HasSelectedDataField && IsBarcodeSelected;
     public bool CanBindSelectedDataFieldToText => HasSelectedDataField && IsTextSelected;
@@ -264,6 +268,13 @@ public partial class DesignerViewModel : ObservableObject
     partial void OnPreviewRecordIndexChanged(int value)
     {
         RefreshPreviewDocument();
+    }
+
+    partial void OnWorkspaceTabIndexChanged(int value)
+    {
+        // Refresh merge bindings whenever the Data Merge tab becomes active
+        if (value == 1)
+            RefreshMergeBindings();
     }
 
     partial void OnSelectedDataMergeRowChanged(DataRowView? value)
@@ -2401,14 +2412,19 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(DataMergeItemsSource));
         OnPropertyChanged(nameof(DataMergeView));
         OnPropertyChanged(nameof(HasLoadedDataSource));
+        OnPropertyChanged(nameof(HasNoLoadedDataSource));
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(DataMergeActionSummary));
+        // RefreshMergeBindings is called via OnWorkspaceTabIndexChanged when tab index becomes 1
+        // but if we're already on tab 1, refresh directly
+        RefreshMergeBindings();
     }
 
     private void ClearDataMergeState()
     {
         ReplaceDataMergeTable(null);
         AvailableDataFields.Clear();
+        MergeBindings.Clear();
         _csvRecords = new();
         _loadedDataSourcePath = null;
         SelectedDataField = null;
@@ -2418,9 +2434,12 @@ public partial class DesignerViewModel : ObservableObject
         RefreshPreviewDocument();
 
         OnPropertyChanged(nameof(HasDataFields));
+        OnPropertyChanged(nameof(HasMergeBindings));
+        OnPropertyChanged(nameof(HasNoMergeBindings));
         OnPropertyChanged(nameof(DataMergeItemsSource));
         OnPropertyChanged(nameof(DataMergeView));
         OnPropertyChanged(nameof(HasLoadedDataSource));
+        OnPropertyChanged(nameof(HasNoLoadedDataSource));
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(PreviewRecordCount));
         OnPropertyChanged(nameof(PreviewRecordText));
@@ -2444,6 +2463,84 @@ public partial class DesignerViewModel : ObservableObject
             _dataMergeTable.RowChanged += OnDataMergeTableRowChanged;
             _dataMergeTable.RowDeleted += OnDataMergeTableRowChanged;
         }
+    }
+
+    /// <summary>Rebuilds MergeBindings from the current document elements and available CSV columns.</summary>
+    private void RefreshMergeBindings()
+    {
+        MergeBindings.Clear();
+        if (!HasLoadedDataSource) return;
+
+        var columns = new List<string>(AvailableDataFields.Count + 1) { "(none)" };
+        foreach (var c in AvailableDataFields)
+            columns.Add(c);
+
+        foreach (var el in _scene.CurrentDocument.AllElements)
+        {
+            string type, name;
+            string? boundCol;
+
+            if (el is TextElement txt)
+            {
+                type = "Text";
+                name = string.IsNullOrWhiteSpace(el.Name) ? "Text" : el.Name;
+                boundCol = ExtractMergeToken(txt.Text);
+            }
+            else if (el is BarcodeElement bc)
+            {
+                type = "Barcode";
+                name = string.IsNullOrWhiteSpace(el.Name) ? "Barcode" : el.Name;
+                boundCol = ExtractMergeToken(bc.Value);
+            }
+            else
+            {
+                continue;
+            }
+
+            var item = new MergeBindingItem
+            {
+                ElementId = el.Id,
+                DisplayName = name,
+                ElementType = type,
+                AvailableColumns = columns,
+                OnColumnSelected = OnMergeBindingColumnSelected
+            };
+            item.SetColumnSilently(boundCol);
+            MergeBindings.Add(item);
+        }
+
+        OnPropertyChanged(nameof(HasMergeBindings));
+        OnPropertyChanged(nameof(HasNoMergeBindings));
+    }
+
+    private void OnMergeBindingColumnSelected(MergeBindingItem item)
+    {
+        var el = _scene.CurrentDocument.AllElements.FirstOrDefault(e => e.Id == item.ElementId);
+        if (el == null) return;
+
+        var col = item.SelectedColumn;
+        var isClear = col == null || col == "(none)";
+
+        if (el is TextElement txt)
+        {
+            txt.Text = isClear ? "" : $"{{{{{col}}}}}";
+            _properties.TrackElement(txt);
+        }
+        else if (el is BarcodeElement bc)
+        {
+            bc.Value = isClear ? "0" : $"{{{{{col}}}}}";
+            _properties.TrackElement(bc);
+        }
+
+        RequestRedraw?.Invoke();
+        RefreshPreviewDocument();
+    }
+
+    private static string? ExtractMergeToken(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        var m = System.Text.RegularExpressions.Regex.Match(text, @"^\{\{(.+?)\}\}$");
+        return m.Success ? m.Groups[1].Value : null;
     }
 
     private static DataTable BuildDataMergeTable(
