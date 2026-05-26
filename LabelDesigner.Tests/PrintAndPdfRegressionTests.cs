@@ -57,6 +57,17 @@ public class PrintAndPdfRegressionTests
         doc.AllElements.Add(bottomShape);
         layer.ElementIds.Add(bottomShape.Id);
 
+        var barcode = new BarcodeElement
+        {
+            Bounds = new RectD(45, 8, 40, 20),
+            Value = "ABC123456",
+            Symbology = BarcodeSymbology.Code128,
+            TextPosition = BarcodeTextPosition.None
+        };
+        barcode.ParentId = layerId;
+        doc.AllElements.Add(barcode);
+        layer.ElementIds.Add(barcode.Id);
+
         return doc;
     }
 
@@ -92,7 +103,7 @@ public class PrintAndPdfRegressionTests
     [Fact]
     public async Task PdfExport_writes_non_empty_file_with_bottom_content_document()
     {
-        var service = new PdfExportService();
+        var service = new PdfExportService(new BarcodeService());
         var doc = BuildDocumentWithContent();
         var outputPath = Path.Combine(Path.GetTempPath(), $"labeldesigner-regression-{Guid.NewGuid():N}.pdf");
 
@@ -103,6 +114,10 @@ public class PrintAndPdfRegressionTests
             Assert.True(File.Exists(outputPath));
             var fileInfo = new FileInfo(outputPath);
             Assert.True(fileInfo.Length > 500);
+
+            var bytes = await File.ReadAllBytesAsync(outputPath);
+            var text = System.Text.Encoding.ASCII.GetString(bytes);
+            Assert.Contains("/Subtype /Image", text);
         }
         finally
         {
