@@ -8,6 +8,8 @@ namespace LabelDesigner.Infrastructure.Export;
 
 public class PdfExportService : IPdfExportService
 {
+    private const float PointsPerPixel = 72f / 96f;
+
     public async Task ExportAsync(SceneDocument document, string outputPath, PdfExportOptions options)
     {
         using var doc = new PdfDocument();
@@ -19,9 +21,6 @@ public class PdfExportService : IPdfExportService
         var page = doc.Pages.Add();
         var graphics = page.Graphics;
 
-        float dpi = options.Dpi;
-        float scale = dpi / 96.0f;
-
         var lookup = document.AllElements.ToDictionary(e => e.Id);
 
         foreach (var layer in document.Layers)
@@ -30,7 +29,7 @@ public class PdfExportService : IPdfExportService
             foreach (var id in layer.ElementIds)
             {
                 if (!lookup.TryGetValue(id, out var el) || !el.Visible) continue;
-                DrawElementToPdf(graphics, el, lookup, scale, doc);
+                DrawElementToPdf(graphics, el, lookup, doc);
             }
         }
 
@@ -38,14 +37,14 @@ public class PdfExportService : IPdfExportService
     }
 
     private void DrawElementToPdf(PdfGraphics graphics, DesignElement el,
-        Dictionary<Guid, DesignElement> lookup, float scale, PdfDocument doc)
+        Dictionary<Guid, DesignElement> lookup, PdfDocument doc)
     {
         var bounds = el.Bounds;
 
         if (el is BarcodeElement barcode)
         {
             // Raster fallback for barcodes
-            DrawBarcodeToPdf(graphics, barcode, scale);
+            DrawBarcodeToPdf(graphics, barcode);
         }
         else if (el is TextElement text)
         {
@@ -54,17 +53,21 @@ public class PdfExportService : IPdfExportService
                       : text.Italic ? PdfFontStyle.Italic
                       : PdfFontStyle.Regular;
 
-            var font = new PdfStandardFont(PdfFontFamily.Helvetica, (float)text.FontSize * scale, style);
+            var font = new PdfStandardFont(PdfFontFamily.Helvetica, (float)text.FontSize * PointsPerPixel, style);
             graphics.DrawString(text.Text, font,
-                PdfBrushes.Black, new Syncfusion.Drawing.PointF((float)bounds.X, (float)bounds.Y));
+                PdfBrushes.Black, new Syncfusion.Drawing.PointF((float)bounds.X * PointsPerPixel, (float)bounds.Y * PointsPerPixel));
         }
         else if (el is ShapeElement shape)
         {
-            DrawShapeToPdf(graphics, shape, scale);
+            DrawShapeToPdf(graphics, shape);
         }
         else if (el is LineElement line)
         {
-            graphics.DrawLine(PdfPens.Black, (float)line.X1, (float)line.Y1, (float)line.X2, (float)line.Y2);
+            graphics.DrawLine(PdfPens.Black,
+                (float)line.X1 * PointsPerPixel,
+                (float)line.Y1 * PointsPerPixel,
+                (float)line.X2 * PointsPerPixel,
+                (float)line.Y2 * PointsPerPixel);
         }
         else if (el is ImageElement image)
         {
@@ -80,35 +83,37 @@ public class PdfExportService : IPdfExportService
             foreach (var childId in container.ChildIds)
             {
                 if (lookup.TryGetValue(childId, out var child) && child.Visible)
-                    DrawElementToPdf(graphics, child, lookup, scale, doc);
+                    DrawElementToPdf(graphics, child, lookup, doc);
             }
         }
     }
 
-    private void DrawBarcodeToPdf(PdfGraphics graphics, BarcodeElement b, float scale)
+    private void DrawBarcodeToPdf(PdfGraphics graphics, BarcodeElement b)
     {
         graphics.DrawRectangle(PdfBrushes.White, new Syncfusion.Drawing.RectangleF(
-            (float)b.Bounds.X, (float)b.Bounds.Y,
-            (float)b.Bounds.Width, (float)b.Bounds.Height));
-        graphics.DrawString(b.DisplayText, new PdfStandardFont(PdfFontFamily.Helvetica, 10),
-            PdfBrushes.Black, new Syncfusion.Drawing.PointF((float)b.Bounds.X, (float)b.Bounds.Y));
+            (float)b.Bounds.X * PointsPerPixel,
+            (float)b.Bounds.Y * PointsPerPixel,
+            (float)b.Bounds.Width * PointsPerPixel,
+            (float)b.Bounds.Height * PointsPerPixel));
+        graphics.DrawString(b.DisplayText, new PdfStandardFont(PdfFontFamily.Helvetica, 10 * PointsPerPixel),
+            PdfBrushes.Black, new Syncfusion.Drawing.PointF((float)b.Bounds.X * PointsPerPixel, (float)b.Bounds.Y * PointsPerPixel));
     }
 
-    private void DrawShapeToPdf(PdfGraphics graphics, ShapeElement shape, float scale)
+    private void DrawShapeToPdf(PdfGraphics graphics, ShapeElement shape)
     {
         var b = shape.Bounds;
         var brush = new PdfSolidBrush(Syncfusion.Drawing.Color.FromArgb(255, 200, 200, 200));
-        var pen = new PdfPen(Syncfusion.Drawing.Color.FromArgb(0, 0, 0), (float)shape.StrokeWidth * scale);
+        var pen = new PdfPen(Syncfusion.Drawing.Color.FromArgb(0, 0, 0), (float)shape.StrokeWidth * PointsPerPixel);
 
         if (shape.Type == ShapeType.Ellipse)
         {
-            graphics.DrawEllipse(brush, (float)b.X, (float)b.Y, (float)b.Width, (float)b.Height);
-            graphics.DrawEllipse(pen, (float)b.X, (float)b.Y, (float)b.Width, (float)b.Height);
+            graphics.DrawEllipse(brush, (float)b.X * PointsPerPixel, (float)b.Y * PointsPerPixel, (float)b.Width * PointsPerPixel, (float)b.Height * PointsPerPixel);
+            graphics.DrawEllipse(pen, (float)b.X * PointsPerPixel, (float)b.Y * PointsPerPixel, (float)b.Width * PointsPerPixel, (float)b.Height * PointsPerPixel);
         }
         else
         {
-            graphics.DrawRectangle(brush, (float)b.X, (float)b.Y, (float)b.Width, (float)b.Height);
-            graphics.DrawRectangle(pen, (float)b.X, (float)b.Y, (float)b.Width, (float)b.Height);
+            graphics.DrawRectangle(brush, (float)b.X * PointsPerPixel, (float)b.Y * PointsPerPixel, (float)b.Width * PointsPerPixel, (float)b.Height * PointsPerPixel);
+            graphics.DrawRectangle(pen, (float)b.X * PointsPerPixel, (float)b.Y * PointsPerPixel, (float)b.Width * PointsPerPixel, (float)b.Height * PointsPerPixel);
         }
     }
 
@@ -119,17 +124,17 @@ public class PdfExportService : IPdfExportService
             if (!string.IsNullOrEmpty(image.SourcePath) && System.IO.File.Exists(image.SourcePath))
             {
                 var brush = new PdfSolidBrush(Syncfusion.Drawing.Color.White);
-                graphics.DrawRectangle(brush, (float)image.Bounds.X, (float)image.Bounds.Y,
-                    (float)image.Bounds.Width, (float)image.Bounds.Height);
+                graphics.DrawRectangle(brush, (float)image.Bounds.X * PointsPerPixel, (float)image.Bounds.Y * PointsPerPixel,
+                    (float)image.Bounds.Width * PointsPerPixel, (float)image.Bounds.Height * PointsPerPixel);
                   
                 var pen = new PdfPen(Syncfusion.Drawing.Color.LightGray, 1);
-                graphics.DrawRectangle(pen, (float)image.Bounds.X, (float)image.Bounds.Y,
-                    (float)image.Bounds.Width, (float)image.Bounds.Height);
+                graphics.DrawRectangle(pen, (float)image.Bounds.X * PointsPerPixel, (float)image.Bounds.Y * PointsPerPixel,
+                    (float)image.Bounds.Width * PointsPerPixel, (float)image.Bounds.Height * PointsPerPixel);
                   
                 // Draw placeholder text with filename
                 var fileName = System.IO.Path.GetFileName(image.SourcePath);
-                graphics.DrawString(fileName, new PdfStandardFont(PdfFontFamily.Helvetica, 8),
-                    PdfBrushes.Gray, new Syncfusion.Drawing.PointF((float)image.Bounds.X + 2, (float)image.Bounds.Y + 2));
+                graphics.DrawString(fileName, new PdfStandardFont(PdfFontFamily.Helvetica, 8 * PointsPerPixel),
+                    PdfBrushes.Gray, new Syncfusion.Drawing.PointF(((float)image.Bounds.X + 2) * PointsPerPixel, ((float)image.Bounds.Y + 2) * PointsPerPixel));
             }
         }
         catch (Exception ex)

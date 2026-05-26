@@ -137,8 +137,8 @@
                     <TextBox Text="{Binding Designer.DefaultTextLineSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>
 
                     <TextBlock Text="Selected Element" FontWeight="SemiBold" FontSize="13" Foreground="{ThemeResource AppTextBrush}" Margin="0,8,0,0"
-                        Visibility="{Binding Designer.IsElementSelected, Converter={StaticResource BoolToVisibility}}"/>
-                    <StackPanel Spacing="5" Visibility="{Binding Designer.IsElementSelected, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding Designer.Properties.IsVisible, Converter={StaticResource BoolToVisibility}}"/>
+                    <StackPanel Spacing="5" Visibility="{Binding Designer.Properties.IsVisible, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="{Binding Designer.Properties.ElementType}" FontWeight="Bold" FontSize="15" Margin="0,4,0,4" Foreground="{ThemeResource AppTextBrush}"/>
                         <TextBlock Text="Name" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}"/>
                         <TextBox Text="{Binding Designer.Properties.ElementName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"/>

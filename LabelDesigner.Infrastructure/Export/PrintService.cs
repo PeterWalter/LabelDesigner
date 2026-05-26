@@ -70,15 +70,51 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         foreach (var document in documents)
         {
-            // Use the same 96-DPI coordinate space as the designer canvas for
-            // predictable page composition in print preview.
-            var bitmap = await RenderDocumentToBitmapAsync(document, 96f);
-            var imageSource = new SoftwareBitmapSource();
-            await imageSource.SetBitmapAsync(bitmap);
-            sources.Add(imageSource);
+            var stream = await RenderDocumentToStreamAsync(document, 150f);
+            var bitmapImage = new BitmapImage();
+            await bitmapImage.SetSourceAsync(stream);
+            sources.Add(bitmapImage);
         }
 
         return sources;
+    }
+
+    private async Task<Windows.Storage.Streams.IRandomAccessStream> RenderDocumentToStreamAsync(SceneDocument document, float dpi)
+    {
+        double pageWidthPx = document.Page.WidthMm * dpi / 25.4;
+        double pageHeightPx = document.Page.HeightMm * dpi / 25.4;
+        int width = Math.Max(1, (int)Math.Ceiling(pageWidthPx));
+        int height = Math.Max(1, (int)Math.Ceiling(pageHeightPx));
+
+        using var device = CanvasDevice.GetSharedDevice();
+        using var renderTarget = new CanvasRenderTarget(device, width, height, dpi);
+        float scale = dpi / 96.0f;
+
+        using (var ds = renderTarget.CreateDrawingSession())
+        {
+            ds.Clear(Colors.White);
+            ds.Transform = Matrix3x2.CreateScale(scale);
+
+            var lookup = document.AllElements.ToDictionary(e => e.Id);
+            foreach (var layer in document.Layers)
+            {
+                if (!layer.Visible)
+                    continue;
+
+                foreach (var id in layer.ElementIds)
+                {
+                    if (!lookup.TryGetValue(id, out var el) || !el.Visible)
+                        continue;
+
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
+                }
+            }
+        }
+
+        var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+        await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
+        stream.Seek(0);
+        return stream;
     }
 
     private static string BuildJobTitle(int pageCount)
@@ -115,7 +151,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
                     if (!lookup.TryGetValue(id, out var el) || !el.Visible)
                         continue;
 
-                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
                 }
             }
         } // session committed before saving
