@@ -29,7 +29,6 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
@@ -238,6 +237,24 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Panels">
+                        <StackPanel Orientation="Horizontal" Spacing="4" Padding="4,0">
+                            <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
+                                Padding="8,4"
+                                Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
+                                ToolTipService.ToolTip="Show/hide Layers panel"/>
+                            <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
+                                Padding="8,4"
+                                Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
+                                ToolTipService.ToolTip="Show/hide Properties panel"/>
+                            <Button Content="Reset" Click="OnResetLayout"
+                                Padding="8,4"
+                                ToolTipService.ToolTip="Restore default panel layout"/>
+                            <Button Content="⚙ Settings" Click="OnSettingsTabClicked"
+                                Padding="8,4"
+                                ToolTipService.ToolTip="Open Settings"/>
+                        </StackPanel>
+                    </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Page">
                         <ribbon:RibbonButton Content="A4" Command="{Binding Designer.SetPageA4Command}"
                             ToolTipService.ToolTip="Set page size to A4 (210×297 mm)">
@@ -409,71 +426,7 @@
 
         </ribbon:SfRibbon>
 
-        <Border Grid.Row="1" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="8,4">
-            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
-                    Padding="6,2"
-                    Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
-                    ToolTipService.ToolTip="Show/hide Layers panel"/>
-                <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
-                    Padding="6,2"
-                    Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
-                    ToolTipService.ToolTip="Show/hide Properties panel"/>
-                <Button Content="Reset Layout" Click="OnResetLayout"
-                    Padding="6,2"
-                    ToolTipService.ToolTip="Restore default panel layout"/>
-                <Button Content="Settings" Click="OnSettingsClicked"
-                    Padding="6,2"
-                    ToolTipService.ToolTip="Application Settings"/>
-                <ToggleButton x:Name="SnapGridToggle" Content="Grid" IsChecked="True"
-                    Padding="6,2"
-                    Checked="OnSnapGridToggled" Unchecked="OnSnapGridToggled"
-                    ToolTipService.ToolTip="Show snap grid on canvas"/>
-                <TextBlock Text="Ruler Units" VerticalAlignment="Center"/>
-                <ComboBox x:Name="RulerUnitComboBox" Width="90" SelectionChanged="OnRulerUnitChanged" SelectedIndex="0">
-                    <ComboBoxItem Content="mm" Tag="Millimeters"/>
-                    <ComboBoxItem Content="cm" Tag="Centimeters"/>
-                    <ComboBoxItem Content="in" Tag="Inches"/>
-                </ComboBox>
-                <TextBlock x:Name="StockPresetLabel" Text="Stock Preset" VerticalAlignment="Center"/>
-                <ComboBox Width="220"
-                    DisplayMemberPath="DisplayName"
-                    SelectedValuePath="Id"
-                    ItemsSource="{Binding Designer.LabelStockPresets}"
-                    SelectedValue="{Binding Designer.SelectedLabelStockPresetId, Mode=TwoWay}" />
-                <TextBlock x:Name="RecentFilesLabel" Text="Recent Files" VerticalAlignment="Center"/>
-                <ComboBox Width="220"
-                    ItemsSource="{Binding Designer.RecentFiles}"
-                    SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}" />
-                <Button x:Name="OpenRecentButton" Content="Open Recent"
-                    Command="{Binding Designer.OpenSelectedRecentCommand}"
-                    Padding="6,2"
-                    ToolTipService.ToolTip="Open the selected recent file"/>
-
-                <!-- ── Merge Preview Navigator (visible when CSV loaded) ── -->
-                <Border Width="1" Background="{ThemeResource AppBorderBrush}"
-                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
-                    Margin="4,2"/>
-                <Button Content="◄" Command="{Binding Designer.PreviousPreviewRecordCommand}"
-                    Padding="6,2" FontSize="12"
-                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
-                    ToolTipService.ToolTip="Previous CSV record"/>
-                <TextBlock Text="{Binding Designer.PreviewRecordText}"
-                    VerticalAlignment="Center" FontSize="11"
-                    Foreground="{ThemeResource AppActiveLayerAccentBrush}"
-                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"/>
-                <Button Content="►" Command="{Binding Designer.NextPreviewRecordCommand}"
-                    Padding="6,2" FontSize="12"
-                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
-                    ToolTipService.ToolTip="Next CSV record"/>
-                <Button Content="✕ Preview" Command="{Binding Designer.ExitPreviewModeCommand}"
-                    Padding="6,2" FontSize="11"
-                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
-                    ToolTipService.ToolTip="Exit merge preview mode"/>
-            </StackPanel>
-        </Border>
-
-        <TabView Grid.Row="2"
+        <TabView Grid.Row="1"
             SelectedIndex="{Binding Designer.WorkspaceTabIndex, Mode=TwoWay}">
             <TabViewItem Header="Designer" IsClosable="False">
                 <Grid>
@@ -528,9 +481,12 @@
             <TabViewItem Header="Data Merge" IsClosable="False">
                 <views:DataMergePaneView/>
             </TabViewItem>
+            <TabViewItem Header="⚙ Settings" IsClosable="False">
+                <views:SettingsPage/>
+            </TabViewItem>
         </TabView>
 
-        <Border Grid.Row="3" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
+        <Border Grid.Row="2" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="4,0"
             AutomationProperties.Name="Status bar">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -538,6 +494,7 @@
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding Designer.RulerUnitText}" Margin="6,0,2,0" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource AppStatusTextBrush}"
                     AutomationProperties.Name="Ruler unit"/>
@@ -563,6 +520,22 @@
                     AutomationProperties.Name="Cursor position"/>
                 <TextBlock Grid.Column="10" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource AppStatusTextBrush}" Margin="12,0,6,0" Text="{Binding Designer.ElementsText}"
                     AutomationProperties.Name="Element count"/>
+                <!-- Merge Preview Navigator -->
+                <Border Grid.Column="11" Width="1" Background="{ThemeResource AppBorderBrush}"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    Margin="4,2"/>
+                <Button Grid.Column="12" Content="◄" Command="{Binding Designer.PreviousPreviewRecordCommand}"
+                    Padding="6,0" Height="20" FontSize="12"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    ToolTipService.ToolTip="Previous CSV record"/>
+                <TextBlock Grid.Column="13" Text="{Binding Designer.PreviewRecordText}"
+                    VerticalAlignment="Center" FontSize="11" Margin="4,0"
+                    Foreground="{ThemeResource AppActiveLayerAccentBrush}"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"/>
+                <Button Grid.Column="14" Content="►" Command="{Binding Designer.NextPreviewRecordCommand}"
+                    Padding="6,0" Height="20" FontSize="12"
+                    Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
+                    ToolTipService.ToolTip="Next CSV record"/>
             </Grid>
         </Border>
 

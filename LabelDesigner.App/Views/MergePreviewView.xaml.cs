@@ -87,11 +87,15 @@ public sealed partial class MergePreviewView : UserControl
             return;
 
         var document = vm.MergePreviewDocument;
+
         if (_firstDraw || sender.ActualWidth <= 0 || sender.ActualHeight <= 0)
         {
             _firstDraw = false;
-            FitToCanvas(document, sender);
+            if (document != null)
+                FitToCanvas(document, sender);
         }
+
+        if (document == null) return;
 
         var rect = new RectD(_viewport.OffsetX, _viewport.OffsetY, sender.ActualWidth, sender.ActualHeight);
         vm.RenderService.RenderScene(
@@ -109,8 +113,7 @@ public sealed partial class MergePreviewView : UserControl
     private void FitToCanvas(SceneDocument document, CanvasControl sender)
     {
         var vm = VM;
-        if (vm == null)
-            return;
+        if (vm == null || document == null) return;
 
         double pageW = document.Page.WidthMm * vm.PixelsPerMm;
         double pageH = document.Page.HeightMm * vm.PixelsPerMm;

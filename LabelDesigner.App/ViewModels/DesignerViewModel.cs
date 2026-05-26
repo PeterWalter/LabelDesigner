@@ -200,6 +200,7 @@ public partial class DesignerViewModel : ObservableObject
     public ObservableCollection<string> AvailableDataFields { get; } = new();
     public bool HasDataFields => AvailableDataFields.Count > 0;
     public DataTable? DataMergeItemsSource => _dataMergeTable;
+    public System.Data.DataView? DataMergeView => _dataMergeTable?.DefaultView;
     public bool HasLoadedDataSource => _dataMergeTable != null;
     public bool HasSelectedDataField => !string.IsNullOrWhiteSpace(SelectedDataField);
     public bool CanBindSelectedDataFieldToBarcode => HasSelectedDataField && IsBarcodeSelected;
@@ -2171,6 +2172,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ShowSettings()
+    {
+        WorkspaceTabIndex = 2;
+    }
+
+    [RelayCommand]
     private void BindSelectedFieldToBarcode()
     {
         BindBarcodeToField(SelectedDataField);
@@ -2392,6 +2399,7 @@ public partial class DesignerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasDataFields));
         OnPropertyChanged(nameof(DataMergeItemsSource));
+        OnPropertyChanged(nameof(DataMergeView));
         OnPropertyChanged(nameof(HasLoadedDataSource));
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(DataMergeActionSummary));
@@ -2411,6 +2419,7 @@ public partial class DesignerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasDataFields));
         OnPropertyChanged(nameof(DataMergeItemsSource));
+        OnPropertyChanged(nameof(DataMergeView));
         OnPropertyChanged(nameof(HasLoadedDataSource));
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(PreviewRecordCount));

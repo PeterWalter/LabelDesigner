@@ -27,14 +27,6 @@ public sealed partial class MainWindow : Window
         ApplyThemeFromSettings();
         AppSettingsService.SettingsChanged += ApplyThemeFromSettings;
 
-        RulerUnitComboBox.SelectedIndex = AppSettingsService.RulerUnit switch
-        {
-            MeasurementUnit.Millimeters => 0,
-            MeasurementUnit.Centimeters => 1,
-            MeasurementUnit.Inches => 2,
-            _ => 0
-        };
-
         // Restore layout
         LayerColumn.Width = AppSettingsService.LayersPaneCollapsed
             ? new GridLength(32)
@@ -182,38 +174,14 @@ public sealed partial class MainWindow : Window
         AppSettingsService.Save();
     }
 
-    private void OnRulerUnitChanged(object sender, SelectionChangedEventArgs e)
+    private void OnSettingsTabClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem selectedItem)
-            return;
-
-        AppSettingsService.RulerUnit = selectedItem.Tag?.ToString() switch
-        {
-            "Centimeters" => MeasurementUnit.Centimeters,
-            "Inches" => MeasurementUnit.Inches,
-            _ => MeasurementUnit.Millimeters
-        };
-    }
-
-    private void OnSnapGridToggled(object sender, RoutedEventArgs e)
-    {
-        if (sender is ToggleButton tb)
-            AppSettingsService.ShowSnapGrid = tb.IsChecked == true;
-    }
-
-    private async void OnSettingsClicked(object sender, RoutedEventArgs e)
-    {
-        var dialog = new Views.SettingsDialog();
-        dialog.XamlRoot = this.Content.XamlRoot;
-        await dialog.ShowAsync();
+        ViewModel.Designer.WorkspaceTabIndex = 2;
     }
 
     private void ApplyLocalization()
     {
         Title = LocalizationService.Get("WindowTitle");
-        if (RecentFilesLabel != null) RecentFilesLabel.Text = LocalizationService.Get("RecentFilesLabel");
-        if (OpenRecentButton != null) OpenRecentButton.Content = LocalizationService.Get("OpenRecentButton");
-        if (StockPresetLabel != null) StockPresetLabel.Text = LocalizationService.Get("StockPresetLabel");
     }
 
     private void ApplyThemeFromSettings()

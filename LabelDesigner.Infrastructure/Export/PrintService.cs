@@ -64,19 +64,53 @@ public class PrintService : IPrintService, IDocumentRasterizer
             throw new InvalidOperationException("Windows could not complete the print job.");
     }
 
-    private async Task<IReadOnlyList<SoftwareBitmapSource>> BuildPageSourcesAsync(IReadOnlyList<SceneDocument> documents)
+    private async Task<IReadOnlyList<BitmapImage>> BuildPageSourcesAsync(IReadOnlyList<SceneDocument> documents)
     {
-        var sources = new List<SoftwareBitmapSource>(documents.Count);
+        var sources = new List<BitmapImage>(documents.Count);
 
         foreach (var document in documents)
         {
-            var bitmap = await RenderDocumentToBitmapAsync(document, (float)document.Page.Dpi);
-            var source = new SoftwareBitmapSource();
-            await source.SetBitmapAsync(bitmap);
-            sources.Add(source);
+            var stream = await RenderDocumentToStreamAsync(document, 150f);
+            var bitmapImage = new BitmapImage();
+            await bitmapImage.SetSourceAsync(stream);
+            sources.Add(bitmapImage);
         }
 
         return sources;
+    }
+
+    private async Task<Windows.Storage.Streams.IRandomAccessStream> RenderDocumentToStreamAsync(SceneDocument document, float dpi)
+    {
+        double pageWidthPx = document.Page.WidthMm * dpi / 25.4;
+        double pageHeightPx = document.Page.HeightMm * dpi / 25.4;
+        int width = Math.Max(1, (int)Math.Ceiling(pageWidthPx));
+        int height = Math.Max(1, (int)Math.Ceiling(pageHeightPx));
+
+        using var device = CanvasDevice.GetSharedDevice();
+        using var renderTarget = new CanvasRenderTarget(device, width, height, dpi);
+        float scale = dpi / 96.0f;
+
+        using (var ds = renderTarget.CreateDrawingSession())
+        {
+            ds.Clear(Colors.White);
+            ds.Transform = Matrix3x2.CreateScale(scale);
+
+            var lookup = document.AllElements.ToDictionary(e => e.Id);
+            foreach (var layer in document.Layers)
+            {
+                if (!layer.Visible) continue;
+                foreach (var id in layer.ElementIds)
+                {
+                    if (!lookup.TryGetValue(id, out var el) || !el.Visible) continue;
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
+                }
+            }
+        } // drawing session committed here before saving
+
+        var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+        await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
+        stream.Seek(0);
+        return stream;
     }
 
     private static string BuildJobTitle(int pageCount)
@@ -95,26 +129,28 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         using var device = CanvasDevice.GetSharedDevice();
         using var renderTarget = new CanvasRenderTarget(device, width, height, dpi);
-
-        using var ds = renderTarget.CreateDrawingSession();
-        ds.Clear(Colors.White);
         float scale = dpi / 96.0f;
-        ds.Transform = Matrix3x2.CreateScale(scale);
 
-        var lookup = document.AllElements.ToDictionary(e => e.Id);
-        foreach (var layer in document.Layers)
+        using (var ds = renderTarget.CreateDrawingSession())
         {
-            if (!layer.Visible)
-                continue;
+            ds.Clear(Colors.White);
+            ds.Transform = Matrix3x2.CreateScale(scale);
 
-            foreach (var id in layer.ElementIds)
+            var lookup = document.AllElements.ToDictionary(e => e.Id);
+            foreach (var layer in document.Layers)
             {
-                if (!lookup.TryGetValue(id, out var el) || !el.Visible)
+                if (!layer.Visible)
                     continue;
 
-                ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
+                foreach (var id in layer.ElementIds)
+                {
+                    if (!lookup.TryGetValue(id, out var el) || !el.Visible)
+                        continue;
+
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
+                }
             }
-        }
+        } // session committed before saving
 
         var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
         await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
@@ -131,13 +167,13 @@ public class PrintService : IPrintService, IDocumentRasterizer
         private readonly PrintManager _printManager;
         private readonly PrintDocument _printDocument;
         private readonly IPrintDocumentSource _documentSource;
-        private readonly IReadOnlyList<SoftwareBitmapSource> _pageSources;
+        private readonly IReadOnlyList<BitmapImage> _pageSources;
         private readonly List<UIElement> _previewPages = new();
         private readonly TaskCompletionSource<PrintTaskCompletion> _completion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly string _jobTitle;
 
-        public PrintSession(nint hwnd, string jobTitle, IReadOnlyList<SoftwareBitmapSource> pageSources)
+        public PrintSession(nint hwnd, string jobTitle, IReadOnlyList<BitmapImage> pageSources)
         {
             _jobTitle = jobTitle;
             _pageSources = pageSources;
@@ -207,7 +243,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
         }
 
         private static UIElement BuildPreviewPage(
-            SoftwareBitmapSource bitmapSource,
+            BitmapImage bitmapSource,
             PrintPageDescription pageDescription,
             int pageNumber,
             int totalPages)

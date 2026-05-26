@@ -175,7 +175,7 @@
 
             <sfgrid:SfDataGrid Grid.Row="4"
                                Margin="10,0,10,10"
-                               ItemsSource="{Binding Designer.DataMergeItemsSource}"
+                               ItemsSource="{Binding Designer.DataMergeView}"
                                SelectedItem="{Binding Designer.SelectedDataMergeRow, Mode=TwoWay}"
                                AllowEditing="True"
                                AllowFiltering="True"

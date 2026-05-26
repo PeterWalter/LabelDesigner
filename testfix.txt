@@ -1,0 +1,14 @@
+  Determining projects to restore...
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Core\LabelDesigner.Core.csproj (in 93 ms).
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Application\LabelDesigner.Application.csproj (in 100 ms).
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Tests\LabelDesigner.Tests.csproj (in 201 ms).
+  LabelDesigner.Core -> D:\projects\source code\LabelDesigner\LabelDesigner.Core\bin\Release\net10.0\LabelDesigner.Core.dll
+  LabelDesigner.Application -> D:\projects\source code\LabelDesigner\LabelDesigner.Application\bin\Release\net10.0\LabelDesigner.Application.dll
+  LabelDesigner.Tests -> D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Release\net10.0\LabelDesigner.Tests.dll
+Test run for D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Release\net10.0\LabelDesigner.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    46, Skipped:     0, Total:    46, Duration: 598 ms - LabelDesigner.Tests.dll (net10.0)
