@@ -1,12 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	  <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
+    <WindowsAppSdkSelfContained>true</WindowsAppSdkSelfContained>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Win2DWarnNoPlatform>true</Win2DWarnNoPlatform>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\LabelDesigner.Application\LabelDesigner.Application.csproj" />
     <ProjectReference Include="..\LabelDesigner.Core\LabelDesigner.Core.csproj" />
+    <ProjectReference Include="..\LabelDesigner.Infrastructure\LabelDesigner.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
