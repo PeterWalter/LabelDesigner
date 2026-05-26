@@ -1162,7 +1162,12 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            await _printService.ShowPrintPreviewAsync(BuildCurrentPrintDocuments(), hwnd, "Label Preview");
+            var ds = _scene.CurrentDocument.DataSource;
+            var documents = ds == null
+                ? BuildCurrentPrintDocuments()
+                : await BuildMailMergePrintDocumentsAsync(ds);
+
+            await _printService.ShowPrintPreviewAsync(documents, hwnd, BuildMailMergeJobTitle(ds, documents.Count));
         }
         catch (Exception ex)
         {
@@ -1193,9 +1198,9 @@ public partial class DesignerViewModel : ObservableObject
             .ToList();
     }
 
-    private string BuildMailMergeJobTitle(DataSourceConfig dataSource, int pageCount)
+    private string BuildMailMergeJobTitle(DataSourceConfig? dataSource, int pageCount)
     {
-        var name = string.IsNullOrWhiteSpace(dataSource.Path)
+        var name = dataSource == null || string.IsNullOrWhiteSpace(dataSource.Path)
             ? "Mail Merge"
             : $"Mail Merge - {Path.GetFileNameWithoutExtension(dataSource.Path)}";
 
@@ -2352,6 +2357,7 @@ public partial class DesignerViewModel : ObservableObject
             SelectedDataField = AvailableDataFields.FirstOrDefault();
 
         _loadedDataSourcePath = sourcePath;
+        PreviewRecordIndex = -1;
         SyncRecordsFromDataMergeTable();
         WorkspaceTabIndex = 1;
 
@@ -2454,12 +2460,6 @@ public partial class DesignerViewModel : ObservableObject
         if (_csvRecords.Count == 0)
         {
             PreviewRecordIndex = -1;
-            return;
-        }
-
-        if (PreviewRecordIndex < 0)
-        {
-            PreviewRecordIndex = 0;
             return;
         }
 
