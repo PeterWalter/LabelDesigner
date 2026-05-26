@@ -7,6 +7,7 @@ using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
 using LabelDesigner.App.Services;
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
@@ -257,12 +258,7 @@ public partial class DesignerViewModel : ObservableObject
     public string PreviewRecordText => IsPreviewMode
         ? $"Merge Preview: Record {PreviewRecordIndex + 1} of {_csvRecords.Count}"
         : "";
-    public ImageSource? MergePreviewImage { get; private set; }
-
-    /// <summary>Returns the merge-preview document when active, otherwise the live scene document.</summary>
-    public SceneDocument ActiveRenderDocument => IsPreviewMode && _previewDocument != null
-        ? _previewDocument
-        : _scene.CurrentDocument;
+    public SceneDocument MergePreviewDocument => _previewDocument ?? _scene.CurrentDocument;
 
     partial void OnPreviewRecordIndexChanged(int value)
     {
@@ -1178,28 +1174,22 @@ public partial class DesignerViewModel : ObservableObject
             var documents = ds == null
                 ? BuildCurrentPrintDocuments()
                 : await BuildMailMergePrintDocumentsAsync(ds);
-            var previewDocument = documents.Count > 0 ? documents[0] : _scene.CurrentDocument;
-            var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(previewDocument, 150);
-            var source = new SoftwareBitmapSource();
-            await source.SetBitmapAsync(bitmap);
-
-            var image = new Image
-            {
-                Source = source,
-                Stretch = Stretch.Uniform,
-                MaxWidth = 900,
-                MaxHeight = 700
-            };
 
             var previewTitle = BuildMailMergeJobTitle(ds, documents.Count);
             var xamlRoot = App.MainWindow?.Content.XamlRoot;
             if (xamlRoot == null)
                 throw new InvalidOperationException("Could not open the preview window.");
 
+            var root = App.MainWindow?.Content as FrameworkElement;
+            var preview = new Views.MergePreviewView
+            {
+                DataContext = root?.DataContext
+            };
+
             var dialog = new ContentDialog
             {
                 Title = previewTitle,
-                Content = new ScrollViewer { Content = image },
+                Content = preview,
                 CloseButtonText = "Close",
                 XamlRoot = xamlRoot
             };
@@ -2554,25 +2544,7 @@ public partial class DesignerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(IsPreviewMode));
         OnPropertyChanged(nameof(PreviewRecordText));
-        _ = RefreshMergePreviewImageAsync();
-    }
-
-    private async Task RefreshMergePreviewImageAsync()
-    {
-        var document = _previewDocument ?? _scene.CurrentDocument;
-        if (document == null)
-        {
-            MergePreviewImage = null;
-            OnPropertyChanged(nameof(MergePreviewImage));
-            return;
-        }
-
-        var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(document, 150);
-        var source = new SoftwareBitmapSource();
-        await source.SetBitmapAsync(bitmap);
-
-        MergePreviewImage = source;
-        OnPropertyChanged(nameof(MergePreviewImage));
+        OnPropertyChanged(nameof(MergePreviewDocument));
     }
 
     private string FormatMeasurement(double pixels)
