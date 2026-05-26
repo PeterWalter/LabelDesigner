@@ -2452,13 +2452,16 @@ public partial class DesignerViewModel : ObservableObject
     {
         var table = new DataTable("MergeData");
 
-        foreach (var column in columns)
+        // Guard: skip null/empty column names (e.g. from trailing commas)
+        var validColumns = columns.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+
+        foreach (var column in validColumns)
             table.Columns.Add(column, typeof(string));
 
         foreach (var record in records)
         {
             var row = table.NewRow();
-            foreach (var column in columns)
+            foreach (var column in validColumns)
                 row[column] = record.TryGetValue(column, out var value) ? value : string.Empty;
             table.Rows.Add(row);
         }
