@@ -202,6 +202,7 @@ public partial class DesignerViewModel : ObservableObject
     public bool HasDataFields => AvailableDataFields.Count > 0;
     public bool HasMergeBindings => MergeBindings.Count > 0;
     public bool HasNoMergeBindings => !HasMergeBindings;
+    public bool HasLoadedDataSourceButNoMergeBindings => HasLoadedDataSource && !HasMergeBindings;
     public DataTable? DataMergeItemsSource => _dataMergeTable;
     public System.Data.DataView? DataMergeView => _dataMergeTable?.DefaultView;
     public bool HasLoadedDataSource => _dataMergeTable != null;
@@ -2413,6 +2414,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(DataMergeView));
         OnPropertyChanged(nameof(HasLoadedDataSource));
         OnPropertyChanged(nameof(HasNoLoadedDataSource));
+        OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(DataMergeActionSummary));
         // RefreshMergeBindings is called via OnWorkspaceTabIndexChanged when tab index becomes 1
@@ -2436,6 +2438,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(HasDataFields));
         OnPropertyChanged(nameof(HasMergeBindings));
         OnPropertyChanged(nameof(HasNoMergeBindings));
+        OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
         OnPropertyChanged(nameof(DataMergeItemsSource));
         OnPropertyChanged(nameof(DataMergeView));
         OnPropertyChanged(nameof(HasLoadedDataSource));
@@ -2514,6 +2517,7 @@ public partial class DesignerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasMergeBindings));
         OnPropertyChanged(nameof(HasNoMergeBindings));
+        OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
     }
 
     private void OnMergeBindingColumnSelected(MergeBindingItem item)

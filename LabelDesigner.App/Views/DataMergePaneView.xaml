@@ -4,7 +4,6 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:views="using:LabelDesigner.App.Views"
-    xmlns:vm="using:LabelDesigner.App.ViewModels"
     xmlns:conv="using:LabelDesigner.App.Converters"
     xmlns:sfgrid="using:Syncfusion.UI.Xaml.DataGrid"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -125,9 +124,9 @@
 
                     <!-- Empty state: CSV loaded but no bindable elements -->
                     <StackPanel Grid.Row="1"
-                                VerticalAlignment="Center" HorizontalAlignment="Center"
-                                Padding="24" Spacing="10"
-                                Visibility="{Binding Designer.HasNoMergeBindings, Converter={StaticResource BoolToVisibility}}">
+                                 VerticalAlignment="Center" HorizontalAlignment="Center"
+                                 Padding="24" Spacing="10"
+                                 Visibility="{Binding Designer.HasLoadedDataSourceButNoMergeBindings, Converter={StaticResource BoolToVisibility}}">
                         <FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets" FontSize="36"
                                   Foreground="{ThemeResource AppMutedTextBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="No Text or Barcode elements found on the canvas. Add them first in the Designer tab."

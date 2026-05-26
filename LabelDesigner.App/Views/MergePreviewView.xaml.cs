@@ -62,6 +62,8 @@ public sealed partial class MergePreviewView : UserControl
                 if (args.PropertyName == nameof(DesignerViewModel.MergePreviewDocument) ||
                     args.PropertyName == nameof(DesignerViewModel.PreviewRecordText))
                 {
+                    if (Canvas.ActualWidth > 0 && Canvas.ActualHeight > 0)
+                        FitToCanvas(_wiredVm.MergePreviewDocument, Canvas);
                     Invalidate();
                 }
             };
