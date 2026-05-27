@@ -1183,7 +1183,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task PreviewPrint()
+    private void PreviewPrint()
+    {
+        _ = PreviewPrintAsync();
+    }
+
+    private async Task PreviewPrintAsync()
     {
         try
         {
