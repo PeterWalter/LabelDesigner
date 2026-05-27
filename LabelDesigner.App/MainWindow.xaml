@@ -86,6 +86,13 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+                    <ribbon:RibbonGroup Header="Application">
+                        <ribbon:RibbonButton Content="Settings" Click="OnSettingsTabClicked"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Open application settings">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE713;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
                 </ribbon:RibbonTab>
 
                 <!-- ═══════════════════════════════════════════════════════
@@ -365,9 +372,6 @@
                             <Button Content="Reset" Click="OnResetLayout"
                                 Padding="8,4"
                                 ToolTipService.ToolTip="Restore default panel layout"/>
-                            <Button Content="⚙ Settings" Click="OnSettingsTabClicked"
-                                Padding="8,4"
-                                ToolTipService.ToolTip="Open Settings"/>
                         </StackPanel>
                     </ribbon:RibbonGroup>
 
