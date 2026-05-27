@@ -1107,11 +1107,12 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
+            _printService.PixelsPerMm = DpiService.PixelsPerMm;
             await _printService.PrintAsync(BuildCurrentPrintDocuments(), hwnd, "Label");
         }
         catch (Exception ex)
         {
-            ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.Message}");
+            ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.GetType().Name} — {ex.Message}");
         }
     }
 
@@ -1140,7 +1141,7 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             await _pdfExportService.ExportAsync(_scene.CurrentDocument, file.Path,
-                new Core.Interfaces.PdfExportOptions());
+                new Core.Interfaces.PdfExportOptions { PixelsPerMm = DpiService.PixelsPerMm });
         }
         catch (Exception ex)
         {
@@ -1210,6 +1211,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
+            _printService.PixelsPerMm = DpiService.PixelsPerMm;
             var documents = await BuildMailMergePrintDocumentsAsync(ds);
             await _printService.PrintAsync(documents, hwnd, BuildMailMergeJobTitle(ds, documents.Count));
         }
@@ -1223,7 +1225,7 @@ public partial class DesignerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.Message}");
+            ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.GetType().Name} — {ex.Message}");
         }
     }
 
@@ -1324,6 +1326,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
+            _printService.PixelsPerMm = DpiService.PixelsPerMm;
             var bitmap = await _rasterizer.RenderDocumentToBitmapAsync(_scene.CurrentDocument, 200);
 
             using var fileStream = await file.OpenStreamForWriteAsync();
