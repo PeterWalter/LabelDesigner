@@ -1,1 +1,17 @@
-CSC : error CS2012: Cannot open 'D:\projects\source code\LabelDesigner\LabelDesigner.Core\obj\Debug\net10.0\LabelDesigner.Core.dll' for writing -- The process cannot access the file 'D:\projects\source code\LabelDesigner\LabelDesigner.Core\obj\Debug\net10.0\LabelDesigner.Core.dll' because it is being used by another process. [D:\projects\source code\LabelDesigner\LabelDesigner.Core\LabelDesigner.Core.csproj]
+  Determining projects to restore...
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Core\LabelDesigner.Core.csproj (in 103 ms).
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Application\LabelDesigner.Application.csproj (in 108 ms).
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Infrastructure\LabelDesigner.Infrastructure.csproj (in 1.05 sec).
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.Tests\LabelDesigner.Tests.csproj (in 1.07 sec).
+  Restored D:\projects\source code\LabelDesigner\LabelDesigner.App\LabelDesigner.App.csproj (in 1.16 sec).
+  LabelDesigner.Core -> D:\projects\source code\LabelDesigner\LabelDesigner.Core\bin\Debug\net10.0\LabelDesigner.Core.dll
+  LabelDesigner.Application -> D:\projects\source code\LabelDesigner\LabelDesigner.Application\bin\Debug\net10.0\LabelDesigner.Application.dll
+  LabelDesigner.Infrastructure -> D:\projects\source code\LabelDesigner\LabelDesigner.Infrastructure\bin\Debug\net10.0-windows10.0.19041.0\LabelDesigner.Infrastructure.dll
+  LabelDesigner.Tests -> D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Debug\net10.0-windows10.0.19041.0\win-x64\LabelDesigner.Tests.dll
+Test run for D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Debug\net10.0-windows10.0.19041.0\win-x64\LabelDesigner.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    48, Skipped:     0, Total:    48, Duration: 1 s - LabelDesigner.Tests.dll (net10.0)

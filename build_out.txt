@@ -1,11 +1,13 @@
   LabelDesigner.Core -> D:\projects\source code\LabelDesigner\LabelDesigner.Core\bin\Debug\net10.0\LabelDesigner.Core.dll
   LabelDesigner.Application -> D:\projects\source code\LabelDesigner\LabelDesigner.Application\bin\Debug\net10.0\LabelDesigner.Application.dll
   LabelDesigner.Infrastructure -> D:\projects\source code\LabelDesigner\LabelDesigner.Infrastructure\bin\Debug\net10.0-windows10.0.19041.0\LabelDesigner.Infrastructure.dll
-  LabelDesigner.Tests -> D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Debug\net10.0\LabelDesigner.Tests.dll
-  LabelDesigner.App -> D:\projects\source code\LabelDesigner\LabelDesigner.App\bin\x64\Debug\net10.0-windows10.0.19041.0\win-x64\LabelDesigner.App.dll
+  LabelDesigner.Tests -> D:\projects\source code\LabelDesigner\LabelDesigner.Tests\bin\Debug\net10.0-windows10.0.19041.0\win-x64\LabelDesigner.Tests.dll
+C:\Users\01376343\.nuget\packages\microsoft.windowsappsdk.winui\2.0.12\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(594,9): error MSB3073: The command ""C:\Users\01376343\.nuget\packages\microsoft.windowsappsdk.winui\2.0.12\buildTransitive\..\tools\net6.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net10.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net10.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [D:\projects\source code\LabelDesigner\LabelDesigner.App\LabelDesigner.App.csproj]
 
-Build succeeded.
+Build FAILED.
+
+C:\Users\01376343\.nuget\packages\microsoft.windowsappsdk.winui\2.0.12\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(594,9): error MSB3073: The command ""C:\Users\01376343\.nuget\packages\microsoft.windowsappsdk.winui\2.0.12\buildTransitive\..\tools\net6.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net10.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net10.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [D:\projects\source code\LabelDesigner\LabelDesigner.App\LabelDesigner.App.csproj]
     0 Warning(s)
-    0 Error(s)
+    1 Error(s)
 
-Time Elapsed 00:00:22.55
+Time Elapsed 00:00:04.70

@@ -13,6 +13,119 @@
             <TextBlock Text="Settings" FontSize="24" FontWeight="SemiBold"
                        Foreground="{ThemeResource AppTextBrush}" Margin="0,0,0,16"/>
 
+            <!-- Document card -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="20,16" Margin="0,0,0,8">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Document" FontWeight="SemiBold" FontSize="15"
+                               Foreground="{ThemeResource AppTextBrush}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Page Width (mm)" FontSize="12" Foreground="{ThemeResource AppTextBrush}"/>
+                        </StackPanel>
+                        <TextBox Grid.Column="1" Text="{Binding Designer.PageWidthMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Page Height (mm)" FontSize="12" Foreground="{ThemeResource AppTextBrush}"/>
+                        </StackPanel>
+                        <TextBox Grid.Column="1" Text="{Binding Designer.PageHeightMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Landscape" FontSize="12" Foreground="{ThemeResource AppTextBrush}"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsOn="{Binding Designer.IsLandscape, Mode=TwoWay}" OnContent="On" OffContent="Off"/>
+                    </Grid>
+                    <TextBlock Text="Margins (mm)" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource AppTextBrush}" Margin="0,4,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,4,0">
+                            <TextBlock Text="Top" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                            <TextBox Text="{Binding Designer.MarginTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4,0,4,0">
+                            <TextBlock Text="Right" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                            <TextBox Text="{Binding Designer.MarginRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="4,0,4,0">
+                            <TextBlock Text="Bottom" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                            <TextBox Text="{Binding Designer.MarginBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="4,0,0,0">
+                            <TextBlock Text="Left" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
+                            <TextBox Text="{Binding Designer.MarginLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Template Defaults card -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="20,16" Margin="0,0,0,8">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Template Defaults" FontWeight="SemiBold" FontSize="15"
+                               Foreground="{ThemeResource AppTextBrush}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Default Barcode Value Position"
+                                       FontSize="12" Foreground="{ThemeResource AppTextBrush}"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" SelectedIndex="{Binding Designer.DefaultBarcodeTextPositionIndex, Mode=TwoWay}" Width="160">
+                            <ComboBoxItem Content="None"/>
+                            <ComboBoxItem Content="Top"/>
+                            <ComboBoxItem Content="Bottom"/>
+                            <ComboBoxItem Content="Left"/>
+                            <ComboBoxItem Content="Right"/>
+                        </ComboBox>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Default Text Font"
+                                       FontSize="12" Foreground="{ThemeResource AppTextBrush}"/>
+                        </StackPanel>
+                        <TextBox Grid.Column="1" Text="{Binding Designer.DefaultTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="160" Height="32"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Default Text Size"
+                                       FontSize="12" Foreground="{ThemeResource AppTextBrush}"/>
+                        </StackPanel>
+                        <TextBox Grid.Column="1" Text="{Binding Designer.DefaultTextFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="160" Height="32"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
             <!-- Measurement card -->
             <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
