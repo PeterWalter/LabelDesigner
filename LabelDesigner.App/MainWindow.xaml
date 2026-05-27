@@ -475,7 +475,7 @@
             VerticalContentAlignment="Stretch"
             SelectedIndex="{Binding Designer.WorkspaceTabIndex, Mode=TwoWay}">
             <TabViewItem Header="Designer" IsClosable="False">
-                <Grid>
+                <Grid VerticalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -488,6 +488,7 @@
                     </Grid.ColumnDefinitions>
 
                     <views:LayersPaneView Grid.Column="0" x:Name="LayersPane"
+                        VerticalAlignment="Stretch"
                         AutomationProperties.Name="Layers panel"/>
 
                     <Border Grid.Column="1" x:Name="SplitterLeft" Background="{ThemeResource AppSurfaceAltBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,1,0"
@@ -495,7 +496,7 @@
                         AutomationProperties.Name="Resize Layers panel"
                         PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-                    <Grid Grid.Column="2">
+                    <Grid Grid.Column="2" VerticalAlignment="Stretch">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="20"/>
                             <RowDefinition Height="*"/>
@@ -514,6 +515,7 @@
                             Viewport="{Binding Designer.Viewport}" PixelsPerMm="{Binding Designer.PixelsPerMm}" Background="{ThemeResource AppSurfaceSubtleBrush}"/>
 
                         <views:DesignerCanvasView Grid.Row="1" Grid.Column="1"
+                            VerticalAlignment="Stretch"
                             AutomationProperties.Name="Label design canvas"
                             AutomationProperties.HelpText="Use arrow keys to nudge selected elements. Delete to remove. Ctrl+Z to undo."/>
                     </Grid>
@@ -523,7 +525,8 @@
                         AutomationProperties.Name="Resize Properties panel"
                         PointerPressed="OnSplitterPressed" PointerMoved="OnSplitterMoved" PointerReleased="OnSplitterReleased"/>
 
-                    <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"/>
+                    <views:PropertiesPaneView Grid.Column="4" x:Name="PropertiesPane"
+                        VerticalAlignment="Stretch"/>
                 </Grid>
             </TabViewItem>
 
