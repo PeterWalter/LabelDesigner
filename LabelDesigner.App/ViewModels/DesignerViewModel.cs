@@ -661,7 +661,7 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task NewDocument()
+    private void NewDocument()
     {
         _scene.Clear();
         _scene.AddLayer("Layer 1");
@@ -669,7 +669,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task OpenDocument()
+    private void OpenDocument()
+    {
+        _ = OpenDocumentAsync();
+    }
+
+    private async Task OpenDocumentAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -690,11 +695,16 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SaveDocument()
+    private void SaveDocument()
+    {
+        _ = SaveDocumentAsync();
+    }
+
+    private async Task SaveDocumentAsync()
     {
         if (_currentFilePath == null)
         {
-            await SaveAsDocument();
+            await SaveAsDocumentAsync();
             return;
         }
         await _persistence.SaveAsync(_scene.CurrentDocument, _currentFilePath);
@@ -702,7 +712,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SaveAsDocument()
+    private void SaveAsDocument()
+    {
+        _ = SaveAsDocumentAsync();
+    }
+
+    private async Task SaveAsDocumentAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -731,7 +746,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task OpenSelectedRecent()
+    private void OpenSelectedRecent()
+    {
+        _ = OpenSelectedRecentAsync();
+    }
+
+    private async Task OpenSelectedRecentAsync()
     {
         if (string.IsNullOrWhiteSpace(SelectedRecentFile))
             return;
@@ -1038,7 +1058,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task SaveTemplate()
+    private void SaveTemplate()
+    {
+        _ = SaveTemplateAsync();
+    }
+
+    private async Task SaveTemplateAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -1067,7 +1092,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task Print()
+    private void Print()
+    {
+        _ = PrintAsync();
+    }
+
+    private async Task PrintAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -1086,7 +1116,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportPdf()
+    private void ExportPdf()
+    {
+        _ = ExportPdfAsync();
+    }
+
+    private async Task ExportPdfAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -1114,7 +1149,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task LoadDataSource()
+    private void LoadDataSource()
+    {
+        _ = LoadDataSourceAsync();
+    }
+
+    private async Task LoadDataSourceAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -1152,7 +1192,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task PrintWithData()
+    private void PrintWithData()
+    {
+        _ = PrintWithDataAsync();
+    }
+
+    private async Task PrintWithDataAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -1161,7 +1206,7 @@ public partial class DesignerViewModel : ObservableObject
         }
 
         var ds = _scene.CurrentDocument.DataSource;
-        if (ds == null) { await Print(); return; }
+        if (ds == null) { await PrintAsync(); return; }
 
         try
         {
@@ -1256,7 +1301,12 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportPng()
+    private void ExportPng()
+    {
+        _ = ExportPngAsync();
+    }
+
+    private async Task ExportPngAsync()
     {
         if (!TryGetWindowHandle(out var hwnd))
         {
@@ -1529,14 +1579,24 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task AddImage()
+    private void AddImage()
+    {
+        _ = AddImageAsync();
+    }
+
+    private async Task AddImageAsync()
     {
         ActiveTool = ToolMode.PlaceImage;
         await PickAndPlaceImage(new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg" });
     }
 
     [RelayCommand]
-    private async Task AddSvg()
+    private void AddSvg()
+    {
+        _ = AddSvgAsync();
+    }
+
+    private async Task AddSvgAsync()
     {
         ActiveTool = ToolMode.PlaceSvg;
         await PickAndPlaceSvg(new[] { ".svg" });
