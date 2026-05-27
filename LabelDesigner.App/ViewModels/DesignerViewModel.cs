@@ -88,6 +88,7 @@ public partial class DesignerViewModel : ObservableObject
     private DocumentDefaults Defaults => _scene.CurrentDocument.Defaults;
     private PointD? _marqueeStartPoint;
     private ResizeHandle _activeHandle = ResizeHandle.None;
+    private List<GuideLine> _savedUserGuides = new();
 
     public double PageWidthMm
     {
@@ -738,15 +739,22 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task SaveDocumentAsync()
     {
-        if (_currentFilePath == null)
+        try
         {
-            await SaveAsDocumentAsync();
-            return;
+            if (_currentFilePath == null)
+            {
+                await SaveAsDocumentAsync();
+                return;
+            }
+            var saveDoc = await BuildMmSaveDocumentAsync();
+            await _persistence.SaveAsync(saveDoc, _currentFilePath);
+            AppSettingsService.AddRecentFile(_currentFilePath);
+            ClearDirty();
         }
-        var saveDoc = await BuildMmSaveDocumentAsync();
-        await _persistence.SaveAsync(saveDoc, _currentFilePath);
-        AppSettingsService.AddRecentFile(_currentFilePath);
-        ClearDirty();
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Save Error", $"Could not save document: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -2165,6 +2173,8 @@ public partial class DesignerViewModel : ObservableObject
 
     public void PointerPressed(Windows.Foundation.Point screenPoint)
     {
+        // Save user-added guides before interaction (don't lose them during drag/resize)
+        _savedUserGuides = new List<GuideLine>(Guides);
         Guides.Clear();
         var p = Viewport.ScreenToWorld(screenPoint);
         var pD = new PointD(p.X, p.Y);
@@ -2333,7 +2343,11 @@ public partial class DesignerViewModel : ObservableObject
     {
         var wasMarqueeSelection = InteractionState == InteractionState.MarqueeSelection;
         _interaction.EndDrag();
+        
+        // Restore user-added guides after interaction
         Guides.Clear();
+        Guides.AddRange(_savedUserGuides);
+        
         if (wasMarqueeSelection)
             FinalizeMarqueeSelection();
 
