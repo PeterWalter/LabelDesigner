@@ -92,6 +92,12 @@ public partial class PropertiesViewModel : ObservableObject
     public partial double BarcodeTextFontSize { get; set; } = 12;
 
     [ObservableProperty]
+    public partial bool BarcodeTextBold { get; set; } = false;
+
+    [ObservableProperty]
+    public partial bool BarcodeTextItalic { get; set; } = false;
+
+    [ObservableProperty]
     public partial string BarcodeTextColor { get; set; } = "#000000";
 
     [ObservableProperty]
@@ -226,6 +232,8 @@ public partial class PropertiesViewModel : ObservableObject
             BarcodeSymbologyIndex = (int)bc.Symbology;
             BarcodeTextFontFamily = bc.TextFontFamily;
             BarcodeTextFontSize = bc.TextFontSize;
+            BarcodeTextBold = bc.TextBold;
+            BarcodeTextItalic = bc.TextItalic;
             BarcodeTextColor = bc.TextColor;
         }
         if (el is ShapeElement sh) { FillColor = sh.Fill; StrokeColor = sh.Stroke; }
@@ -369,6 +377,18 @@ public partial class PropertiesViewModel : ObservableObject
     {
         if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
             ApplyPropertyChange(_ => bc.TextFontSize, (_, v) => bc.TextFontSize = v, value, "Change barcode text size");
+    }
+
+    partial void OnBarcodeTextBoldChanged(bool value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => bc.TextBold, (_, v) => bc.TextBold = v, value, "Toggle barcode text bold");
+    }
+
+    partial void OnBarcodeTextItalicChanged(bool value)
+    {
+        if (_trackedElement is BarcodeElement bc && !_isTrackingUpdate)
+            ApplyPropertyChange(_ => bc.TextItalic, (_, v) => bc.TextItalic = v, value, "Toggle barcode text italic");
     }
 
     partial void OnBarcodeTextColorChanged(string value)

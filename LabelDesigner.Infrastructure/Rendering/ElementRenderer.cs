@@ -147,13 +147,24 @@ internal static class ElementRenderer
         }
 
         var textColor = ParseColor(b.TextColor, Colors.Black);
-        ds.DrawText(text, new Vector2(tx, ty), textColor, new CanvasTextFormat
+        if (b.TextPosition != BarcodeTextPosition.None)
         {
-            HorizontalAlignment = CanvasHorizontalAlignment.Center,
-            VerticalAlignment = CanvasVerticalAlignment.Center,
-            FontSize = (float)b.TextFontSize * scale,
-            FontFamily = string.IsNullOrEmpty(b.TextFontFamily) ? "Segoe UI" : b.TextFontFamily
-        });
+            var fontWeight = b.TextBold
+                ? Microsoft.UI.Text.FontWeights.Bold
+                : Microsoft.UI.Text.FontWeights.Normal;
+            var fontStyle = b.TextItalic
+                ? Windows.UI.Text.FontStyle.Italic
+                : Windows.UI.Text.FontStyle.Normal;
+            ds.DrawText(text, new Vector2(tx, ty), textColor, new CanvasTextFormat
+            {
+                HorizontalAlignment = CanvasHorizontalAlignment.Center,
+                VerticalAlignment = CanvasVerticalAlignment.Center,
+                FontSize = (float)b.TextFontSize * scale,
+                FontFamily = string.IsNullOrEmpty(b.TextFontFamily) ? "Segoe UI" : b.TextFontFamily,
+                FontWeight = fontWeight,
+                FontStyle = fontStyle
+            });
+        }
     }
 
     private static void DrawText(CanvasDrawingSession ds, TextElement txt, float scale)

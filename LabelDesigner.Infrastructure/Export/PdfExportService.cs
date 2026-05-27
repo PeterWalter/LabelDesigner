@@ -136,7 +136,16 @@ public class PdfExportService : IPdfExportService
 
         if (b.TextPosition != BarcodeTextPosition.None)
         {
-            var font = new PdfStandardFont(PdfFontFamily.Helvetica, (float)b.TextFontSize * ptp);
+            var fontStyle = (b.TextBold, b.TextItalic) switch
+            {
+                (true, true)  => PdfFontStyle.Bold | PdfFontStyle.Italic,
+                (true, false) => PdfFontStyle.Bold,
+                (false, true) => PdfFontStyle.Italic,
+                _             => PdfFontStyle.Regular
+            };
+            var font = new PdfStandardFont(PdfFontFamily.Helvetica, (float)b.TextFontSize * ptp, fontStyle);
+            var textColor = ParsePdfColor(b.TextColor);
+            var brush = new PdfSolidBrush(textColor);
             var textY = b.TextPosition switch
             {
                 BarcodeTextPosition.Top => (float)b.Bounds.Y * ptp - (float)b.TextFontSize * ptp - 2,
@@ -146,9 +155,27 @@ public class PdfExportService : IPdfExportService
             graphics.DrawString(
                 b.DisplayText,
                 font,
-                PdfBrushes.Black,
+                brush,
                 new Syncfusion.Drawing.PointF((float)b.Bounds.X * ptp, textY));
         }
+    }
+
+    private static Syncfusion.Drawing.Color ParsePdfColor(string hex)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(hex))
+            {
+                var h = hex.TrimStart('#');
+                if (h.Length == 6)
+                    return Syncfusion.Drawing.Color.FromArgb(255,
+                        Convert.ToByte(h[..2], 16),
+                        Convert.ToByte(h[2..4], 16),
+                        Convert.ToByte(h[4..6], 16));
+            }
+        }
+        catch { }
+        return Syncfusion.Drawing.Color.Black;
     }
 
     private void DrawShapeToPdf(PdfGraphics graphics, ShapeElement shape, float ptp)

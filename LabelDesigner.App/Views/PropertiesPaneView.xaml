@@ -147,6 +147,19 @@
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeTextFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                        <TextBlock Text="Text Style" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
+                            Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6"
+                            Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}">
+                            <ToggleButton IsChecked="{Binding Designer.Properties.BarcodeTextBold, Mode=TwoWay}"
+                                ToolTipService.ToolTip="Bold" Width="36" Height="32" Padding="0">
+                                <TextBlock Text="B" FontWeight="Bold" FontSize="13"/>
+                            </ToggleButton>
+                            <ToggleButton IsChecked="{Binding Designer.Properties.BarcodeTextItalic, Mode=TwoWay}"
+                                ToolTipService.ToolTip="Italic" Width="36" Height="32" Padding="0">
+                                <TextBlock Text="I" FontStyle="Italic" FontSize="13"/>
+                            </ToggleButton>
+                        </StackPanel>
                         <TextBlock Text="Text Color" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBox Text="{Binding Designer.Properties.BarcodeTextColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}" PlaceholderText="#RRGGBB"

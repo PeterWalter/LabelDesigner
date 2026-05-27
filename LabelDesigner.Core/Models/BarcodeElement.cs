@@ -14,5 +14,7 @@ public class BarcodeElement : DesignElement
 
     public string TextFontFamily { get; set; } = "Segoe UI";
     public double TextFontSize { get; set; } = 12;
+    public bool TextBold { get; set; } = false;
+    public bool TextItalic { get; set; } = false;
     public string TextColor { get; set; } = "#000000";
 }
