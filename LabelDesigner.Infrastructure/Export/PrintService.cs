@@ -110,7 +110,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
                     if (!lookup.TryGetValue(id, out var el) || !el.Visible)
                         continue;
 
-                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
                 }
             }
         }
@@ -156,7 +156,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
                     if (!lookup.TryGetValue(id, out var el) || !el.Visible)
                         continue;
 
-                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg, scale);
                 }
             }
         } // session committed before saving
