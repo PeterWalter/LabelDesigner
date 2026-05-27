@@ -21,6 +21,9 @@ public class PrintService : IPrintService, IDocumentRasterizer
     private readonly IBarcodeService _barcode;
     private readonly ISvgService _svg;
 
+    /// <inheritdoc/>
+    public double PixelsPerMm { get; set; } = 96.0 / 25.4;
+
     public PrintService(IBarcodeService barcode, ISvgService svg)
     {
         _barcode = barcode;
@@ -88,7 +91,8 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         using var device = CanvasDevice.GetSharedDevice();
         using var renderTarget = new CanvasRenderTarget(device, width, height, dpi);
-        float scale = dpi / 96.0f;
+        // scale: convert from canvas screen-pixels (mm × PixelsPerMm) to render pixels (mm × dpi/25.4)
+        float scale = dpi / (float)(PixelsPerMm * 25.4);
 
         using (var ds = renderTarget.CreateDrawingSession())
         {
@@ -133,7 +137,8 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         using var device = CanvasDevice.GetSharedDevice();
         using var renderTarget = new CanvasRenderTarget(device, width, height, dpi);
-        float scale = dpi / 96.0f;
+        // scale: convert from canvas screen-pixels (mm × PixelsPerMm) to render pixels (mm × dpi/25.4)
+        float scale = dpi / (float)(PixelsPerMm * 25.4);
 
         using (var ds = renderTarget.CreateDrawingSession())
         {

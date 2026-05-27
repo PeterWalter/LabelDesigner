@@ -66,6 +66,10 @@
                             ToolTipService.ToolTip="Save as a reusable label template">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F9;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="New from Template" Command="{Binding Designer.NewFromTemplateCommand}"
+                            ToolTipService.ToolTip="Start a new document from a saved template (.ldtemplate)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Data">
                         <ribbon:RibbonButton Content="Select CSV" Command="{Binding Designer.LoadDataSourceCommand}"
@@ -80,11 +84,19 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Recent">
-                        <ribbon:RibbonButton Content="Open Recent" Command="{Binding Designer.OpenSelectedRecentCommand}"
-                            AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Open the selected recent file">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
+                        <StackPanel Orientation="Vertical" Spacing="4" Padding="4,6">
+                            <ComboBox x:Name="RecentFilesBox"
+                                ItemsSource="{Binding Designer.RecentFiles}"
+                                SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}"
+                                PlaceholderText="Select recent file…"
+                                Width="220"
+                                FontSize="11"/>
+                            <ribbon:RibbonButton Content="Open Recent" Command="{Binding Designer.OpenSelectedRecentCommand}"
+                                AllowedSizeModes="Normal"
+                                ToolTipService.ToolTip="Open the selected recent file">
+                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            </ribbon:RibbonButton>
+                        </StackPanel>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Application">
                         <ribbon:RibbonButton Content="Settings" Click="OnSettingsTabClicked"

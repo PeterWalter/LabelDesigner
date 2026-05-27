@@ -524,9 +524,33 @@ public partial class DesignerViewModel : ObservableObject
     }
 
     private string? _currentFilePath;
+    private bool _isDirty;
     private DesignElement? _clipboard;
 
     public Action? RequestRedraw { get; set; }
+
+    public string DocumentTitle
+    {
+        get
+        {
+            var name = _currentFilePath != null
+                ? System.IO.Path.GetFileNameWithoutExtension(_currentFilePath)
+                : "Untitled";
+            return _isDirty ? $"{name}* — LabelDesigner" : $"{name} — LabelDesigner";
+        }
+    }
+
+    private void MarkDirty()
+    {
+        _isDirty = true;
+        OnPropertyChanged(nameof(DocumentTitle));
+    }
+
+    private void ClearDirty()
+    {
+        _isDirty = false;
+        OnPropertyChanged(nameof(DocumentTitle));
+    }
 
     private PlacementMode _placementMode = PlacementMode.None;
     private DesignElement? _pendingElement;
@@ -666,6 +690,7 @@ public partial class DesignerViewModel : ObservableObject
         _scene.Clear();
         _scene.AddLayer("Layer 1");
         _currentFilePath = null;
+        ClearDirty();
     }
 
     [RelayCommand]
@@ -709,6 +734,7 @@ public partial class DesignerViewModel : ObservableObject
         }
         await _persistence.SaveAsync(_scene.CurrentDocument, _currentFilePath);
         AppSettingsService.AddRecentFile(_currentFilePath);
+        ClearDirty();
     }
 
     [RelayCommand]
@@ -738,6 +764,7 @@ public partial class DesignerViewModel : ObservableObject
             await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
             _currentFilePath = file.Path;
             AppSettingsService.AddRecentFile(file.Path);
+            ClearDirty();
         }
         catch (Exception ex)
         {
@@ -796,6 +823,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ElementsText));
         Layers.Refresh(Selected?.Id);
+        MarkDirty();
     }
 
     private void UpdatePageBounds()
@@ -1074,7 +1102,7 @@ public partial class DesignerViewModel : ObservableObject
         var savePicker = new Windows.Storage.Pickers.FileSavePicker();
         WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
         savePicker.SuggestedFileName = "Template.ldtemplate";
-        savePicker.FileTypeChoices.Add("Label Template", new[] { ".ldtemplate", ".ldlabel", ".json" });
+        savePicker.FileTypeChoices.Add("Label Template", new[] { ".ldtemplate" });
 
         var file = await savePicker.PickSaveFileAsync();
         if (file == null) return;
@@ -1082,13 +1110,36 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
-            _currentFilePath = file.Path;
-            AppSettingsService.AddRecentFile(file.Path);
+            // Template save is an export — does NOT change the current document path
         }
         catch (Exception ex)
         {
             ShowErrorDialog("Save Error", $"Could not save template: {ex.Message}");
         }
+    }
+
+    [RelayCommand]
+    private void NewFromTemplate()
+    {
+        _ = NewFromTemplateAsync();
+    }
+
+    private async Task NewFromTemplateAsync()
+    {
+        if (!TryGetWindowHandle(out var hwnd))
+        {
+            ShowErrorDialog("Error", "Could not access main window");
+            return;
+        }
+
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        picker.FileTypeFilter.Add(".ldtemplate");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        await OpenDocumentFromPath(file.Path);
     }
 
     [RelayCommand]
@@ -2437,9 +2488,15 @@ public partial class DesignerViewModel : ObservableObject
         {
             var doc = await _persistence.LoadAsync(filePath);
             _scene.Load(doc);
-            _currentFilePath = filePath;
-            AppSettingsService.AddRecentFile(filePath);
-            SelectedRecentFile = filePath;
+            // Opening a template starts a new untitled document — don't track template path
+            bool isTemplate = string.Equals(Path.GetExtension(filePath), ".ldtemplate", StringComparison.OrdinalIgnoreCase);
+            _currentFilePath = isTemplate ? null : filePath;
+            if (!isTemplate)
+            {
+                AppSettingsService.AddRecentFile(filePath);
+                SelectedRecentFile = filePath;
+            }
+            ClearDirty();
             await RestoreLoadedDataSourceAsync(doc.DataSource);
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
