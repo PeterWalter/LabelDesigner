@@ -16,8 +16,8 @@
   <mp:PhoneIdentity PhoneProductId="12d985c8-318c-47d4-986b-af1cafb0f5db" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>LabelDesigner.App</DisplayName>
-    <PublisherDisplayName>01376343</PublisherDisplayName>
+    <DisplayName>LabelDesigner</DisplayName>
+    <PublisherDisplayName>LabelDesigner</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -35,9 +35,9 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="LabelDesigner.App"
-        Description="LabelDesigner.App"
-        BackgroundColor="transparent"
+        DisplayName="LabelDesigner"
+        Description="Professional label and barcode editor"
+        BackgroundColor="#202C6C"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
