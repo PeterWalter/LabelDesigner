@@ -474,6 +474,9 @@
             SelectedIndex="{Binding Designer.WorkspaceTabIndex, Mode=TwoWay}">
             <TabViewItem Header="Designer" IsClosable="False">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition x:Name="LayerColumn" Width="180"/>
                         <ColumnDefinition Width="4"/>
