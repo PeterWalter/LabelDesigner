@@ -625,14 +625,14 @@ public partial class DesignerViewModel : ObservableObject
 
         _scene.AddElement(new BarcodeElement
         {
-            Bounds = new RectD(100, 100, 200, 100),
+            Bounds = new RectD(10 * PixelsPerMm, 10 * PixelsPerMm, 50 * PixelsPerMm, 20 * PixelsPerMm),
             Value = "ABC123456",
             TextPosition = BarcodeTextPosition.Top
         }, layer.Id);
 
         _scene.AddElement(new TextElement
         {
-            Bounds = new RectD(200, 300, 200, 50),
+            Bounds = new RectD(15 * PixelsPerMm, 35 * PixelsPerMm, 50 * PixelsPerMm, 10 * PixelsPerMm),
             Text = "Hello World"
         }, layer.Id);
 
@@ -732,7 +732,8 @@ public partial class DesignerViewModel : ObservableObject
             await SaveAsDocumentAsync();
             return;
         }
-        await _persistence.SaveAsync(_scene.CurrentDocument, _currentFilePath);
+        var saveDoc = await BuildMmSaveDocumentAsync();
+        await _persistence.SaveAsync(saveDoc, _currentFilePath);
         AppSettingsService.AddRecentFile(_currentFilePath);
         ClearDirty();
     }
@@ -761,7 +762,8 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
+            var saveDoc = await BuildMmSaveDocumentAsync();
+            await _persistence.SaveAsync(saveDoc, file.Path);
             _currentFilePath = file.Path;
             AppSettingsService.AddRecentFile(file.Path);
             ClearDirty();
@@ -849,6 +851,46 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(RulerUnitText));
         UpdatePageBounds();
         RequestRedraw?.Invoke();
+    }
+
+    // Builds a deep-cloned SceneDocument with all element bounds stored in mm
+    // (device-independent). Used exclusively for serialization.
+    private async Task<SceneDocument> BuildMmSaveDocumentAsync()
+    {
+        double ppm = PixelsPerMm;
+        // JSON round-trip gives a clean deep clone with no live references
+        var json = await _persistence.SaveToJsonAsync(_scene.CurrentDocument);
+        var clone = await _persistence.LoadFromJsonAsync(json);
+        clone.Version = "2.0";
+        foreach (var el in clone.AllElements)
+        {
+            el.Bounds = new RectD(
+                el.Bounds.X / ppm, el.Bounds.Y / ppm,
+                el.Bounds.Width / ppm, el.Bounds.Height / ppm);
+            if (el is LineElement ln)
+            {
+                ln.X1 /= ppm; ln.Y1 /= ppm;
+                ln.X2 /= ppm; ln.Y2 /= ppm;
+            }
+        }
+        return clone;
+    }
+
+    // Converts a loaded document's element bounds from mm → screen pixels
+    // using the current PixelsPerMm. Only applied to V2.0 documents.
+    private static void ConvertMmBoundsToPixels(SceneDocument doc, double ppm)
+    {
+        foreach (var el in doc.AllElements)
+        {
+            el.Bounds = new RectD(
+                el.Bounds.X * ppm, el.Bounds.Y * ppm,
+                el.Bounds.Width * ppm, el.Bounds.Height * ppm);
+            if (el is LineElement ln)
+            {
+                ln.X1 *= ppm; ln.Y1 *= ppm;
+                ln.X2 *= ppm; ln.Y2 *= ppm;
+            }
+        }
     }
 
     private void SetInteractionState(InteractionState state)
@@ -1056,7 +1098,7 @@ public partial class DesignerViewModel : ObservableObject
         ActiveTool = ToolMode.PlaceBarcode;
         EnterPlacementMode(new BarcodeElement
         {
-            Bounds = new RectD(0, 0, 200, 100),
+            Bounds = new RectD(0, 0, 50 * PixelsPerMm, 20 * PixelsPerMm),
             Value = "TYPE HERE",
             TextPosition = Defaults.BarcodeTextPosition,
             TextFontFamily = Defaults.BarcodeTextFontFamily,
@@ -1071,7 +1113,7 @@ public partial class DesignerViewModel : ObservableObject
         ActiveTool = ToolMode.PlaceText;
         EnterPlacementMode(new TextElement
         {
-            Bounds = new RectD(0, 0, 150, 30),
+            Bounds = new RectD(0, 0, 40 * PixelsPerMm, 8 * PixelsPerMm),
             Text = "Double-click to edit",
             FontFamily = Defaults.TextFontFamily,
             FontSize = Defaults.TextFontSize,
@@ -1109,7 +1151,8 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            await _persistence.SaveAsync(_scene.CurrentDocument, file.Path);
+            var saveDoc = await BuildMmSaveDocumentAsync();
+            await _persistence.SaveAsync(saveDoc, file.Path);
             // Template save is an export — does NOT change the current document path
         }
         catch (Exception ex)
@@ -1621,7 +1664,7 @@ public partial class DesignerViewModel : ObservableObject
         ActiveTool = ToolMode.PlaceShape;
         EnterPlacementMode(new ShapeElement
         {
-            Bounds = new RectD(0, 0, 120, 80),
+            Bounds = new RectD(0, 0, 30 * PixelsPerMm, 20 * PixelsPerMm),
             Fill = "#E0E0E0",
             Stroke = "#000000",
             StrokeWidth = 1
@@ -1677,7 +1720,7 @@ public partial class DesignerViewModel : ObservableObject
 
         var element = new SvgElement
         {
-            Bounds = new RectD(0, 0, 150, 150),
+            Bounds = new RectD(0, 0, 40 * PixelsPerMm, 40 * PixelsPerMm),
             SourcePath = file.Path
         };
 
@@ -1702,7 +1745,7 @@ public partial class DesignerViewModel : ObservableObject
 
         var element = new ImageElement
         {
-            Bounds = new RectD(0, 0, 150, 150),
+            Bounds = new RectD(0, 0, 40 * PixelsPerMm, 40 * PixelsPerMm),
             SourcePath = file.Path
         };
 
@@ -2487,6 +2530,9 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             var doc = await _persistence.LoadAsync(filePath);
+            // V2.0 files store bounds in mm; convert to screen pixels on load
+            if (doc.Version == "2.0")
+                ConvertMmBoundsToPixels(doc, PixelsPerMm);
             _scene.Load(doc);
             // Opening a template starts a new untitled document — don't track template path
             bool isTemplate = string.Equals(Path.GetExtension(filePath), ".ldtemplate", StringComparison.OrdinalIgnoreCase);
