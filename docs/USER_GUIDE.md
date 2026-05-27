@@ -16,14 +16,15 @@
    - 3.4 Line
    - 3.5 Image
 4. [Selecting and editing elements](#4-selecting-and-editing-elements)
-5. [Layers](#5-layers)
-6. [Page settings](#6-page-settings)
-7. [Saving and opening files](#7-saving-and-opening-files)
-8. [Templates](#8-templates)
-9. [Data merge (CSV)](#9-data-merge-csv)
-10. [Print and export](#10-print-and-export)
-11. [Settings](#11-settings)
-12. [Keyboard shortcuts](#12-keyboard-shortcuts)
+5. [Guides](#5-guides)
+6. [Layers](#6-layers)
+7. [Page settings](#7-page-settings)
+8. [Saving and opening files](#8-saving-and-opening-files)
+9. [Templates](#9-templates)
+10. [Data merge (CSV)](#10-data-merge-csv)
+11. [Print and export](#11-print-and-export)
+12. [Settings](#12-settings)
+13. [Keyboard shortcuts](#13-keyboard-shortcuts)
 
 ---
 
@@ -221,7 +222,34 @@ Every element property change, move, resize, rotation, and delete is undoable.
 
 ---
 
-## 5. Layers
+## 5. Guides
+
+**Guides** are non-printing reference lines that help you align elements on the canvas. Guides can be horizontal or vertical, and they persist when you save the label.
+
+### Creating a guide
+
+1. **Click and drag from the ruler edge** (top ruler for vertical guides, left ruler for horizontal guides).
+2. A dashed blue line follows your cursor, showing the preview position.
+3. **Release the mouse** to place the guide at that position.
+
+Guides are positioned in document units (mm, cm, or inches — same as the ruler units in Settings).
+
+### Clearing guides
+
+1. Click **Home → Guides group → Clear All**.
+2. All guides are removed from the canvas.
+
+### Why use guides?
+
+- Align elements at precise positions without snapping them to a grid.
+- Mark safe zones (e.g., 1 cm from each edge) to avoid printer margins.
+- Plan multi-label layouts before adding elements.
+
+Guides do **not** print or export to PDF / PNG — they are editorial aids only.
+
+---
+
+## 6. Layers
 
 The **Layers panel** (left side) organises elements into named groups.
 
@@ -239,7 +267,7 @@ Elements on higher layers always render in front of elements on lower layers. Wi
 
 ---
 
-## 6. Page settings
+## 7. Page settings
 
 When **no element is selected**, the Properties panel shows page settings:
 
@@ -250,11 +278,11 @@ When **no element is selected**, the Properties panel shows page settings:
 | Orientation | Portrait / Landscape |
 | Margins (T/R/B/L) | Margin guides drawn on the canvas (dotted) |
 | Background color | Canvas page fill color |
-| Sheet layout | Rows and columns for multi-label printing (see Section 9) |
+| Sheet layout | Rows and columns for multi-label printing (see Section 10) |
 
 ---
 
-## 7. Saving and opening files
+## 8. Saving and opening files
 
 ### Save
 - **Ctrl+S** — save to the current file. If the label has not been saved before, a Save dialog opens.
@@ -278,7 +306,7 @@ The window title shows the current state:
 
 ---
 
-## 8. Templates
+## 9. Templates
 
 A **template** is a reusable label layout (`.ldtemplate`) that you can open as a starting point for new labels without modifying the original.
 
@@ -310,7 +338,7 @@ Save As → MyOrder-2026-05.ldlabel
 
 ---
 
-## 9. Data merge (CSV)
+## 10. Data merge (CSV)
 
 Data merge prints multiple versions of the same label, each using one row from a CSV file.
 
@@ -354,7 +382,7 @@ Open page settings (click an empty area of the canvas → Properties panel):
 
 ---
 
-## 10. Print and export
+## 11. Print and export
 
 | Action | Where | Description |
 |---|---|---|
@@ -371,7 +399,7 @@ Open page settings (click an empty area of the canvas → Properties panel):
 
 ---
 
-## 11. Settings
+## 12. Settings
 
 Open **File → Settings** (or click **Settings** in the Application group of the File tab).
 
@@ -388,7 +416,7 @@ Settings are saved automatically and restored when the application restarts.
 
 ---
 
-## 12. Keyboard shortcuts
+## 13. Keyboard shortcuts
 
 ### File
 | Shortcut | Action |
