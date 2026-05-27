@@ -73,7 +73,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         foreach (var document in documents)
         {
-            var stream = await RenderDocumentToStreamAsync(document, 150f);
+            var stream = await RenderDocumentToStreamAsync(document, 300f);
             var bitmapImage = new BitmapImage();
             await bitmapImage.SetSourceAsync(stream);
             sources.Add(bitmapImage);
@@ -257,9 +257,6 @@ public class PrintService : IPrintService, IDocumentRasterizer
             int pageNumber,
             int totalPages)
         {
-            const double framePadding = 24;
-            const double pageNumberSpacing = 8;
-
             var page = new Grid
             {
                 Width = pageDescription.PageSize.Width,
@@ -267,50 +264,22 @@ public class PrintService : IPrintService, IDocumentRasterizer
                 Background = new SolidColorBrush(Colors.White)
             };
 
+            // Place the label image inside the printer's imageable area.
+            // No additional padding, borders, or page number chrome.
             var imageableRect = pageDescription.ImageableRect;
-            var contentWidth = Math.Max(1, imageableRect.Width - (framePadding * 2));
-            var contentHeight = Math.Max(1, imageableRect.Height - (framePadding * 2) - 24 - pageNumberSpacing);
 
-            var contentBorder = new Border
+            var image = new Image
             {
-                Width = contentWidth,
-                Height = contentHeight,
-                Background = new SolidColorBrush(Colors.White),
-                BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 220, 220, 220)),
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(12),
-                Margin = new Thickness(
-                    imageableRect.X + framePadding,
-                    imageableRect.Y + framePadding,
-                    0,
-                    0),
+                Source = bitmapSource,
+                Stretch = Stretch.Uniform,
+                Width = imageableRect.Width,
+                Height = imageableRect.Height,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
-                Child = new Image
-                {
-                    Source = bitmapSource,
-                    Stretch = Stretch.Uniform,
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    VerticalAlignment = VerticalAlignment.Stretch
-                }
+                Margin = new Thickness(imageableRect.X, imageableRect.Y, 0, 0)
             };
 
-            var caption = new TextBlock
-            {
-                Text = $"Page {pageNumber} of {totalPages}",
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 96, 96, 96)),
-                FontSize = 11,
-                Margin = new Thickness(
-                    imageableRect.X + framePadding,
-                    imageableRect.Y + framePadding + contentHeight + pageNumberSpacing,
-                    0,
-                    0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top
-            };
-
-            page.Children.Add(contentBorder);
-            page.Children.Add(caption);
+            page.Children.Add(image);
             page.Measure(pageDescription.PageSize);
             page.Arrange(new Rect(0, 0, pageDescription.PageSize.Width, pageDescription.PageSize.Height));
             page.UpdateLayout();
