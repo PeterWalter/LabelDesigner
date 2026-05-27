@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LabelDesigner.App.Services;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
@@ -9,6 +10,9 @@ namespace LabelDesigner.App.ViewModels;
 
 public partial class PropertiesViewModel : ObservableObject
 {
+    // Internal canvas coords = mm × DpiService.PixelsPerMm (screen-DPI-aware).
+    private static double PxPerMm => DpiService.PixelsPerMm;
+
     private readonly IUndoRedoService _undoRedo;
     private DesignElement? _trackedElement;
     private bool _isTrackingUpdate;
@@ -196,10 +200,10 @@ public partial class PropertiesViewModel : ObservableObject
 
         ElementType = el.GetType().Name.Replace("Element", "");
         ElementName = el.Name;
-        PosX = el.Bounds.X;
-        PosY = el.Bounds.Y;
-        Width = el.Bounds.Width;
-        Height = el.Bounds.Height;
+        PosX = Math.Round(el.Bounds.X / PxPerMm, 2);
+        PosY = Math.Round(el.Bounds.Y / PxPerMm, 2);
+        Width = Math.Round(el.Bounds.Width / PxPerMm, 2);
+        Height = Math.Round(el.Bounds.Height / PxPerMm, 2);
         Rotation = el.Rotation;
 
         if (el is TextElement txt)
@@ -233,16 +237,28 @@ public partial class PropertiesViewModel : ObservableObject
         => ApplyPropertyChange(e => e.Name, (e, v) => e.Name = v, value, "Rename element");
 
     partial void OnPosXChanged(double value)
-        => ApplyPropertyChange(e => e.Bounds.X, (e, v) => e.Bounds = new RectD(v, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height), value, "Move element X");
+        => ApplyPropertyChange(
+            e => Math.Round(e.Bounds.X / PxPerMm, 2),
+            (e, v) => e.Bounds = new RectD(v * PxPerMm, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height),
+            value, "Move element X");
 
     partial void OnPosYChanged(double value)
-        => ApplyPropertyChange(e => e.Bounds.Y, (e, v) => e.Bounds = new RectD(e.Bounds.X, v, e.Bounds.Width, e.Bounds.Height), value, "Move element Y");
+        => ApplyPropertyChange(
+            e => Math.Round(e.Bounds.Y / PxPerMm, 2),
+            (e, v) => e.Bounds = new RectD(e.Bounds.X, v * PxPerMm, e.Bounds.Width, e.Bounds.Height),
+            value, "Move element Y");
 
     partial void OnWidthChanged(double value)
-        => ApplyPropertyChange(e => e.Bounds.Width, (e, v) => e.Bounds = new RectD(e.Bounds.X, e.Bounds.Y, v, e.Bounds.Height), value, "Resize element width");
+        => ApplyPropertyChange(
+            e => Math.Round(e.Bounds.Width / PxPerMm, 2),
+            (e, v) => e.Bounds = new RectD(e.Bounds.X, e.Bounds.Y, v * PxPerMm, e.Bounds.Height),
+            value, "Resize element width");
 
     partial void OnHeightChanged(double value)
-        => ApplyPropertyChange(e => e.Bounds.Height, (e, v) => e.Bounds = new RectD(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, v), value, "Resize element height");
+        => ApplyPropertyChange(
+            e => Math.Round(e.Bounds.Height / PxPerMm, 2),
+            (e, v) => e.Bounds = new RectD(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, v * PxPerMm),
+            value, "Resize element height");
 
     partial void OnRotationChanged(double value)
         => ApplyPropertyChange(e => e.Rotation, (e, v) => e.Rotation = v, value, "Rotate element");
