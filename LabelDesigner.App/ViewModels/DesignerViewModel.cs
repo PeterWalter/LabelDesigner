@@ -1294,6 +1294,12 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             var records = await _dataSource.LoadAsync(file.Path);
+            if (records == null || records.Count == 0)
+            {
+                ShowErrorDialog("Empty Data Source", "The selected file contains no data records.");
+                ClearDataMergeState();
+                return;
+            }
 
             var mergeMode = _scene.CurrentDocument.DataSource?.MergeMode ?? nameof(DataMergeMode.OneRecordPerPage);
             _scene.CurrentDocument.DataSource = new DataSourceConfig
@@ -1306,9 +1312,20 @@ public partial class DesignerViewModel : ObservableObject
             LoadDataMergeRecords(records, file.Path);
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
+        catch (FileNotFoundException ex)
+        {
+            ShowErrorDialog("File Not Found", $"Could not find the data source file: {ex.Message}");
+            ClearDataMergeState();
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            ShowErrorDialog("Invalid Data Format", $"The file format is invalid: {ex.Message}");
+            ClearDataMergeState();
+        }
         catch (Exception ex)
         {
-            ShowErrorDialog("Data Source Error", $"Could not load data source: {ex.Message}");
+            ShowErrorDialog("Data Source Error", $"Could not load data source: {ex.GetType().Name} — {ex.Message}");
+            ClearDataMergeState();
         }
     }
 
@@ -2605,39 +2622,48 @@ public partial class DesignerViewModel : ObservableObject
 
     private void LoadDataMergeRecords(IReadOnlyList<IReadOnlyDictionary<string, string>> records, string sourcePath)
     {
-        var columns = records
-            .SelectMany(record => record.Keys)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        try
+        {
+            var columns = records
+                .SelectMany(record => record.Keys)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-        ReplaceDataMergeTable(BuildDataMergeTable(columns, records));
+            ReplaceDataMergeTable(BuildDataMergeTable(columns, records));
 
-        AvailableDataFields.Clear();
-        foreach (var column in columns)
-            AvailableDataFields.Add(column);
+            AvailableDataFields.Clear();
+            foreach (var column in columns)
+                AvailableDataFields.Add(column);
 
-        if (string.IsNullOrWhiteSpace(SelectedDataField) || !AvailableDataFields.Contains(SelectedDataField))
-            SelectedDataField = AvailableDataFields.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(SelectedDataField) || !AvailableDataFields.Contains(SelectedDataField))
+                SelectedDataField = AvailableDataFields.FirstOrDefault();
 
-        _loadedDataSourcePath = sourcePath;
-        PreviewRecordIndex = _dataMergeTable?.Rows.Count > 0 ? 0 : -1;
-        SelectedDataMergeRow = _dataMergeTable?.DefaultView.Count > 0
-            ? _dataMergeTable.DefaultView[0] as DataRowView
-            : null;
-        SyncRecordsFromDataMergeTable();
-        WorkspaceTabIndex = 1;
+            _loadedDataSourcePath = sourcePath;
+            PreviewRecordIndex = _dataMergeTable?.Rows.Count > 0 ? 0 : -1;
+            
+            if (_dataMergeTable != null && _dataMergeTable.DefaultView != null && _dataMergeTable.DefaultView.Count > 0)
+                SelectedDataMergeRow = _dataMergeTable.DefaultView[0] as DataRowView;
+            else
+                SelectedDataMergeRow = null;
+            
+            SyncRecordsFromDataMergeTable();
+            WorkspaceTabIndex = 1;
 
-        OnPropertyChanged(nameof(HasDataFields));
-        OnPropertyChanged(nameof(DataMergeItemsSource));
-        OnPropertyChanged(nameof(DataMergeView));
-        OnPropertyChanged(nameof(HasLoadedDataSource));
-        OnPropertyChanged(nameof(HasNoLoadedDataSource));
-        OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
-        OnPropertyChanged(nameof(DataSourceSummary));
-        OnPropertyChanged(nameof(DataMergeActionSummary));
-        // RefreshMergeBindings is called via OnWorkspaceTabIndexChanged when tab index becomes 1
-        // but if we're already on tab 1, refresh directly
-        RefreshMergeBindings();
+            OnPropertyChanged(nameof(HasDataFields));
+            OnPropertyChanged(nameof(DataMergeItemsSource));
+            OnPropertyChanged(nameof(DataMergeView));
+            OnPropertyChanged(nameof(HasLoadedDataSource));
+            OnPropertyChanged(nameof(HasNoLoadedDataSource));
+            OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
+            OnPropertyChanged(nameof(DataSourceSummary));
+            OnPropertyChanged(nameof(DataMergeActionSummary));
+            RefreshMergeBindings();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Error Loading Data", $"An error occurred while loading the data source: {ex.Message}");
+            ClearDataMergeState();
+        }
     }
 
     private void ClearDataMergeState()
@@ -2814,7 +2840,9 @@ public partial class DesignerViewModel : ObservableObject
             .Where(row => row.RowState != DataRowState.Deleted)
             .Select(row => (IReadOnlyDictionary<string, string>)_dataMergeTable.Columns
                 .Cast<DataColumn>()
-                .ToDictionary(column => column.ColumnName, column => row[column]?.ToString() ?? string.Empty))
+                .ToDictionary(
+                    column => column.ColumnName,
+                    column => row[column.ColumnName]?.ToString() ?? string.Empty))
             .ToList();
 
         OnPropertyChanged(nameof(PreviewRecordCount));
@@ -2852,8 +2880,15 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task RestoreLoadedDataSourceAsync(DataSourceConfig? dataSource)
     {
-        if (dataSource == null || string.IsNullOrWhiteSpace(dataSource.Path) || !File.Exists(dataSource.Path))
+        if (dataSource == null || string.IsNullOrWhiteSpace(dataSource.Path))
         {
+            ClearDataMergeState();
+            return;
+        }
+
+        if (!File.Exists(dataSource.Path))
+        {
+            ShowErrorDialog("Data Source Not Found", $"Could not find the data source file: {dataSource.Path}");
             ClearDataMergeState();
             return;
         }
@@ -2861,10 +2896,17 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             var records = await _dataSource.LoadAsync(dataSource.Path);
+            if (records == null || records.Count == 0)
+            {
+                ClearDataMergeState();
+                return;
+            }
+
             LoadDataMergeRecords(records, dataSource.Path);
         }
-        catch
+        catch (Exception ex)
         {
+            ShowErrorDialog("Error Restoring Data Source", $"Could not restore the data source: {ex.Message}");
             ClearDataMergeState();
         }
     }
