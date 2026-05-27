@@ -91,6 +91,22 @@ See [`docs/adr/0001-draw-command-rendering-seam.md`](docs/adr/0001-draw-command-
 
 The renderer emits an intermediate list of draw commands rather than painting directly. This allows canvas, print preview, PDF, and PNG export to share one rendering path.
 
+### ADR-0002 — Coordinate system and DPI scaling
+See [`docs/adr/0002-coordinate-system-and-dpi-scaling.md`](docs/adr/0002-coordinate-system-and-dpi-scaling.md).
+
+All `DesignElement.Bounds` are stored in **screen pixels at actual device DPI** — not logical 96-DPI pixels. `PixelsPerMm = GetDpiForWindow(hwnd) / 25.4`. Every export path (print, PDF, PNG) derives its scale from this value. Hardcoding 96 DPI causes blank output on HiDPI monitors.
+
+```
+canvas_pixels  = mm × PixelsPerMm
+print scale    = printDpi / (PixelsPerMm × 25.4)
+pdf pointsPx   = 72 / (PixelsPerMm × 25.4)
+```
+
+### ADR-0003 — Syncfusion ribbon async re-entrancy
+See [`docs/adr/0003-syncfusion-ribbon-async-reentrancy.md`](docs/adr/0003-syncfusion-ribbon-async-reentrancy.md).
+
+Syncfusion ribbon buttons cannot bind `AsyncRelayCommand`. All async ribbon actions use a sync `RelayCommand` wrapper (`_ = MethodAsync()`). Any such method that opens UI (dialog, picker) before its first natural await **must** begin with `await Task.Yield()` to avoid calling into WinUI modal APIs while Syncfusion's click handler is still on the call stack.
+
 ### CanvasViewport origin
 `CanvasViewport.PageOriginX/Y` stores the pixel position of the page top-left corner on screen. Ruler labels subtract this origin before converting pixels to document units, so the ruler reads `0 mm` at the page corner regardless of pan or zoom.
 
