@@ -38,6 +38,10 @@ _Avoid_: group, z-group
 One design object on a **Label** — Barcode, Text, Shape, Line, or Image.
 _Avoid_: object, item, widget
 
+**Guide**
+A non-printing reference line (horizontal or vertical) positioned in mm, placed by dragging from the ruler edge. Guides help align elements and persist across saves.
+_Avoid_: guide line, ruler mark, measurement line
+
 **Viewport**
 The canvas coordinate space — tracks zoom, pan offset, and the pixel position of the page origin so rulers read in document units (mm/cm/in) from the page top-left corner.
 _Avoid_: camera, transform
@@ -65,6 +69,7 @@ _Avoid_: camera, transform
 | Interaction: select, move, resize, rotate, multi-select | ✅ |
 | Rulers with page-origin 0,0 and unit switching | ✅ |
 | Snap to grid (toggle + configurable size) | ✅ |
+| Ruler guides: create, persist, visualize | ✅ |
 | Layers panel: named layers, eye/lock, add/delete, element list | ✅ |
 | Properties panel: all element types with undo integration | ✅ |
 | Barcode text label: independent font/size/color | ✅ |
@@ -106,6 +111,11 @@ pdf pointsPx   = 72 / (PixelsPerMm × 25.4)
 See [`docs/adr/0003-syncfusion-ribbon-async-reentrancy.md`](docs/adr/0003-syncfusion-ribbon-async-reentrancy.md).
 
 Syncfusion ribbon buttons cannot bind `AsyncRelayCommand`. All async ribbon actions use a sync `RelayCommand` wrapper (`_ = MethodAsync()`). Any such method that opens UI (dialog, picker) before its first natural await **must** begin with `await Task.Yield()` to avoid calling into WinUI modal APIs while Syncfusion's click handler is still on the call stack.
+
+### ADR-0004 — Ruler guides
+See [`docs/adr/0004-ruler-guides.md`](docs/adr/0004-ruler-guides.md).
+
+**Guides** are placed by dragging from ruler edges and stored in `SceneDocument.Guides` as mm-based line definitions. Guides are rendered as dashed reference lines but do not print. Snap feedback during element drag shows temporary guides for alignment hints.
 
 ### CanvasViewport origin
 `CanvasViewport.PageOriginX/Y` stores the pixel position of the page top-left corner on screen. Ruler labels subtract this origin before converting pixels to document units, so the ruler reads `0 mm` at the page corner regardless of pan or zoom.

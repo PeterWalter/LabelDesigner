@@ -1344,12 +1344,22 @@ public partial class DesignerViewModel : ObservableObject
         }
 
         var ds = _scene.CurrentDocument.DataSource;
-        if (ds == null) { await PrintAsync(); return; }
+        if (ds == null) 
+        { 
+            await PrintAsync(); 
+            return; 
+        }
 
         try
         {
             _printService.PixelsPerMm = DpiService.PixelsPerMm;
             var documents = await BuildMailMergePrintDocumentsAsync(ds);
+            if (documents == null || documents.Count == 0)
+            {
+                ShowErrorDialog("No Documents", "No documents to print. Please verify your data source and merge settings.");
+                return;
+            }
+
             await _printService.PrintAsync(documents, hwnd, BuildMailMergeJobTitle(ds, documents.Count));
         }
         catch (FileNotFoundException ex)
@@ -1417,20 +1427,31 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task<IReadOnlyList<SceneDocument>> BuildMailMergePrintDocumentsAsync(DataSourceConfig dataSource)
     {
-        var records = await GetActiveMergeRecordsAsync(dataSource);
-        if (records.Count == 0)
-            return BuildCurrentPrintDocuments();
-
-        var originalDoc = _scene.CurrentDocument;
-        if (GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage)
+        try
         {
-            var pages = BuildMergedPages(originalDoc, records);
-            return pages.Count == 0 ? BuildCurrentPrintDocuments() : pages;
-        }
+            var records = await GetActiveMergeRecordsAsync(dataSource);
+            if (records == null || records.Count == 0)
+                return BuildCurrentPrintDocuments();
 
-        return records
-            .Select(record => _dataBinding.ApplyRecord(originalDoc, record))
-            .ToList();
+            var originalDoc = _scene?.CurrentDocument;
+            if (originalDoc == null)
+                return BuildCurrentPrintDocuments();
+
+            if (GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage)
+            {
+                var pages = BuildMergedPages(originalDoc, records);
+                return pages.Count == 0 ? BuildCurrentPrintDocuments() : pages;
+            }
+
+            return records
+                .Select(record => _dataBinding.ApplyRecord(originalDoc, record))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("Error Building Merge Documents", $"Could not build mail merge documents: {ex.Message}");
+            return BuildCurrentPrintDocuments();
+        }
     }
 
     private string BuildMailMergeJobTitle(DataSourceConfig? dataSource, int pageCount)
