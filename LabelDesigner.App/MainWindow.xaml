@@ -36,13 +36,16 @@
         <ribbon:SfRibbon x:Name="AppRibbon" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1">
 
             <ribbon:SfRibbon.Tabs>
- 
+
+                <!-- ═══════════════════════════════════════════════════════
+                     FILE TAB
+                     ═══════════════════════════════════════════════════════ -->
                 <ribbon:RibbonTab Header="File">
                     <ribbon:RibbonGroup Header="Document">
                         <ribbon:RibbonButton Content="New" Command="{Binding Designer.NewDocumentCommand}"
                             AllowedSizeModes="Large"
                             ToolTipService.ToolTip="Create new document (Ctrl+N)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Open" Command="{Binding Designer.OpenDocumentCommand}"
                             AllowedSizeModes="Large"
@@ -56,8 +59,12 @@
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Save As" Command="{Binding Designer.SaveAsDocumentCommand}"
                             AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Save document as...">
+                            ToolTipService.ToolTip="Save document as a new file">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE78C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Save Template" Command="{Binding Designer.SaveTemplateCommand}"
+                            ToolTipService.ToolTip="Save as a reusable label template">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F9;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Data">
@@ -74,70 +81,99 @@
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Recent">
                         <ribbon:RibbonButton Content="Open Recent" Command="{Binding Designer.OpenSelectedRecentCommand}"
+                            AllowedSizeModes="Large"
                             ToolTipService.ToolTip="Open the selected recent file">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                 </ribbon:RibbonTab>
 
+                <!-- ═══════════════════════════════════════════════════════
+                     HOME TAB  (Word-style: Large primary, small secondary)
+                     ═══════════════════════════════════════════════════════ -->
                 <ribbon:RibbonTab Header="Home" Background="{ThemeResource AppSurfaceBrush}">
-                <ribbon:RibbonGroup Header="Elements" Background="{ThemeResource AppSurfaceBrush}">
-                        <ribbon:RibbonButton 
-                            Content="Select" 
-                            Command="{Binding Designer.SelectToolCommand}" 
+
+                    <!-- ── Clipboard ── -->
+                    <ribbon:RibbonGroup Header="Clipboard">
+                        <!-- Paste is the primary clipboard action → Large -->
+                        <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}"
+                            AllowedSizeModes="Large"
+                            AutomationProperties.Name="Paste element (Ctrl+V)"
+                            ToolTipService.ToolTip="Paste copied element (Ctrl+V)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE77F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="V"/>
+                            </ribbon:RibbonButton.KeyboardAccelerators>
+                        </ribbon:RibbonButton>
+                        <!-- Copy stacks small below Paste -->
+                        <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}"
+                            AutomationProperties.Name="Copy selected element (Ctrl+C)"
+                            ToolTipService.ToolTip="Copy selected element (Ctrl+C)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="C"/>
+                            </ribbon:RibbonButton.KeyboardAccelerators>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+
+                    <!-- ── Insert ── -->
+                    <ribbon:RibbonGroup Header="Insert">
+                        <!-- Primary insert elements → Large -->
+                        <ribbon:RibbonButton Content="Barcode" Command="{Binding Designer.AddBarcodeCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Add barcode element (B)"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceBarcode}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF3BE;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Text" Command="{Binding Designer.AddTextCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Add text element (T)"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceText}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Shape" Command="{Binding Designer.AddShapeCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Add rectangle shape"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceShape}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEC4E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Image" Command="{Binding Designer.AddImageCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Insert image from file"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceImage}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <!-- Secondary elements → small, stack 3-per-column -->
+                        <ribbon:RibbonButton Content="Line" Command="{Binding Designer.AddLineCommand}"
+                            ToolTipService.ToolTip="Add line element (L)"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceLine}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE751;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="SVG" Command="{Binding Designer.AddSvgCommand}"
+                            ToolTipService.ToolTip="Import SVG vector file"
+                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceSvg}">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+
+                    <!-- ── Tools ── -->
+                    <ribbon:RibbonGroup Header="Tools">
+                        <ribbon:RibbonButton Content="Select" Command="{Binding Designer.SelectToolCommand}"
                             AllowedSizeModes="Large"
                             ToolTipService.ToolTip="Select tool — click to select elements (S)"
                             Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=Select}">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8B0;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton 
-                            Content="Barcode" 
-                            Command="{Binding Designer.AddBarcodeCommand}"
-                            ToolTipService.ToolTip="Add barcode element (B)"
-                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceBarcode}">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF3BE;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton 
-                            Content="Text" 
-                            Command="{Binding Designer.AddTextCommand}"
-                            ToolTipService.ToolTip="Add text element (T)"
-                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceText}">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8D2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton 
-                            Content="Shape" 
-                            Command="{Binding Designer.AddShapeCommand}"
-                            ToolTipService.ToolTip="Add rectangle shape"
-                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceShape}">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEC4E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton 
-                            Content="Line" 
-                            Command="{Binding Designer.AddLineCommand}"
-                            ToolTipService.ToolTip="Add line element (L)"
-                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceLine}">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE751;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton 
-                            Content="Image" 
-                            Command="{Binding Designer.AddImageCommand}"
-                            ToolTipService.ToolTip="Insert image from file"
-                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceImage}">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton 
-                            Content="SVG" 
-                            Command="{Binding Designer.AddSvgCommand}"
-                            ToolTipService.ToolTip="Import SVG vector file"
-                            Background="{Binding Designer.ActiveTool, Converter={StaticResource ToolModeToBackground}, ConverterParameter=PlaceSvg}">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A5;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}" AllowedSizeModes="Large"
+                        <ribbon:RibbonButton Content="Delete" Command="{Binding Designer.DeleteSelectedCommand}"
+                            AllowedSizeModes="Large"
                             ToolTipService.ToolTip="Delete selected element (Del)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+
+                    <!-- ── Arrange ── -->
                     <ribbon:RibbonGroup Header="Arrange">
+                        <!-- small buttons stack 3-per-column -->
                         <ribbon:RibbonButton Content="Group" Command="{Binding Designer.GroupSelectedCommand}"
                             ToolTipService.ToolTip="Group selected elements (Ctrl+G)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF5B2;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
@@ -146,55 +182,61 @@
                             ToolTipService.ToolTip="Ungroup elements (Ctrl+Shift+G)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF5B3;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Move">
-                        <ribbon:RibbonButton Content="Left" Command="{Binding Designer.MoveLeftCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Move element left (←)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        <ribbon:RibbonButton Content="Rotate" Command="{Binding Designer.RotateElementCommand}"
+                            ToolTipService.ToolTip="Rotate selected element 90° clockwise">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Right" Command="{Binding Designer.MoveRightCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Move element right (→)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72A;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Up" Command="{Binding Designer.MoveUpCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Move element up (↑)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE70E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Down" Command="{Binding Designer.MoveDownCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Move element down (↓)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE70D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Scale">
-                        <ribbon:RibbonButton Content="Larger" Command="{Binding Designer.ScaleUpCommand}" AllowedSizeModes="Large"
+                        <ribbon:RibbonButton Content="Larger" Command="{Binding Designer.ScaleUpCommand}"
                             ToolTipService.ToolTip="Scale element larger">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE740;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Smaller" Command="{Binding Designer.ScaleDownCommand}" AllowedSizeModes="Large"
+                        <ribbon:RibbonButton Content="Smaller" Command="{Binding Designer.ScaleDownCommand}"
                             ToolTipService.ToolTip="Scale element smaller">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE741;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+
+                    <!-- ── Move ── -->
+                    <ribbon:RibbonGroup Header="Move">
+                        <ribbon:RibbonButton Content="Left" Command="{Binding Designer.MoveLeftCommand}"
+                            ToolTipService.ToolTip="Move element left (←)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Right" Command="{Binding Designer.MoveRightCommand}"
+                            ToolTipService.ToolTip="Move element right (→)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE72A;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Up" Command="{Binding Designer.MoveUpCommand}"
+                            ToolTipService.ToolTip="Move element up (↑)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE70E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Down" Command="{Binding Designer.MoveDownCommand}"
+                            ToolTipService.ToolTip="Move element down (↓)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE70D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+
+                    <!-- ── Align ── -->
                     <ribbon:RibbonGroup Header="Align">
-                        <ribbon:RibbonButton Content="Left" Command="{Binding Designer.AlignLeftCommand}"
-                            ToolTipService.ToolTip="Align left edges">
+                        <ribbon:RibbonButton Content="Align Left" Command="{Binding Designer.AlignLeftCommand}"
+                            ToolTipService.ToolTip="Align left edges of selected elements">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE0E6;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Center" Command="{Binding Designer.AlignCenterCommand}"
+                        <ribbon:RibbonButton Content="Center H" Command="{Binding Designer.AlignCenterCommand}"
                             ToolTipService.ToolTip="Align centers horizontally">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8E3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Right" Command="{Binding Designer.AlignRightCommand}"
-                            ToolTipService.ToolTip="Align right edges">
+                        <ribbon:RibbonButton Content="Align Right" Command="{Binding Designer.AlignRightCommand}"
+                            ToolTipService.ToolTip="Align right edges of selected elements">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE0E8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Top" Command="{Binding Designer.AlignTopCommand}"
-                            ToolTipService.ToolTip="Align top edges">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE14B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        <ribbon:RibbonButton Content="Align Top" Command="{Binding Designer.AlignTopCommand}"
+                            ToolTipService.ToolTip="Align top edges of selected elements">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74A;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Bottom" Command="{Binding Designer.AlignBottomCommand}"
-                            ToolTipService.ToolTip="Align bottom edges">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE14C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        <ribbon:RibbonButton Content="Align Bot" Command="{Binding Designer.AlignBottomCommand}"
+                            ToolTipService.ToolTip="Align bottom edges of selected elements">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74B;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Dist H" Command="{Binding Designer.DistributeHorizontalCommand}"
                             ToolTipService.ToolTip="Distribute elements evenly — horizontal">
@@ -205,56 +247,8 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE135;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Clipboard">
-                        <ribbon:RibbonButton Content="Copy" Command="{Binding Designer.CopySelectedCommand}"
-                            AutomationProperties.Name="Copy selected element (Ctrl+C)"
-                            ToolTipService.ToolTip="Copy (Ctrl+C)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                            <ribbon:RibbonButton.KeyboardAccelerators>
-                                <KeyboardAccelerator Modifiers="Control" Key="C"/>
-                            </ribbon:RibbonButton.KeyboardAccelerators>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Paste" Command="{Binding Designer.PasteElementCommand}"
-                            AutomationProperties.Name="Paste element (Ctrl+V)"
-                            ToolTipService.ToolTip="Paste (Ctrl+V)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE77F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                            <ribbon:RibbonButton.KeyboardAccelerators>
-                                <KeyboardAccelerator Modifiers="Control" Key="V"/>
-                            </ribbon:RibbonButton.KeyboardAccelerators>
-                        </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="View">
-                        <ribbon:RibbonButton Content="Zoom In" Command="{Binding Designer.ZoomInCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Zoom in (Ctrl++)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Zoom Out" Command="{Binding Designer.ZoomOutCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Zoom out (Ctrl+-)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE71E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Fit" Command="{Binding Designer.ZoomToFitCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Fit page to window (Ctrl+0)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Panels">
-                        <StackPanel Orientation="Horizontal" Spacing="4" Padding="4,0">
-                            <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
-                                Padding="8,4"
-                                Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
-                                ToolTipService.ToolTip="Show/hide Layers panel"/>
-                            <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
-                                Padding="8,4"
-                                Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
-                                ToolTipService.ToolTip="Show/hide Properties panel"/>
-                            <Button Content="Reset" Click="OnResetLayout"
-                                Padding="8,4"
-                                ToolTipService.ToolTip="Restore default panel layout"/>
-                            <Button Content="⚙ Settings" Click="OnSettingsTabClicked"
-                                Padding="8,4"
-                                ToolTipService.ToolTip="Open Settings"/>
-                        </StackPanel>
-                    </ribbon:RibbonGroup>
+
+                    <!-- ── Page ── -->
                     <ribbon:RibbonGroup Header="Page">
                         <ribbon:RibbonButton Content="A4" Command="{Binding Designer.SetPageA4Command}"
                             ToolTipService.ToolTip="Set page size to A4 (210×297 mm)">
@@ -285,37 +279,40 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Rotate">
-                        <ribbon:RibbonButton Content="Rot 90°" Command="{Binding Designer.RotateElementCommand}" AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Rotate selected element 90° clockwise">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7C8;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+
+                    <!-- ── View ── -->
+                    <ribbon:RibbonGroup Header="View">
+                        <ribbon:RibbonButton Content="Zoom In" Command="{Binding Designer.ZoomInCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Zoom in (Ctrl++)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A7;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Zoom Out" Command="{Binding Designer.ZoomOutCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Zoom out (Ctrl+-)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE71E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Fit" Command="{Binding Designer.ZoomToFitCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Fit page to window (Ctrl+0)">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE950;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Data">
-                        <ribbon:RibbonButton Content="1/Page" Command="{Binding Designer.SetMergeModeOneRecordPerPageCommand}"
-                            ToolTipService.ToolTip="Merge mode: one CSV record per printed page">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8EF;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Multi/Page" Command="{Binding Designer.SetMergeModeMultipleRecordsPerPageCommand}"
-                            ToolTipService.ToolTip="Merge mode: multiple CSV records tiled per page">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Print All" Command="{Binding Designer.PrintWithDataCommand}"
-                            ToolTipService.ToolTip="Open Windows print preview for all CSV records using the current merge mode">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Preview">
+
+                    <!-- ── Print &amp; Export ── -->
+                    <ribbon:RibbonGroup Header="Print &amp; Export">
+                        <!-- Primary print actions → Large -->
                         <ribbon:RibbonButton Content="Preview" Command="{Binding Designer.PreviewPrintCommand}"
-                            ToolTipService.ToolTip="Open the Windows print preview window for the current page">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Open print preview for the current page">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8E0;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Export">
                         <ribbon:RibbonButton Content="Print" Command="{Binding Designer.PrintCommand}"
-                            ToolTipService.ToolTip="Open the Windows print window for the current page">
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Open the Windows print dialog for the current page">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
+                        <!-- Export formats → small, stack -->
                         <ribbon:RibbonButton Content="PDF" Command="{Binding Designer.ExportPdfCommand}"
                             ToolTipService.ToolTip="Export label as PDF">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEA90;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
@@ -325,6 +322,55 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xEB9F;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
+
+                    <!-- ── Data ── -->
+                    <ribbon:RibbonGroup Header="Data">
+                        <!-- Primary data actions → Large -->
+                        <ribbon:RibbonButton Content="Select CSV" Command="{Binding Designer.LoadDataSourceCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Select CSV data source file for data merge">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Merge Panel" Command="{Binding Designer.ToggleDataMergePaneCommand}"
+                            AllowedSizeModes="Large"
+                            ToolTipService.ToolTip="Show or hide the data merge editor">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF0E2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <!-- Merge mode controls → small, stack -->
+                        <ribbon:RibbonButton Content="1/Page" Command="{Binding Designer.SetMergeModeOneRecordPerPageCommand}"
+                            ToolTipService.ToolTip="Merge mode: one CSV record per printed page">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8EF;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Multi/Page" Command="{Binding Designer.SetMergeModeMultipleRecordsPerPageCommand}"
+                            ToolTipService.ToolTip="Merge mode: multiple CSV records tiled per page">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Print All" Command="{Binding Designer.PrintWithDataCommand}"
+                            ToolTipService.ToolTip="Print all CSV records using the current merge mode">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+
+                    <!-- ── Panels ── -->
+                    <ribbon:RibbonGroup Header="Panels">
+                        <StackPanel Orientation="Horizontal" Spacing="4" Padding="4,0">
+                            <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
+                                Padding="8,4"
+                                Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
+                                ToolTipService.ToolTip="Show/hide Layers panel"/>
+                            <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
+                                Padding="8,4"
+                                Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
+                                ToolTipService.ToolTip="Show/hide Properties panel"/>
+                            <Button Content="Reset" Click="OnResetLayout"
+                                Padding="8,4"
+                                ToolTipService.ToolTip="Restore default panel layout"/>
+                            <Button Content="⚙ Settings" Click="OnSettingsTabClicked"
+                                Padding="8,4"
+                                ToolTipService.ToolTip="Open Settings"/>
+                        </StackPanel>
+                    </ribbon:RibbonGroup>
+
                 </ribbon:RibbonTab>
 
             </ribbon:SfRibbon.Tabs>
