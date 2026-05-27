@@ -1237,6 +1237,9 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task PreviewPrintAsync()
     {
+        // Yield to let Syncfusion finish its button-click processing before opening the dialog.
+        await Task.Yield();
+
         try
         {
             var ds = _scene.CurrentDocument.DataSource;
