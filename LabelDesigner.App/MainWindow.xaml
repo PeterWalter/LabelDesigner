@@ -471,6 +471,8 @@
         </ribbon:SfRibbon>
 
         <TabView Grid.Row="1"
+            VerticalAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
             SelectedIndex="{Binding Designer.WorkspaceTabIndex, Mode=TwoWay}">
             <TabViewItem Header="Designer" IsClosable="False">
                 <Grid>
