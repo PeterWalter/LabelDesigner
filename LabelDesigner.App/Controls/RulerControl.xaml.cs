@@ -81,61 +81,82 @@ public sealed partial class RulerControl : UserControl
     private void OnDraw(CanvasControl sender, CanvasDrawEventArgs args)
     {
         var ds = args.DrawingSession;
-        ds.Clear(Color.FromArgb(255, 240, 240, 240));
+        ds.Clear(Color.FromArgb(255, 245, 245, 245));
 
-        double pixelsPerMm = PixelsPerMm;
         var vp = Viewport;
-        double zoom = vp?.Zoom ?? 1.0;
-        double tickInterval = zoom < 0.5 ? 100 : zoom < 1.0 ? 50 : zoom < 2.0 ? 25 : 10;
-        double labelInterval = 100;
+        double ppm = PixelsPerMm;
         float canvasLen = IsVertical ? (float)sender.ActualHeight : (float)sender.ActualWidth;
         float rulerDim = IsVertical ? (float)sender.ActualWidth : (float)sender.ActualHeight;
 
+        // Visible range in world pixels
         double worldStart = IsVertical
             ? (vp?.ScreenToWorld(new Point(0, 0)).Y ?? 0)
             : (vp?.ScreenToWorld(new Point(0, 0)).X ?? 0);
         double worldEnd = IsVertical
             ? (vp?.ScreenToWorld(new Point(0, canvasLen)).Y ?? 0)
             : (vp?.ScreenToWorld(new Point(canvasLen, 0)).X ?? 0);
-
         if (worldEnd < worldStart)
             (worldStart, worldEnd) = (worldEnd, worldStart);
 
-        double alignedStart = Math.Floor(worldStart / tickInterval) * tickInterval;
-        double pageOrigin = IsVertical ? (vp?.PageOriginY ?? 0) : (vp?.PageOriginX ?? 0);
+        double pageOriginPx = IsVertical ? (vp?.PageOriginY ?? 0) : (vp?.PageOriginX ?? 0);
 
-        for (double wp = alignedStart; wp <= worldEnd + tickInterval; wp += Math.Max(tickInterval, 5))
+        // Convert visible range to mm relative to page origin
+        double startMm = (worldStart - pageOriginPx) / ppm;
+        double endMm = (worldEnd - pageOriginPx) / ppm;
+        double rangeMm = endMm - startMm;
+
+        // Choose tick intervals (in mm) based on visible range
+        double minorMm, majorMm, labelMm;
+        if (rangeMm < 30)       { minorMm = 1;  majorMm = 5;  labelMm = 10; }
+        else if (rangeMm < 80)  { minorMm = 1;  majorMm = 10; labelMm = 10; }
+        else if (rangeMm < 200) { minorMm = 2;  majorMm = 10; labelMm = 20; }
+        else if (rangeMm < 500) { minorMm = 5;  majorMm = 25; labelMm = 50; }
+        else                    { minorMm = 10; majorMm = 50; labelMm = 100; }
+
+        double alignedStart = Math.Floor(startMm / minorMm) * minorMm;
+        var textFormat = new CanvasTextFormat { FontSize = 8, FontFamily = "Segoe UI" };
+
+        for (double mm = alignedStart; mm <= endMm + minorMm; mm += minorMm)
         {
+            double worldPx = mm * ppm + pageOriginPx;
             double sp = IsVertical
-                ? (vp?.WorldToScreen(new Point(0, wp)).Y ?? 0)
-                : (vp?.WorldToScreen(new Point(wp, 0)).X ?? 0);
-            if (sp < -10 || sp > canvasLen + 10) continue;
+                ? (vp?.WorldToScreen(new Point(0, worldPx)).Y ?? 0)
+                : (vp?.WorldToScreen(new Point(worldPx, 0)).X ?? 0);
+            if (sp < -5 || sp > canvasLen + 5) continue;
 
-            bool major = Math.Abs(wp % labelInterval) < Math.Max(tickInterval, 5) * 0.5;
-            bool medium = Math.Abs(wp % 50) < Math.Max(tickInterval, 5) * 0.5 && !major;
-            float ts = major ? 12f : medium ? 8f : 5f;
-            Color tc = major ? Colors.DarkGray : Colors.Gray;
+            double absMm = Math.Abs(mm % labelMm);
+            bool isLabel  = absMm < minorMm * 0.5 || absMm > labelMm - minorMm * 0.5;
+            double absMajor = Math.Abs(mm % majorMm);
+            bool isMajor  = absMajor < minorMm * 0.5 || absMajor > majorMm - minorMm * 0.5;
+            double absMid = Math.Abs(mm % (majorMm / 2.0));
+            bool isMid    = !isMajor && (absMid < minorMm * 0.5 || absMid > majorMm / 2.0 - minorMm * 0.5);
+
+            float tickLen = isLabel ? rulerDim * 0.7f : isMajor ? rulerDim * 0.55f : isMid ? rulerDim * 0.4f : rulerDim * 0.25f;
+            Color tc = isMajor || isLabel ? Color.FromArgb(255, 90, 90, 90) : Color.FromArgb(255, 160, 160, 160);
 
             if (IsVertical)
             {
-                ds.DrawLine(rulerDim - ts, (float)sp, rulerDim, (float)sp, tc, 1);
-                if (major)
+                // Ticks from right edge inward
+                ds.DrawLine(rulerDim - tickLen, (float)sp, rulerDim - 1, (float)sp, tc, 1);
+                if (isLabel)
                 {
-                    var label = FormatMeasurementLabel((wp - pageOrigin) / pixelsPerMm);
-                    ds.DrawText(label, 2, (float)sp - 5.5f, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
+                    var label = FormatMeasurementLabel(mm);
+                    ds.DrawText(label, 2, (float)sp + 1, Color.FromArgb(255, 70, 70, 70), textFormat);
                 }
             }
             else
             {
-                ds.DrawLine((float)sp, rulerDim - ts, (float)sp, rulerDim, tc, 1);
-                if (major)
+                // Ticks from top edge downward
+                ds.DrawLine((float)sp, 0, (float)sp, tickLen, tc, 1);
+                if (isLabel)
                 {
-                    var label = FormatMeasurementLabel((wp - pageOrigin) / pixelsPerMm);
-                    ds.DrawText(label, (float)sp - 5, rulerDim - 14, Colors.DarkGray, new CanvasTextFormat { FontSize = 9 });
+                    var label = FormatMeasurementLabel(mm);
+                    ds.DrawText(label, (float)sp + 2, 1, Color.FromArgb(255, 70, 70, 70), textFormat);
                 }
             }
         }
 
+        // Guide drag preview
         if (_isDraggingGuide && vp != null)
         {
             double screenPos = IsVertical
@@ -148,10 +169,11 @@ public sealed partial class RulerControl : UserControl
                 ds.DrawLine((float)screenPos, 0, (float)screenPos, rulerDim, previewColor, 2);
         }
 
+        // Border line on the canvas-facing edge
         if (IsVertical)
-            ds.DrawLine(rulerDim - 1, 0, rulerDim - 1, canvasLen, Colors.LightGray, 1);
+            ds.DrawLine(rulerDim - 1, 0, rulerDim - 1, canvasLen, Color.FromArgb(255, 180, 180, 180), 1);
         else
-            ds.DrawLine(0, rulerDim - 1, canvasLen, rulerDim - 1, Colors.LightGray, 1);
+            ds.DrawLine(0, rulerDim - 1, canvasLen, rulerDim - 1, Color.FromArgb(255, 180, 180, 180), 1);
     }
 
     private void OnRulerPointerPressed(object sender, PointerRoutedEventArgs e)
@@ -193,10 +215,10 @@ public sealed partial class RulerControl : UserControl
     {
         return AppSettingsService.RulerUnit switch
         {
-            MeasurementUnit.Millimeters => $"{millimeters:0} mm",
-            MeasurementUnit.Centimeters => $"{(millimeters / 10.0):0.0} cm",
-            MeasurementUnit.Inches => $"{(millimeters / 25.4):0.00} in",
-            _ => $"{millimeters:0} mm"
+            MeasurementUnit.Millimeters => $"{millimeters:0}",
+            MeasurementUnit.Centimeters => $"{(millimeters / 10.0):0.#}",
+            MeasurementUnit.Inches => $"{(millimeters / 25.4):0.##}",
+            _ => $"{millimeters:0}"
         };
     }
 }
