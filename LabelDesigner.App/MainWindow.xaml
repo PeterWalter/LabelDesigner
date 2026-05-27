@@ -267,6 +267,14 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
 
+                    <!-- ── Guides ── -->
+                    <ribbon:RibbonGroup Header="Guides">
+                        <ribbon:RibbonButton Content="Clear All" Command="{Binding Designer.ClearGuidesCommand}"
+                            ToolTipService.ToolTip="Remove all guide lines">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74D;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                    </ribbon:RibbonGroup>
+
                     <!-- ── Page ── -->
                     <ribbon:RibbonGroup Header="Page">
                         <ribbon:RibbonButton Content="A4" Command="{Binding Designer.SetPageA4Command}"

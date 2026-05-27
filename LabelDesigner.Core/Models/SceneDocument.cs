@@ -7,6 +7,7 @@ public class SceneDocument
     public DocumentDefaults Defaults { get; set; } = new();
     public List<LayerNode> Layers { get; set; } = new();
     public List<DesignElement> AllElements { get; set; } = new();
+    public List<GuideLine> Guides { get; set; } = new();
     public DataSourceConfig? DataSource { get; set; }
 }
 

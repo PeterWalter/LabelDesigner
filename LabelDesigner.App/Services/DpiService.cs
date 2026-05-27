@@ -10,6 +10,8 @@ public static class DpiService
 
     public static double PixelsPerMm => _cachedPixelsPerMm ?? (GetDpiForSystem() / MillimetersPerInch);
 
+    public static double SystemPixelsPerMm => GetDpiForSystem() / MillimetersPerInch;
+
     public static bool InitializeForWindow(Window window)
     {
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);

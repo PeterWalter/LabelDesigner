@@ -43,6 +43,10 @@ public partial class DesignerViewModel : ObservableObject
     private Action? _settingsChanged;
     private Action? _documentReset;
 
+    // DPI at construction time (before window DPI is known). Used to rescale
+    // default elements in RefreshDpiDependentState when window DPI is larger.
+    private double _constructionPixelsPerMm;
+
     public PropertiesViewModel Properties => _properties;
     public LayerPanelViewModel Layers { get; }
 
@@ -505,14 +509,16 @@ public partial class DesignerViewModel : ObservableObject
     [RelayCommand]
     public void AddHorizontalGuide(double positionPx)
     {
-        Guides.Add(new GuideLine { IsHorizontal = true, Position = positionPx });
+        double positionMm = positionPx / PixelsPerMm;
+        Guides.Add(new GuideLine { IsHorizontal = true, PositionMm = positionMm });
         RequestRedraw?.Invoke();
     }
 
     [RelayCommand]
     public void AddVerticalGuide(double positionPx)
     {
-        Guides.Add(new GuideLine { IsHorizontal = false, Position = positionPx });
+        double positionMm = positionPx / PixelsPerMm;
+        Guides.Add(new GuideLine { IsHorizontal = false, PositionMm = positionMm });
         RequestRedraw?.Invoke();
     }
 
@@ -622,6 +628,11 @@ public partial class DesignerViewModel : ObservableObject
         Layers.Refresh();
         Layers.SelectedLayer = Layers.Layers.FirstOrDefault(l => l.LayerId == layer.Id);
         _interaction.SnapEnabled = AppSettingsService.ShowSnapGrid;
+
+        // Record the DPI in use at construction time (system DPI fallback). If
+        // the actual window DPI is different (high-DPI monitor), RefreshDpiDependentState
+        // will rescale these default elements to the correct window DPI.
+        _constructionPixelsPerMm = DpiService.PixelsPerMm;
 
         _scene.AddElement(new BarcodeElement
         {
@@ -846,6 +857,17 @@ public partial class DesignerViewModel : ObservableObject
 
     public void RefreshDpiDependentState()
     {
+        double newPpm = DpiService.PixelsPerMm;
+        double oldPpm = _constructionPixelsPerMm;
+
+        // If window DPI differs from the DPI used when default elements were created,
+        // rescale all element bounds so they remain at the intended mm positions.
+        if (Math.Abs(newPpm - oldPpm) > 0.01 && oldPpm > 0)
+            RescaleElementBounds(_scene.CurrentDocument, newPpm / oldPpm);
+
+        // Update so repeated calls (window moved to different monitor) rescale correctly.
+        _constructionPixelsPerMm = newPpm;
+
         OnPropertyChanged(nameof(PixelsPerMm));
         OnPropertyChanged(nameof(CursorText));
         OnPropertyChanged(nameof(RulerUnitText));
@@ -879,16 +901,20 @@ public partial class DesignerViewModel : ObservableObject
     // Converts a loaded document's element bounds from mm → screen pixels
     // using the current PixelsPerMm. Only applied to V2.0 documents.
     private static void ConvertMmBoundsToPixels(SceneDocument doc, double ppm)
+        => RescaleElementBounds(doc, ppm);
+
+    // Multiplies all element bounds (and line endpoints) by the given scale factor.
+    private static void RescaleElementBounds(SceneDocument doc, double scale)
     {
         foreach (var el in doc.AllElements)
         {
             el.Bounds = new RectD(
-                el.Bounds.X * ppm, el.Bounds.Y * ppm,
-                el.Bounds.Width * ppm, el.Bounds.Height * ppm);
+                el.Bounds.X * scale, el.Bounds.Y * scale,
+                el.Bounds.Width * scale, el.Bounds.Height * scale);
             if (el is LineElement ln)
             {
-                ln.X1 *= ppm; ln.Y1 *= ppm;
-                ln.X2 *= ppm; ln.Y2 *= ppm;
+                ln.X1 *= scale; ln.Y1 *= scale;
+                ln.X2 *= scale; ln.Y2 *= scale;
             }
         }
     }
@@ -2235,7 +2261,7 @@ public partial class DesignerViewModel : ObservableObject
             var otherBounds = _scene.CurrentDocument.AllElements
                 .Where(e => e.Id != Selected.Id)
                 .Select(e => e.Bounds);
-            var update = _interaction.UpdateDrag(pD, Selected, otherBounds, GetPageRect());
+            var update = _interaction.UpdateDrag(pD, Selected, otherBounds, GetPageRect(), PixelsPerMm);
 
             if (update.Rotation.HasValue)
             {
@@ -2530,9 +2556,22 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             var doc = await _persistence.LoadAsync(filePath);
-            // V2.0 files store bounds in mm; convert to screen pixels on load
             if (doc.Version == "2.0")
+            {
+                // V2.0: bounds stored in mm → convert to screen pixels at current window DPI
                 ConvertMmBoundsToPixels(doc, PixelsPerMm);
+            }
+            else
+            {
+                // V1.0: bounds stored in screen pixels from the save-time DPI.
+                // Best-effort correction: assume the file was saved when the app used
+                // system DPI (the fallback before InitializeForWindow). If window DPI
+                // differs, rescale so elements appear at the intended mm positions.
+                double sysPpm = DpiService.SystemPixelsPerMm;
+                double winPpm = PixelsPerMm;
+                if (Math.Abs(sysPpm - winPpm) > 0.05 && sysPpm > 0)
+                    RescaleElementBounds(doc, winPpm / sysPpm);
+            }
             _scene.Load(doc);
             // Opening a template starts a new untitled document — don't track template path
             bool isTemplate = string.Equals(Path.GetExtension(filePath), ".ldtemplate", StringComparison.OrdinalIgnoreCase);

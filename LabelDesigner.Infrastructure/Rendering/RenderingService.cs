@@ -100,10 +100,11 @@ public class RenderService : IRenderService
             var guideStroke = new CanvasStrokeStyle { DashStyle = CanvasDashStyle.Dash };
             foreach (var guide in guides)
             {
+                float guidePosPixels = (float)(guide.PositionMm * pixelsPerMm);
                 if (guide.IsHorizontal)
-                    ds.DrawLine(0, (float)guide.Position, pageW, (float)guide.Position, guideColor, 1f / zoom, guideStroke);
+                    ds.DrawLine(0, guidePosPixels, pageW, guidePosPixels, guideColor, 1f / zoom, guideStroke);
                 else
-                    ds.DrawLine((float)guide.Position, 0, (float)guide.Position, pageH, guideColor, 1f / zoom, guideStroke);
+                    ds.DrawLine(guidePosPixels, 0, guidePosPixels, pageH, guideColor, 1f / zoom, guideStroke);
             }
         }
 

@@ -8,6 +8,8 @@ namespace LabelDesigner.Tests;
 
 public class ElementInteractionServiceTests
 {
+    private const double Ppm = 3.78; // 96 DPI
+
     [Fact]
     public void GetHoverHandle_returns_move_when_pointer_is_inside_bounds()
     {
@@ -36,7 +38,8 @@ public class ElementInteractionServiceTests
             new PointD(87, 89),
             selected,
             Array.Empty<RectD>(),
-            new RectD(0, 0, 100, 100));
+            new RectD(0, 0, 100, 100),
+            Ppm);
 
         Assert.NotNull(update.Bounds);
         Assert.Equal(50, update.Bounds!.Value.X);
@@ -57,7 +60,8 @@ public class ElementInteractionServiceTests
             new PointD(60, 60),
             selected,
             Array.Empty<RectD>(),
-            new RectD(0, 0, 500, 500));
+            new RectD(0, 0, 500, 500),
+            Ppm);
 
         Assert.NotNull(update.Bounds);
         Assert.Equal(20, update.Bounds!.Value.Width);
@@ -92,7 +96,8 @@ public class ElementInteractionServiceTests
             new PointD(87, 20),
             selected,
             Array.Empty<RectD>(),
-            new RectD(0, 0, 200, 200));
+            new RectD(0, 0, 200, 200),
+            Ppm);
 
         Assert.NotNull(update.Bounds);
         Assert.Equal(70, update.Bounds!.Value.Width);
@@ -112,7 +117,8 @@ public class ElementInteractionServiceTests
             new PointD(90, 30),
             selected,
             Array.Empty<RectD>(),
-            new RectD(0, 0, 200, 200));
+            new RectD(0, 0, 200, 200),
+            Ppm);
 
         Assert.True(update.Rotation.HasValue);
         Assert.Equal(90, update.Rotation.Value, precision: 0);

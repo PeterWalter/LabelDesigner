@@ -37,7 +37,7 @@ public class SnapService
                 guides.Add(new GuideLine
                 {
                     IsHorizontal = false,
-                    Position = o.X
+                    PositionMm = o.X
                 });
             }
 
@@ -49,7 +49,7 @@ public class SnapService
                 guides.Add(new GuideLine
                 {
                     IsHorizontal = false,
-                    Position = o.X + o.Width
+                    PositionMm = o.X + o.Width
                 });
             }
 
@@ -64,7 +64,7 @@ public class SnapService
                 guides.Add(new GuideLine
                 {
                     IsHorizontal = false,
-                    Position = ocx
+                    PositionMm = ocx
                 });
             }
 
@@ -76,7 +76,7 @@ public class SnapService
                 guides.Add(new GuideLine
                 {
                     IsHorizontal = true,
-                    Position = o.Y
+                    PositionMm = o.Y
                 });
             }
 
@@ -88,7 +88,7 @@ public class SnapService
                 guides.Add(new GuideLine
                 {
                     IsHorizontal = true,
-                    Position = o.Y + o.Height
+                    PositionMm = o.Y + o.Height
                 });
             }
 
@@ -103,7 +103,7 @@ public class SnapService
                 guides.Add(new GuideLine
                 {
                     IsHorizontal = true,
-                    Position = ocy
+                    PositionMm = ocy
                 });
             }
         }

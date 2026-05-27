@@ -8,5 +8,5 @@ public interface ISnapService
     double GridSize { get; set; }
     double Threshold { get; set; }
 
-    RectD Snap(RectD moving, IEnumerable<RectD> others, out IReadOnlyList<GuideLine> guides);
+    RectD Snap(RectD moving, IEnumerable<RectD> others, double pixelsPerMm, out IReadOnlyList<GuideLine> guides);
 }

@@ -12,6 +12,7 @@ public class SnapService : ISnapService
     public RectD Snap(
         RectD moving,
         IEnumerable<RectD> others,
+        double pixelsPerMm,
         out IReadOnlyList<GuideLine> guides)
     {
         var resolvedGuides = new List<GuideLine>();
@@ -22,37 +23,37 @@ public class SnapService : ISnapService
             if (Math.Abs(moving.Left - other.Left) < Threshold)
             {
                 moving.X = other.Left;
-                resolvedGuides.Add(new GuideLine { IsHorizontal = false, Position = other.Left });
+                resolvedGuides.Add(new GuideLine { IsHorizontal = false, PositionMm = other.Left / pixelsPerMm });
             }
 
             if (Math.Abs(moving.Right - other.Right) < Threshold)
             {
                 moving.X = other.Right - moving.Width;
-                resolvedGuides.Add(new GuideLine { IsHorizontal = false, Position = other.Right });
+                resolvedGuides.Add(new GuideLine { IsHorizontal = false, PositionMm = other.Right / pixelsPerMm });
             }
 
             if (Math.Abs(moving.CenterX - other.CenterX) < Threshold)
             {
                 moving.X = other.CenterX - (moving.Width / 2);
-                resolvedGuides.Add(new GuideLine { IsHorizontal = false, Position = other.CenterX });
+                resolvedGuides.Add(new GuideLine { IsHorizontal = false, PositionMm = other.CenterX / pixelsPerMm });
             }
 
             if (Math.Abs(moving.Top - other.Top) < Threshold)
             {
                 moving.Y = other.Top;
-                resolvedGuides.Add(new GuideLine { IsHorizontal = true, Position = other.Top });
+                resolvedGuides.Add(new GuideLine { IsHorizontal = true, PositionMm = other.Top / pixelsPerMm });
             }
 
             if (Math.Abs(moving.Bottom - other.Bottom) < Threshold)
             {
                 moving.Y = other.Bottom - moving.Height;
-                resolvedGuides.Add(new GuideLine { IsHorizontal = true, Position = other.Bottom });
+                resolvedGuides.Add(new GuideLine { IsHorizontal = true, PositionMm = other.Bottom / pixelsPerMm });
             }
 
             if (Math.Abs(moving.CenterY - other.CenterY) < Threshold)
             {
                 moving.Y = other.CenterY - (moving.Height / 2);
-                resolvedGuides.Add(new GuideLine { IsHorizontal = true, Position = other.CenterY });
+                resolvedGuides.Add(new GuideLine { IsHorizontal = true, PositionMm = other.CenterY / pixelsPerMm });
             }
         }
 

@@ -72,7 +72,7 @@ public class ElementInteractionService : IElementInteractionService
         _rotationStartAngle = selected.Rotation;
     }
 
-    public InteractionUpdate UpdateDrag(PointD currentPoint, DesignElement selected, IEnumerable<RectD> otherBounds, RectD pageRect)
+    public InteractionUpdate UpdateDrag(PointD currentPoint, DesignElement selected, IEnumerable<RectD> otherBounds, RectD pageRect, double pixelsPerMm)
     {
         if (!_isDragging)
         {
@@ -99,7 +99,7 @@ public class ElementInteractionService : IElementInteractionService
             var snappedBounds = movedBounds;
             if (SnapEnabled)
             {
-                snappedBounds = _snapService.Snap(movedBounds, otherBounds, out guides);
+                snappedBounds = _snapService.Snap(movedBounds, otherBounds, pixelsPerMm, out guides);
             }
             var clampedBounds = snappedBounds.ClampToBounds(pageRect);
             return new InteractionUpdate(clampedBounds, null, guides);

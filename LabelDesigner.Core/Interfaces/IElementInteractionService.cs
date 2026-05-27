@@ -11,7 +11,7 @@ public interface IElementInteractionService
 
     ResizeHandle GetHoverHandle(DesignElement? selected, PointD point, double zoom);
     void BeginDrag(PointD startPoint, DesignElement selected, ResizeHandle handle);
-    InteractionUpdate UpdateDrag(PointD currentPoint, DesignElement selected, IEnumerable<RectD> otherBounds, RectD pageRect);
+    InteractionUpdate UpdateDrag(PointD currentPoint, DesignElement selected, IEnumerable<RectD> otherBounds, RectD pageRect, double pixelsPerMm);
     void EndDrag();
 }
 

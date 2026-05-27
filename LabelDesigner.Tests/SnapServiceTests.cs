@@ -10,8 +10,9 @@ public class SnapServiceTests
     {
         var snapService = new SnapService { GridSize = 20, Threshold = 5 };
         var moving = new RectD(13, 27, 40, 10);
+        double ppm = 3.78; // 96 DPI
 
-        var snapped = snapService.Snap(moving, Array.Empty<RectD>(), out var guides);
+        var snapped = snapService.Snap(moving, Array.Empty<RectD>(), ppm, out var guides);
 
         Assert.Equal(20, snapped.X);
         Assert.Equal(20, snapped.Y);
@@ -24,8 +25,9 @@ public class SnapServiceTests
         var snapService = new SnapService { GridSize = 1, Threshold = 5 };
         var moving = new RectD(97, 58, 40, 20);
         var other = new RectD(100, 10, 60, 30);
+        double ppm = 3.78; // 96 DPI
 
-        var snapped = snapService.Snap(moving, new[] { other }, out var guides);
+        var snapped = snapService.Snap(moving, new[] { other }, ppm, out var guides);
 
         Assert.Equal(100, snapped.X);
         Assert.True(guides.Count > 0);
