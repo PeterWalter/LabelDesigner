@@ -6,6 +6,8 @@
 # Build outputs
 bin/
 obj/
+artifacts/
+AppPackages/
 
 # dotnet
 *.nupkg

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
+              Version="1.0.0.0"
+              Uri="https://YOUR-DISTRIBUTION-URL/LabelDesigner.appinstaller">
+  <MainPackage Name="12d985c8-318c-47d4-986b-af1cafb0f5db"
+               Publisher="CN=01376343"
+               Version="1.0.0.0"
+               Uri="https://YOUR-DISTRIBUTION-URL/LabelDesigner.msix" />
+  <UpdateSettings>
+    <OnLaunch HoursBetweenUpdateChecks="0" ShowPrompt="true" UpdateBlocksActivation="false" />
+  </UpdateSettings>
+</AppInstaller>
