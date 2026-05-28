@@ -2,7 +2,6 @@ using LabelDesigner.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Data;
-using System.Diagnostics;
 using System.ComponentModel;
 using System.Linq;
 
@@ -12,7 +11,6 @@ public sealed partial class DataMergePaneView : UserControl
 {
     private DesignerViewModel? _vm;
     private bool _isRefreshingDataGrid;
-    private string? _lastGridSchema;
 
     private DesignerViewModel? VM => DataContext switch
     {
@@ -59,52 +57,18 @@ public sealed partial class DataMergePaneView : UserControl
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DesignerViewModel.DataMergeView)
-            || e.PropertyName == nameof(DesignerViewModel.DataMergeItemsSource)
-            || e.PropertyName == nameof(DesignerViewModel.HasLoadedDataSource))
+            || e.PropertyName == nameof(DesignerViewModel.SelectedDataMergeRow))
             DispatcherQueue.TryEnqueue(RefreshDataGrid);
     }
 
     private void RefreshDataGrid()
     {
-        try
-        {
-            if (_vm == null) return;
+        if (_vm == null) return;
 
-            _isRefreshingDataGrid = true;
-            var table = _vm.DataMergeItemsSource;
-            var schema = BuildSchemaKey(table);
-            var schemaChanged = !string.Equals(_lastGridSchema, schema, StringComparison.Ordinal);
-
-            if (schemaChanged)
-            {
-                CsvDataGrid.ItemsSource = null;
-                CsvDataGrid.ItemsSource = table;
-                _lastGridSchema = schema;
-            }
-            else if (!ReferenceEquals(CsvDataGrid.ItemsSource, table))
-            {
-                CsvDataGrid.ItemsSource = table;
-            }
-
-            if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
-                CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"DataMergePaneView.RefreshDataGrid failed: {ex}");
-        }
-        finally
-        {
-            _isRefreshingDataGrid = false;
-        }
-    }
-
-    private static string? BuildSchemaKey(DataTable? table)
-    {
-        if (table == null)
-            return null;
-
-        return string.Join("|", table.Columns.Cast<DataColumn>().Select(c => c.ColumnName));
+        _isRefreshingDataGrid = true;
+        if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
+            CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
+        _isRefreshingDataGrid = false;
     }
 
     private void OnGridSelectionChanged(object sender, object e)

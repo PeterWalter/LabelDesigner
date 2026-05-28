@@ -240,6 +240,7 @@
 
                 <sfgrid:SfDataGrid x:Name="CsvDataGrid"
                                    Grid.Row="1"
+                                   ItemsSource="{Binding Designer.DataMergeView}"
                                    AutoGenerateColumnsMode="ResetAll"
                                    AllowEditing="False"
                                    AllowFiltering="True"
@@ -250,8 +251,7 @@
                                    SelectionChanged="OnGridSelectionChanged"
                                    GridLinesVisibility="Both"
                                    HeaderRowHeight="36"
-                                   RowHeight="32"
-                                   Visibility="{Binding Designer.HasLoadedDataSource, Converter={StaticResource BoolToVisibility}}"/>
+                                   RowHeight="32"/>
             </Grid>
         </Grid>
     </Grid>
