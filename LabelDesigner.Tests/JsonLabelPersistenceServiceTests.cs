@@ -2,6 +2,7 @@ using FluentAssertions;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Models;
 using LabelDesigner.Core.ValueObjects;
+using LabelDesigner.Infrastructure.Persistence;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -102,6 +103,54 @@ public class SceneDocumentTemplateTests
         var loadedText = loaded.AllElements.OfType<TextElement>().Single();
         loadedText.TextAlignment.Should().Be(TextAlignmentType.Right);
         loadedText.Text.Should().Be("Hello");
+    }
+
+    [Fact]
+    public async Task Persistence_round_trips_rect_bounds_and_legacy_bounds_shape()
+    {
+        var service = new JsonLabelPersistenceService();
+        var doc = new SceneDocument
+        {
+            Version = "2.0",
+            Page = new PageNode { WidthMm = 100, HeightMm = 50, Dpi = 300 }
+        };
+        var layer = new LayerNode { Name = "Layer 1" };
+        var element = new TextElement
+        {
+            Bounds = new RectD(12.5, 7.25, 40, 10),
+            Text = "Sample"
+        };
+        doc.Layers.Add(layer);
+        doc.AllElements.Add(element);
+        layer.ElementIds.Add(element.Id);
+
+        var json = await service.SaveToJsonAsync(doc);
+        json.Should().Contain("\"x\": 12.5");
+        json.Should().Contain("\"width\": 40");
+
+        var loaded = await service.LoadFromJsonAsync(json);
+        var loadedText = Assert.Single(loaded.AllElements.OfType<TextElement>());
+        loadedText.Bounds.X.Should().Be(12.5);
+        loadedText.Bounds.Y.Should().Be(7.25);
+        loadedText.Bounds.Width.Should().Be(40);
+        loadedText.Bounds.Height.Should().Be(10);
+
+        const string legacyJson = """
+        {
+          "version":"1.0",
+          "page":{"widthMm":100,"heightMm":50,"dpi":300,"margins":{"left":2,"top":2,"right":2,"bottom":2}},
+          "defaults":{"barcodeTextPosition":"bottom","barcodeTextFontFamily":"Segoe UI","barcodeTextFontSize":12,"barcodeTextColor":"#000000","textFontFamily":"Segoe UI","textFontSize":14,"textColor":"#000000","textBold":false,"textItalic":false,"textUnderline":false,"textAlignment":"left","textMultiline":false,"textLineSpacing":0},
+          "layers":[{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","name":"Layer 1","visible":true,"locked":false,"elementIds":["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]}],
+          "allElements":[{"type":"TextElement","text":"Legacy","fontSize":14,"fontFamily":"Segoe UI","bold":false,"italic":false,"underline":false,"textAlignment":"left","isMultiline":false,"lineSpacing":0,"foreColor":"#000000","id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","name":"","bounds":{"left":15,"top":20,"right":55,"bottom":30,"centerX":35,"centerY":25},"rotation":0,"scaleX":1,"scaleY":1,"opacity":1,"locked":false,"visible":true,"metadata":{},"parentId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","zIndex":0}]
+        }
+        """;
+
+        var legacyLoaded = await service.LoadFromJsonAsync(legacyJson);
+        var legacyText = Assert.Single(legacyLoaded.AllElements.OfType<TextElement>());
+        legacyText.Bounds.X.Should().Be(15);
+        legacyText.Bounds.Y.Should().Be(20);
+        legacyText.Bounds.Width.Should().Be(40);
+        legacyText.Bounds.Height.Should().Be(10);
     }
 
     private sealed class DesignElementConverter : JsonConverter<DesignElement>

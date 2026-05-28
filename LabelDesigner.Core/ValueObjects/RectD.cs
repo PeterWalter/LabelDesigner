@@ -1,5 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace LabelDesigner.Core.ValueObjects;
 
+[JsonConverter(typeof(RectDJsonConverter))]
 public struct RectD
 {
     public double X;
@@ -71,5 +75,88 @@ public struct RectD
         var clampedY = Math.Clamp(Y, bounds.Y, bounds.Bottom - clampedHeight);
 
         return new RectD(clampedX, clampedY, clampedWidth, clampedHeight);
+    }
+}
+
+internal sealed class RectDJsonConverter : JsonConverter<RectD>
+{
+    public override RectD Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.StartObject)
+            throw new JsonException("RectD must be a JSON object");
+
+        double x = 0;
+        double y = 0;
+        double width = 0;
+        double height = 0;
+        double? left = null;
+        double? top = null;
+        double? right = null;
+        double? bottom = null;
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+                break;
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                throw new JsonException("Invalid RectD JSON");
+
+            var name = reader.GetString();
+            reader.Read();
+
+            switch (name)
+            {
+                case "x":
+                    x = reader.GetDouble();
+                    break;
+                case "y":
+                    y = reader.GetDouble();
+                    break;
+                case "width":
+                    width = reader.GetDouble();
+                    break;
+                case "height":
+                    height = reader.GetDouble();
+                    break;
+                case "left":
+                    left = reader.GetDouble();
+                    break;
+                case "top":
+                    top = reader.GetDouble();
+                    break;
+                case "right":
+                    right = reader.GetDouble();
+                    break;
+                case "bottom":
+                    bottom = reader.GetDouble();
+                    break;
+                default:
+                    reader.Skip();
+                    break;
+            }
+        }
+
+        if (left.HasValue || top.HasValue || right.HasValue || bottom.HasValue)
+        {
+            x = left ?? x;
+            y = top ?? y;
+            if (right.HasValue)
+                width = right.Value - x;
+            if (bottom.HasValue)
+                height = bottom.Value - y;
+        }
+
+        return new RectD(x, y, width, height);
+    }
+
+    public override void Write(Utf8JsonWriter writer, RectD value, JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WriteNumber("x", value.X);
+        writer.WriteNumber("y", value.Y);
+        writer.WriteNumber("width", value.Width);
+        writer.WriteNumber("height", value.Height);
+        writer.WriteEndObject();
     }
 }
