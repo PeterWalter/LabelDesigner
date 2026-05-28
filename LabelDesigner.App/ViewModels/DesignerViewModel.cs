@@ -1235,6 +1235,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
+            await Task.Yield();
             _printService.PixelsPerMm = DpiService.PixelsPerMm;
             await _printService.PrintAsync(BuildCurrentPrintDocuments(), hwnd, "Label");
         }
@@ -1360,6 +1361,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
+            await Task.Yield();
             _printService.PixelsPerMm = DpiService.PixelsPerMm;
             var documents = await BuildMailMergePrintDocumentsAsync(ds);
             if (documents == null || documents.Count == 0)
