@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LabelDesigner.Application.Data;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
@@ -317,6 +318,9 @@ public partial class DesignerViewModel : ObservableObject
             if (rowView.Row.RowState != DataRowState.Deleted)
                 _selectedMergeRows.Add(rowView.Row);
         }
+
+        if (_selectedMergeRows.Count == 0)
+            SelectedDataMergeRow = null;
 
         if (previousCount != _selectedMergeRows.Count)
         {
@@ -1476,7 +1480,7 @@ public partial class DesignerViewModel : ObservableObject
             if (records == null || records.Count == 0)
                 return Array.Empty<SceneDocument>();
 
-            var selectedRecords = GetSelectedMergeRecordsFromTable();
+            var selectedRecords = MergeRecordSelector.SelectActiveRecords(_dataMergeTable, _selectedMergeRows, records);
             if (_selectedMergeRows.Count > 0 && selectedRecords.Count == 0)
                 return Array.Empty<SceneDocument>();
 
@@ -2956,22 +2960,6 @@ public partial class DesignerViewModel : ObservableObject
         }
 
         RefreshPreviewDocument();
-    }
-
-    private IReadOnlyList<IReadOnlyDictionary<string, string>> GetSelectedMergeRecordsFromTable()
-    {
-        if (_dataMergeTable == null || _selectedMergeRows.Count == 0)
-            return Array.Empty<IReadOnlyDictionary<string, string>>();
-
-        var columns = _dataMergeTable.Columns.Cast<DataColumn>().ToArray();
-        var selectedRecords = _selectedMergeRows
-            .Where(row => row.RowState != DataRowState.Deleted && ReferenceEquals(row.Table, _dataMergeTable))
-            .Select(row => (IReadOnlyDictionary<string, string>)columns.ToDictionary(
-                column => column.ColumnName,
-                column => row[column.ColumnName]?.ToString() ?? string.Empty))
-            .ToList();
-
-        return selectedRecords;
     }
 
     private async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> GetActiveMergeRecordsAsync(DataSourceConfig ds)

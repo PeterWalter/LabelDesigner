@@ -81,5 +81,7 @@ public sealed partial class DataMergePaneView : UserControl
 
         if (selectedRows.Count > 0 && !ReferenceEquals(_vm.SelectedDataMergeRow, selectedRows[0]))
             _vm.SelectedDataMergeRow = selectedRows[0];
+        else if (selectedRows.Count == 0 && _vm.SelectedDataMergeRow != null)
+            _vm.SelectedDataMergeRow = null;
     }
 }

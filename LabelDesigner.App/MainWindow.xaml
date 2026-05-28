@@ -72,9 +72,9 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Data">
-                        <ribbon:RibbonButton Content="Select CSV" Command="{Binding Designer.LoadDataSourceCommand}"
+                        <ribbon:RibbonButton Content="Select Data" Command="{Binding Designer.LoadDataSourceCommand}"
                             AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Select CSV data source file">
+                            ToolTipService.ToolTip="Select data source file (CSV, Excel, JSON)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Data Merge" Command="{Binding Designer.ToggleDataMergePaneCommand}"
@@ -353,9 +353,9 @@
                     <!-- ── Data ── -->
                     <ribbon:RibbonGroup Header="Data">
                         <!-- Primary data actions → Large -->
-                        <ribbon:RibbonButton Content="Select CSV" Command="{Binding Designer.LoadDataSourceCommand}"
+                        <ribbon:RibbonButton Content="Select Data" Command="{Binding Designer.LoadDataSourceCommand}"
                             AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Select CSV data source file for data merge">
+                            ToolTipService.ToolTip="Select data source file for data merge (CSV, Excel, JSON)">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Merge Panel" Command="{Binding Designer.ToggleDataMergePaneCommand}"
@@ -365,15 +365,15 @@
                         </ribbon:RibbonButton>
                         <!-- Merge mode controls → small, stack -->
                         <ribbon:RibbonButton Content="1/Page" Command="{Binding Designer.SetMergeModeOneRecordPerPageCommand}"
-                            ToolTipService.ToolTip="Merge mode: one CSV record per printed page">
+                            ToolTipService.ToolTip="Merge mode: one data record per printed page">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8EF;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Multi/Page" Command="{Binding Designer.SetMergeModeMultipleRecordsPerPageCommand}"
-                            ToolTipService.ToolTip="Merge mode: multiple CSV records tiled per page">
+                            ToolTipService.ToolTip="Merge mode: multiple data records tiled per page">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Print All" Command="{Binding Designer.PrintWithDataCommand}"
-                            ToolTipService.ToolTip="Print all CSV records using the current merge mode">
+                        <ribbon:RibbonButton Content="Print Data" Command="{Binding Designer.PrintWithDataCommand}"
+                            ToolTipService.ToolTip="Print selected rows; if none selected, print all records using current merge mode">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
@@ -649,7 +649,7 @@
                 <Button Grid.Column="12" Content="◄" Command="{Binding Designer.PreviousPreviewRecordCommand}"
                     Padding="6,0" Height="20" FontSize="12"
                     Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
-                    ToolTipService.ToolTip="Previous CSV record"/>
+                    ToolTipService.ToolTip="Previous data record"/>
                 <TextBlock Grid.Column="13" Text="{Binding Designer.PreviewRecordText}"
                     VerticalAlignment="Center" FontSize="11" Margin="4,0"
                     Foreground="{ThemeResource AppActiveLayerAccentBrush}"
@@ -657,7 +657,7 @@
                 <Button Grid.Column="14" Content="►" Command="{Binding Designer.NextPreviewRecordCommand}"
                     Padding="6,0" Height="20" FontSize="12"
                     Visibility="{Binding Designer.IsPreviewMode, Converter={StaticResource BoolToVisibility}}"
-                    ToolTipService.ToolTip="Next CSV record"/>
+                    ToolTipService.ToolTip="Next data record"/>
             </Grid>
         </Border>
 
