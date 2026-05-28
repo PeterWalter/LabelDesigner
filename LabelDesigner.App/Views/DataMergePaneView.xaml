@@ -40,10 +40,10 @@
                     <TextBlock Text="{Binding Designer.DataSourceSummary}" FontSize="12"
                                Foreground="{ThemeResource AppMutedTextBrush}" VerticalAlignment="Center"/>
                     <Button Command="{Binding Designer.LoadDataSourceCommand}"
-                            Padding="10,4" ToolTipService.ToolTip="Load a CSV file for mail merge">
+                            Padding="10,4" ToolTipService.ToolTip="Load CSV, Excel, or JSON data for mail merge">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
-                            <TextBlock Text="Load CSV"/>
+                            <TextBlock Text="Load Data"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -68,10 +68,10 @@
                     <Button Command="{Binding Designer.PrintWithDataCommand}"
                             Padding="12,4"
                             IsEnabled="{Binding Designer.HasLoadedDataSource}"
-                            ToolTipService.ToolTip="Send one page per record to the printer">
+                            ToolTipService.ToolTip="Print selected records (or all records when none are selected)">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
-                            <TextBlock Text="Print All"/>
+                            <TextBlock Text="Print Data"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -110,19 +110,19 @@
                                    Foreground="{ThemeResource AppTextBrush}"/>
                     </Border>
 
-                    <!-- Empty state: no CSV loaded -->
+                    <!-- Empty state: no data source loaded -->
                     <StackPanel Grid.Row="1"
                                 VerticalAlignment="Center" HorizontalAlignment="Center"
                                 Padding="24" Spacing="10"
                                 Visibility="{Binding Designer.HasNoLoadedDataSource, Converter={StaticResource BoolToVisibility}}">
                         <FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="36"
                                   Foreground="{ThemeResource AppMutedTextBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Load a CSV file to map its columns to canvas elements."
+                        <TextBlock Text="Load a data file to map its columns to canvas elements."
                                    TextWrapping="WrapWholeWords" TextAlignment="Center" FontSize="12"
                                    Foreground="{ThemeResource AppMutedTextBrush}"/>
                     </StackPanel>
 
-                    <!-- Empty state: CSV loaded but no bindable elements -->
+                    <!-- Empty state: data loaded but no bindable elements -->
                     <StackPanel Grid.Row="1"
                                  VerticalAlignment="Center" HorizontalAlignment="Center"
                                  Padding="24" Spacing="10"
@@ -211,7 +211,7 @@
             <!-- Column divider -->
             <Border Grid.Column="1" Background="{ThemeResource AppBorderBrush}"/>
 
-            <!-- ── RIGHT: CSV DataGrid ── -->
+            <!-- ── RIGHT: Data grid ── -->
             <Grid Grid.Column="2" Background="{ThemeResource AppSurfaceBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -222,7 +222,7 @@
                         Background="{ThemeResource AppSurfaceAltBrush}"
                         BorderBrush="{ThemeResource AppBorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <TextBlock Text="CSV Data" FontWeight="SemiBold" FontSize="13"
+                    <TextBlock Text="Data Records" FontWeight="SemiBold" FontSize="13"
                                Foreground="{ThemeResource AppTextBrush}"/>
                 </Border>
 
@@ -233,7 +233,7 @@
                             Visibility="{Binding Designer.HasNoLoadedDataSource, Converter={StaticResource BoolToVisibility}}">
                     <FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="48"
                               Foreground="{ThemeResource AppMutedTextBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="No data loaded. Click Load CSV above to import a CSV file."
+                    <TextBlock Text="No data loaded. Click Load Data above to import CSV, Excel, or JSON."
                                TextWrapping="WrapWholeWords" TextAlignment="Center"
                                Foreground="{ThemeResource AppMutedTextBrush}"/>
                 </StackPanel>
@@ -244,8 +244,10 @@
                                    AllowEditing="False"
                                    AllowFiltering="True"
                                    AllowSorting="True"
-                                   SelectionMode="Single"
+                                   SelectionMode="Extended"
                                    NavigationMode="Row"
+                                   SelectedItem="{Binding Designer.SelectedDataMergeRow, Mode=TwoWay}"
+                                   SelectionChanged="OnGridSelectionChanged"
                                    GridLinesVisibility="Both"
                                    HeaderRowHeight="36"
                                    RowHeight="32"
@@ -254,4 +256,3 @@
         </Grid>
     </Grid>
 </UserControl>
-

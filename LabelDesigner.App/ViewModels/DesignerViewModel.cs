@@ -225,24 +225,36 @@ public partial class DesignerViewModel : ObservableObject
         _ => "Selected target: none. Select a Barcode or Text element on the canvas."
     };
     public string DataMergeActionSummary => !HasLoadedDataSource
-        ? "1. Load a CSV file. 2. Select a column. 3. Select a Barcode or Text element on the canvas. 4. Click the matching Bind button. 5. Use Preview or Print All to review the merged output."
+        ? "1. Load a data file. 2. Select a column. 3. Select a Barcode or Text element on the canvas. 4. Click the matching Bind button. 5. Use Preview or Print Data to review the merged output."
         : string.IsNullOrWhiteSpace(SelectedDataField)
-            ? "Choose a CSV column, then select a Barcode or Text element to insert its merge token."
+            ? "Choose a data column, then select a Barcode or Text element to insert its merge token."
             : Selected switch
             {
                 BarcodeElement => $"Click Bind to Barcode to set the barcode value to {SelectedDataFieldToken}.",
                 TextElement => $"Click Bind to Text to set the text content to {SelectedDataFieldToken}.",
                 _ => $"Choose a Barcode or Text element to bind {SelectedDataFieldToken}."
             };
-    public string DataSourceSummary => string.IsNullOrWhiteSpace(_loadedDataSourcePath)
-        ? "No data source loaded"
-        : $"{Path.GetFileName(_loadedDataSourcePath)} ({_csvRecords.Count} row{(_csvRecords.Count == 1 ? string.Empty : "s")})";
+    public int SelectedMergeRecordCount => _selectedMergeRows.Count;
+    public string DataSourceSummary
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_loadedDataSourcePath))
+                return "No data source loaded";
+
+            var summary = $"{Path.GetFileName(_loadedDataSourcePath)} ({_csvRecords.Count} row{(_csvRecords.Count == 1 ? string.Empty : "s")})";
+            if (SelectedMergeRecordCount > 0 && SelectedMergeRecordCount != _csvRecords.Count)
+                summary += $" • {SelectedMergeRecordCount} selected";
+            return summary;
+        }
+    }
 
     // ── Merge preview ──────────────────────────────────────────────────────
     private List<IReadOnlyDictionary<string, string>> _csvRecords = new();
     private DataTable? _dataMergeTable;
     private SceneDocument? _previewDocument;
     private string? _loadedDataSourcePath;
+    private readonly HashSet<DataRow> _selectedMergeRows = new();
 
     [ObservableProperty]
     public partial int WorkspaceTabIndex { get; set; }
@@ -293,6 +305,24 @@ public partial class DesignerViewModel : ObservableObject
 
         var index = _dataMergeTable.Rows.IndexOf(value.Row);
         PreviewRecordIndex = index >= 0 ? index : -1;
+    }
+
+    public void SetSelectedMergeRows(IReadOnlyList<DataRowView> selectedRows)
+    {
+        var previousCount = _selectedMergeRows.Count;
+        _selectedMergeRows.Clear();
+
+        foreach (var rowView in selectedRows)
+        {
+            if (rowView.Row.RowState != DataRowState.Deleted)
+                _selectedMergeRows.Add(rowView.Row);
+        }
+
+        if (previousCount != _selectedMergeRows.Count)
+        {
+            OnPropertyChanged(nameof(SelectedMergeRecordCount));
+            OnPropertyChanged(nameof(DataSourceSummary));
+        }
     }
 
     [RelayCommand]
@@ -1296,6 +1326,8 @@ public partial class DesignerViewModel : ObservableObject
         var picker = new Windows.Storage.Pickers.FileOpenPicker();
         WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
         picker.FileTypeFilter.Add(".csv");
+        picker.FileTypeFilter.Add(".xlsx");
+        picker.FileTypeFilter.Add(".xls");
         picker.FileTypeFilter.Add(".json");
 
         var file = await picker.PickSingleFileAsync();
@@ -1442,7 +1474,13 @@ public partial class DesignerViewModel : ObservableObject
         {
             var records = await GetActiveMergeRecordsAsync(dataSource);
             if (records == null || records.Count == 0)
-                return BuildCurrentPrintDocuments();
+                return Array.Empty<SceneDocument>();
+
+            var selectedRecords = GetSelectedMergeRecordsFromTable();
+            if (_selectedMergeRows.Count > 0 && selectedRecords.Count == 0)
+                return Array.Empty<SceneDocument>();
+
+            var activeRecords = selectedRecords.Count > 0 ? selectedRecords : records;
 
             var originalDoc = _scene?.CurrentDocument;
             if (originalDoc == null)
@@ -1450,11 +1488,11 @@ public partial class DesignerViewModel : ObservableObject
 
             if (GetDataMergeMode() == DataMergeMode.MultipleRecordsPerPage)
             {
-                var pages = BuildMergedPages(originalDoc, records);
+                var pages = BuildMergedPages(originalDoc, activeRecords);
                 return pages.Count == 0 ? BuildCurrentPrintDocuments() : pages;
             }
 
-            return records
+            return activeRecords
                 .Select(record => _dataBinding.ApplyRecord(originalDoc, record))
                 .ToList();
         }
@@ -2686,6 +2724,7 @@ public partial class DesignerViewModel : ObservableObject
 
             _loadedDataSourcePath = sourcePath;
             PreviewRecordIndex = _dataMergeTable?.Rows.Count > 0 ? 0 : -1;
+            _selectedMergeRows.Clear();
             
             if (_dataMergeTable != null && _dataMergeTable.DefaultView != null && _dataMergeTable.DefaultView.Count > 0)
                 SelectedDataMergeRow = _dataMergeTable.DefaultView[0] as DataRowView;
@@ -2702,6 +2741,7 @@ public partial class DesignerViewModel : ObservableObject
             OnPropertyChanged(nameof(HasNoLoadedDataSource));
             OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
             OnPropertyChanged(nameof(DataSourceSummary));
+            OnPropertyChanged(nameof(SelectedMergeRecordCount));
             OnPropertyChanged(nameof(DataMergeActionSummary));
             RefreshMergeBindings();
         }
@@ -2719,6 +2759,7 @@ public partial class DesignerViewModel : ObservableObject
         MergeBindings.Clear();
         _csvRecords = new();
         _loadedDataSourcePath = null;
+        _selectedMergeRows.Clear();
         SelectedDataField = null;
         SelectedDataMergeRow = null;
         PreviewRecordIndex = -1;
@@ -2734,6 +2775,7 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(HasLoadedDataSource));
         OnPropertyChanged(nameof(HasNoLoadedDataSource));
         OnPropertyChanged(nameof(DataSourceSummary));
+        OnPropertyChanged(nameof(SelectedMergeRecordCount));
         OnPropertyChanged(nameof(PreviewRecordCount));
         OnPropertyChanged(nameof(PreviewRecordText));
         OnPropertyChanged(nameof(DataMergeActionSummary));
@@ -2749,6 +2791,7 @@ public partial class DesignerViewModel : ObservableObject
         }
 
         _dataMergeTable = table;
+        _selectedMergeRows.Clear();
 
         if (_dataMergeTable != null)
         {
@@ -2891,9 +2934,14 @@ public partial class DesignerViewModel : ObservableObject
                     column => row[column.ColumnName]?.ToString() ?? string.Empty))
             .ToList();
 
+        var previousSelectedCount = _selectedMergeRows.Count;
+        _selectedMergeRows.RemoveWhere(row => row.RowState == DataRowState.Deleted || !ReferenceEquals(row.Table, _dataMergeTable));
+
         OnPropertyChanged(nameof(PreviewRecordCount));
         OnPropertyChanged(nameof(PreviewRecordText));
         OnPropertyChanged(nameof(DataSourceSummary));
+        if (previousSelectedCount != _selectedMergeRows.Count)
+            OnPropertyChanged(nameof(SelectedMergeRecordCount));
 
         if (_csvRecords.Count == 0)
         {
@@ -2908,6 +2956,22 @@ public partial class DesignerViewModel : ObservableObject
         }
 
         RefreshPreviewDocument();
+    }
+
+    private IReadOnlyList<IReadOnlyDictionary<string, string>> GetSelectedMergeRecordsFromTable()
+    {
+        if (_dataMergeTable == null || _selectedMergeRows.Count == 0)
+            return Array.Empty<IReadOnlyDictionary<string, string>>();
+
+        var columns = _dataMergeTable.Columns.Cast<DataColumn>().ToArray();
+        var selectedRecords = _selectedMergeRows
+            .Where(row => row.RowState != DataRowState.Deleted && ReferenceEquals(row.Table, _dataMergeTable))
+            .Select(row => (IReadOnlyDictionary<string, string>)columns.ToDictionary(
+                column => column.ColumnName,
+                column => row[column.ColumnName]?.ToString() ?? string.Empty))
+            .ToList();
+
+        return selectedRecords;
     }
 
     private async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> GetActiveMergeRecordsAsync(DataSourceConfig ds)

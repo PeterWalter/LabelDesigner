@@ -1,13 +1,18 @@
 using LabelDesigner.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System.Data;
+using System.Diagnostics;
 using System.ComponentModel;
+using System.Linq;
 
 namespace LabelDesigner.App.Views;
 
 public sealed partial class DataMergePaneView : UserControl
 {
     private DesignerViewModel? _vm;
+    private bool _isRefreshingDataGrid;
+    private string? _lastGridSchema;
 
     private DesignerViewModel? VM => DataContext switch
     {
@@ -53,7 +58,9 @@ public sealed partial class DataMergePaneView : UserControl
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(DesignerViewModel.DataMergeView))
+        if (e.PropertyName == nameof(DesignerViewModel.DataMergeView)
+            || e.PropertyName == nameof(DesignerViewModel.DataMergeItemsSource)
+            || e.PropertyName == nameof(DesignerViewModel.HasLoadedDataSource))
             DispatcherQueue.TryEnqueue(RefreshDataGrid);
     }
 
@@ -62,13 +69,53 @@ public sealed partial class DataMergePaneView : UserControl
         try
         {
             if (_vm == null) return;
-            // Force SfDataGrid to rebuild columns by resetting ItemsSource
-            CsvDataGrid.ItemsSource = null;
-            CsvDataGrid.ItemsSource = _vm.DataMergeView;
+
+            _isRefreshingDataGrid = true;
+            var table = _vm.DataMergeItemsSource;
+            var schema = BuildSchemaKey(table);
+            var schemaChanged = !string.Equals(_lastGridSchema, schema, StringComparison.Ordinal);
+
+            if (schemaChanged)
+            {
+                CsvDataGrid.ItemsSource = null;
+                CsvDataGrid.ItemsSource = table;
+                _lastGridSchema = schema;
+            }
+            else if (!ReferenceEquals(CsvDataGrid.ItemsSource, table))
+            {
+                CsvDataGrid.ItemsSource = table;
+            }
+
+            if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
+                CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
         }
-        catch
+        catch (Exception ex)
         {
-            // SfDataGrid can throw during column regeneration; suppress to prevent app crash
+            Debug.WriteLine($"DataMergePaneView.RefreshDataGrid failed: {ex}");
         }
+        finally
+        {
+            _isRefreshingDataGrid = false;
+        }
+    }
+
+    private static string? BuildSchemaKey(DataTable? table)
+    {
+        if (table == null)
+            return null;
+
+        return string.Join("|", table.Columns.Cast<DataColumn>().Select(c => c.ColumnName));
+    }
+
+    private void OnGridSelectionChanged(object sender, object e)
+    {
+        if (_isRefreshingDataGrid || _vm == null)
+            return;
+
+        var selectedRows = CsvDataGrid.SelectedItems?.OfType<DataRowView>().ToList() ?? new List<DataRowView>();
+        _vm.SetSelectedMergeRows(selectedRows);
+
+        if (selectedRows.Count > 0 && !ReferenceEquals(_vm.SelectedDataMergeRow, selectedRows[0]))
+            _vm.SelectedDataMergeRow = selectedRows[0];
     }
 }
