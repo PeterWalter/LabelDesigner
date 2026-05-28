@@ -244,6 +244,8 @@ public partial class DesignerViewModel : ObservableObject
                 return "No data source loaded";
 
             var summary = $"{Path.GetFileName(_loadedDataSourcePath)} ({_csvRecords.Count} row{(_csvRecords.Count == 1 ? string.Empty : "s")})";
+            if (!string.IsNullOrWhiteSpace(_scene.CurrentDocument.DataSource?.WorksheetName))
+                summary += $" • Sheet: {_scene.CurrentDocument.DataSource.WorksheetName}";
             if (SelectedMergeRecordCount > 0 && SelectedMergeRecordCount != _csvRecords.Count)
                 summary += $" • {SelectedMergeRecordCount} selected";
             return summary;
@@ -1339,7 +1341,17 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var records = await _dataSource.LoadAsync(file.Path);
+            var extension = Path.GetExtension(file.Path);
+            string? worksheetName = null;
+            if (string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase))
+            {
+                worksheetName = await PromptForWorksheetSelectionAsync(file.Path);
+                if (worksheetName == "__cancel__")
+                    return;
+            }
+
+            var records = await _dataSource.LoadAsync(file.Path, worksheetName);
             if (records == null || records.Count == 0)
             {
                 ShowErrorDialog("Empty Data Source", "The selected file contains no data records.");
@@ -1352,6 +1364,7 @@ public partial class DesignerViewModel : ObservableObject
             {
                 Type = Path.GetExtension(file.Path).TrimStart('.'),
                 Path = file.Path,
+                WorksheetName = worksheetName,
                 MergeMode = mergeMode
             };
 
@@ -1512,6 +1525,8 @@ public partial class DesignerViewModel : ObservableObject
         var name = dataSource == null || string.IsNullOrWhiteSpace(dataSource.Path)
             ? "Mail Merge"
             : $"Mail Merge - {Path.GetFileNameWithoutExtension(dataSource.Path)}";
+        if (!string.IsNullOrWhiteSpace(dataSource?.WorksheetName))
+            name += $" [{dataSource.WorksheetName}]";
 
         return pageCount <= 1 ? name : $"{name} ({pageCount} pages)";
     }
@@ -2586,6 +2601,7 @@ public partial class DesignerViewModel : ObservableObject
                 {
                     Type = source.DataSource.Type,
                     Path = source.DataSource.Path,
+                    WorksheetName = source.DataSource.WorksheetName,
                     MergeMode = source.DataSource.MergeMode
                 }
         };
@@ -2971,7 +2987,7 @@ public partial class DesignerViewModel : ObservableObject
             return _csvRecords;
         }
 
-        var records = await _dataSource.LoadAsync(ds.Path);
+        var records = await _dataSource.LoadAsync(ds.Path, ds.WorksheetName);
         LoadDataMergeRecords(records, ds.Path);
         return _csvRecords;
     }
@@ -2993,7 +3009,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var records = await _dataSource.LoadAsync(dataSource.Path);
+            var records = await _dataSource.LoadAsync(dataSource.Path, dataSource.WorksheetName);
             if (records == null || records.Count == 0)
             {
                 ClearDataMergeState();
@@ -3019,6 +3035,43 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPreviewMode));
         OnPropertyChanged(nameof(PreviewRecordText));
         OnPropertyChanged(nameof(MergePreviewDocument));
+    }
+
+    private async Task<string?> PromptForWorksheetSelectionAsync(string excelPath)
+    {
+        var worksheetNames = await _dataSource.GetWorksheetNamesAsync(excelPath);
+        if (worksheetNames.Count <= 1)
+            return worksheetNames.FirstOrDefault();
+
+        var xamlRoot = App.MainWindow?.Content.XamlRoot;
+        if (xamlRoot == null)
+            return worksheetNames[0];
+
+        var combo = new ComboBox
+        {
+            ItemsSource = worksheetNames,
+            SelectedIndex = 0,
+            MinWidth = 280
+        };
+
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(new TextBlock { Text = "Workbook has multiple sheets. Select sheet to load:" });
+        panel.Children.Add(combo);
+
+        var dialog = new ContentDialog
+        {
+            Title = "Select Excel Sheet",
+            Content = panel,
+            PrimaryButtonText = "Load",
+            CloseButtonText = "Cancel",
+            XamlRoot = xamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary)
+            return "__cancel__";
+
+        return combo.SelectedItem as string ?? worksheetNames[0];
     }
 
     private string FormatMeasurement(double pixels)

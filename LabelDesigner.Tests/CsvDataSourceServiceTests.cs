@@ -22,14 +22,12 @@ public class CsvDataSourceServiceTests
             try
             {
                 var sheet = workbook.Worksheets[0];
-
                 sheet["A1"].Text = "Name";
                 sheet["B1"].Text = "Code";
                 sheet["A2"].Text = "Alpha";
                 sheet["B2"].Number = 12345;
                 sheet["A3"].Text = string.Empty;
                 sheet["B3"].Text = string.Empty;
-
                 workbook.SaveAs(path);
             }
             finally
@@ -38,10 +36,55 @@ public class CsvDataSourceServiceTests
             }
 
             var records = await service.LoadAsync(path);
-
             var alphaRecord = records.Single(record =>
                 string.Equals(record["Name"], "Alpha", StringComparison.Ordinal));
             alphaRecord["Code"].Should().Be("12345");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task LoadAsync_reads_records_from_selected_excel_worksheet()
+    {
+        var service = new CsvDataSourceService();
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+
+        try
+        {
+            using var excelEngine = new ExcelEngine();
+            var app = excelEngine.Excel;
+            app.DefaultVersion = ExcelVersion.Xlsx;
+            var workbook = app.Workbooks.Create(2);
+            try
+            {
+                var sheet1 = workbook.Worksheets[0];
+                sheet1.Name = "First";
+                sheet1["A1"].Text = "Name";
+                sheet1["A2"].Text = "FromFirst";
+
+                var sheet2 = workbook.Worksheets[1];
+                sheet2.Name = "Second";
+                sheet2["A1"].Text = "Name";
+                sheet2["A2"].Text = "FromSecond";
+
+                workbook.SaveAs(path);
+            }
+            finally
+            {
+                workbook.Close();
+            }
+
+            var names = await service.GetWorksheetNamesAsync(path);
+            names.Should().Contain(new[] { "First", "Second" });
+
+            var records = await service.LoadAsync(path, "Second");
+            var target = records.Single(record =>
+                string.Equals(record["Name"], "FromSecond", StringComparison.Ordinal));
+            target["Name"].Should().Be("FromSecond");
         }
         finally
         {

@@ -27,6 +27,7 @@ public class DataBindingService : IDataBindingService
                 {
                     Type = document.DataSource.Type,
                     Path = document.DataSource.Path,
+                    WorksheetName = document.DataSource.WorksheetName,
                     MergeMode = document.DataSource.MergeMode
                 }
         };

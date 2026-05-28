@@ -9,16 +9,42 @@ namespace LabelDesigner.Infrastructure.Data;
 
 public class CsvDataSourceService : IDataSourceService
 {
-    public async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> LoadAsync(string path)
+    public async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> LoadAsync(string path, string? worksheetName = null)
     {
         var extension = Path.GetExtension(path).ToLowerInvariant();
         return extension switch
         {
             ".csv" => await LoadCsvAsync(path),
-            ".xlsx" or ".xls" => LoadExcel(path),
+            ".xlsx" or ".xls" => LoadExcel(path, worksheetName),
             ".json" => await LoadJsonAsync(path),
             _ => throw new NotSupportedException($"Unsupported data source format: {extension}")
         };
+    }
+
+    public Task<IReadOnlyList<string>> GetWorksheetNamesAsync(string path)
+    {
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        if (extension is not ".xlsx" and not ".xls")
+            return Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+
+        using var excelEngine = new ExcelEngine();
+        var app = excelEngine.Excel;
+        app.DefaultVersion = ExcelVersion.Xlsx;
+
+        var workbook = app.Workbooks.Open(path);
+        try
+        {
+            var names = workbook.Worksheets
+                .Cast<IWorksheet>()
+                .Select(sheet => sheet.Name)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .ToList();
+            return Task.FromResult<IReadOnlyList<string>>(names);
+        }
+        finally
+        {
+            workbook.Close();
+        }
     }
 
     private static async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> LoadCsvAsync(string path)
@@ -101,7 +127,7 @@ public class CsvDataSourceService : IDataSourceService
         };
     }
 
-    private static IReadOnlyList<IReadOnlyDictionary<string, string>> LoadExcel(string path)
+    private static IReadOnlyList<IReadOnlyDictionary<string, string>> LoadExcel(string path, string? worksheetName)
     {
         var records = new List<IReadOnlyDictionary<string, string>>();
 
@@ -116,6 +142,15 @@ public class CsvDataSourceService : IDataSourceService
                 return records;
 
             var sheet = workbook.Worksheets[0];
+            if (!string.IsNullOrWhiteSpace(worksheetName))
+            {
+                var explicitSheet = workbook.Worksheets
+                    .Cast<IWorksheet>()
+                    .FirstOrDefault(s => string.Equals(s.Name, worksheetName, StringComparison.OrdinalIgnoreCase));
+                if (explicitSheet != null)
+                    sheet = explicitSheet;
+            }
+
             var usedRange = sheet.UsedRange;
             if (usedRange == null || usedRange.LastRow < 1 || usedRange.LastColumn < 1)
                 return records;

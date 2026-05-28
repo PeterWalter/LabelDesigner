@@ -401,25 +401,21 @@
                     <ribbon:RibbonContextualTabGroup.Tabs>
                         <ribbon:RibbonTab Header="Barcode">
                             <ribbon:RibbonGroup Header="Symbology">
-                                <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
-                                    <TextBlock Text="Barcode Type" FontSize="10"
-                                        Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                    <ComboBox x:Name="RibbonBarcodeSymbologyCombo"
-                                        Width="120"
-                                        SelectedIndex="{Binding Designer.Properties.BarcodeSymbologyIndex, Mode=TwoWay}"
-                                        ToolTipService.ToolTip="Select barcode symbology (Code128, QR, EAN, etc.)">
-                                        <ComboBoxItem Content="Code 128"/>
-                                        <ComboBoxItem Content="Code 39"/>
-                                        <ComboBoxItem Content="QR Code"/>
-                                        <ComboBoxItem Content="EAN-13"/>
-                                        <ComboBoxItem Content="EAN-8"/>
-                                        <ComboBoxItem Content="UPC-A"/>
-                                        <ComboBoxItem Content="DataMatrix"/>
-                                        <ComboBoxItem Content="PDF417"/>
-                                        <ComboBoxItem Content="Aztec"/>
-                                        <ComboBoxItem Content="ITF"/>
-                                    </ComboBox>
-                                </StackPanel>
+                                <ribbon:RibbonComboBox x:Name="RibbonBarcodeSymbologyCombo"
+                                    Width="140"
+                                    SelectedIndex="{Binding Designer.Properties.BarcodeSymbologyIndex, Mode=TwoWay}"
+                                    ToolTipService.ToolTip="Barcode type">
+                                    <ribbon:RibbonComboBoxItem Content="Code 128"/>
+                                    <ribbon:RibbonComboBoxItem Content="Code 39"/>
+                                    <ribbon:RibbonComboBoxItem Content="QR Code"/>
+                                    <ribbon:RibbonComboBoxItem Content="EAN-13"/>
+                                    <ribbon:RibbonComboBoxItem Content="EAN-8"/>
+                                    <ribbon:RibbonComboBoxItem Content="UPC-A"/>
+                                    <ribbon:RibbonComboBoxItem Content="DataMatrix"/>
+                                    <ribbon:RibbonComboBoxItem Content="PDF417"/>
+                                    <ribbon:RibbonComboBoxItem Content="Aztec"/>
+                                    <ribbon:RibbonComboBoxItem Content="ITF"/>
+                                </ribbon:RibbonComboBox>
                             </ribbon:RibbonGroup>
                             <ribbon:RibbonGroup Header="Text Position">
                                 <ribbon:RibbonButton Content="Top" Command="{Binding Designer.SetTextTopCommand}"
@@ -451,12 +447,9 @@
                                     ToolTipService.ToolTip="Open the data merge editor">
                                     <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                                 </ribbon:RibbonButton>
-                                <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
-                                    <TextBlock Text="Selected Column" FontSize="10"
-                                        Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                    <TextBlock Text="{Binding Designer.SelectedDataField}"
-                                        Foreground="{ThemeResource AppTextBrush}"/>
-                                </StackPanel>
+                                <ribbon:RibbonButton Content="{Binding Designer.SelectedDataField}"
+                                    IsEnabled="False"
+                                    ToolTipService.ToolTip="Selected data column"/>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
                     </ribbon:RibbonContextualTabGroup.Tabs>
@@ -467,48 +460,36 @@
                     <ribbon:RibbonContextualTabGroup.Tabs>
                         <ribbon:RibbonTab Header="Text">
                             <ribbon:RibbonGroup Header="Typography">
-                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Padding="4,0">
-                                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Font" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                        <TextBox Width="130"
-                                            Text="{Binding Designer.Properties.FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            PlaceholderText="Segoe UI"
-                                            ToolTipService.ToolTip="Text font family"/>
-                                    </StackPanel>
-                                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Size" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                        <TextBox Width="56"
-                                            Text="{Binding Designer.Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            ToolTipService.ToolTip="Text font size"/>
-                                    </StackPanel>
-                                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Color" FontSize="10" Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                        <TextBox Width="88"
-                                            Text="{Binding Designer.Properties.ForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            PlaceholderText="#RRGGBB"
-                                            ToolTipService.ToolTip="Text color hex"/>
-                                    </StackPanel>
-                                </StackPanel>
+                                <ribbon:RibbonComboBox Width="140"
+                                    IsEditable="True"
+                                    Text="{Binding Designer.Properties.FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ToolTipService.ToolTip="Text font family"/>
+                                <ribbon:RibbonComboBox Width="70"
+                                    IsEditable="True"
+                                    Text="{Binding Designer.Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ToolTipService.ToolTip="Text font size"/>
+                                <ribbon:RibbonComboBox Width="100"
+                                    IsEditable="True"
+                                    Text="{Binding Designer.Properties.ForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ToolTipService.ToolTip="Text color hex (#RRGGBB)"/>
                             </ribbon:RibbonGroup>
                             <ribbon:RibbonGroup Header="Style &amp; Align">
-                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Padding="4,0">
-                                    <ToggleButton Content="B" FontWeight="Bold" Width="30" Height="26"
-                                        IsChecked="{Binding Designer.Properties.IsBold, Mode=TwoWay}"
-                                        ToolTipService.ToolTip="Bold"/>
-                                    <ToggleButton Content="I" FontStyle="Italic" Width="30" Height="26"
-                                        IsChecked="{Binding Designer.Properties.IsItalic, Mode=TwoWay}"
-                                        ToolTipService.ToolTip="Italic"/>
-                                    <ToggleButton Content="U" Width="30" Height="26"
-                                        IsChecked="{Binding Designer.Properties.IsUnderline, Mode=TwoWay}"
-                                        ToolTipService.ToolTip="Underline"/>
-                                    <ComboBox Width="96"
-                                        SelectedIndex="{Binding Designer.Properties.TextAlignmentIndex, Mode=TwoWay}"
-                                        ToolTipService.ToolTip="Text alignment">
-                                        <ComboBoxItem Content="Left"/>
-                                        <ComboBoxItem Content="Center"/>
-                                        <ComboBoxItem Content="Right"/>
-                                    </ComboBox>
-                                </StackPanel>
+                                <ribbon:RibbonToggleButton Content="B" FontWeight="Bold" Width="30" Height="26"
+                                    IsChecked="{Binding Designer.Properties.IsBold, Mode=TwoWay}"
+                                    ToolTipService.ToolTip="Bold"/>
+                                <ribbon:RibbonToggleButton Content="I" FontStyle="Italic" Width="30" Height="26"
+                                    IsChecked="{Binding Designer.Properties.IsItalic, Mode=TwoWay}"
+                                    ToolTipService.ToolTip="Italic"/>
+                                <ribbon:RibbonToggleButton Content="U" Width="30" Height="26"
+                                    IsChecked="{Binding Designer.Properties.IsUnderline, Mode=TwoWay}"
+                                    ToolTipService.ToolTip="Underline"/>
+                                <ribbon:RibbonComboBox Width="96"
+                                    SelectedIndex="{Binding Designer.Properties.TextAlignmentIndex, Mode=TwoWay}"
+                                    ToolTipService.ToolTip="Text alignment">
+                                    <ribbon:RibbonComboBoxItem Content="Left"/>
+                                    <ribbon:RibbonComboBoxItem Content="Center"/>
+                                    <ribbon:RibbonComboBoxItem Content="Right"/>
+                                </ribbon:RibbonComboBox>
                             </ribbon:RibbonGroup>
                             <ribbon:RibbonGroup Header="Data Merge">
                                 <ribbon:RibbonButton Content="Bind Column"
@@ -522,12 +503,9 @@
                                     ToolTipService.ToolTip="Open the data merge editor">
                                     <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                                 </ribbon:RibbonButton>
-                                <StackPanel Spacing="2" VerticalAlignment="Center" Padding="4,0">
-                                    <TextBlock Text="Selected Column" FontSize="10"
-                                        Foreground="{ThemeResource AppMutedTextBrush}"/>
-                                    <TextBlock Text="{Binding Designer.SelectedDataField}"
-                                        Foreground="{ThemeResource AppTextBrush}"/>
-                                </StackPanel>
+                                <ribbon:RibbonButton Content="{Binding Designer.SelectedDataField}"
+                                    IsEnabled="False"
+                                    ToolTipService.ToolTip="Selected data column"/>
                             </ribbon:RibbonGroup>
                         </ribbon:RibbonTab>
                     </ribbon:RibbonContextualTabGroup.Tabs>
