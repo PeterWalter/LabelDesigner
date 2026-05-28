@@ -42,17 +42,13 @@ public class CsvDataSourceService : IDataSourceService
 
         // Filter out null, empty, or whitespace-only headers (e.g. from trailing commas)
         var rawHeaders = csv.HeaderRecord ?? Array.Empty<string>();
-        var headers = rawHeaders
-            .Select(h => h?.Trim())
-            .Where(h => !string.IsNullOrWhiteSpace(h))
-            .Cast<string>()
-            .ToArray();
+        var headers = NormalizeHeaders(rawHeaders);
 
         while (await csv.ReadAsync())
         {
             var row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var header in headers)
-                row[header] = csv.GetField(header) ?? "";
+            for (var i = 0; i < headers.Count; i++)
+                row[headers[i]] = csv.GetField(i) ?? "";
             results.Add(row);
         }
 
@@ -155,23 +151,37 @@ public class CsvDataSourceService : IDataSourceService
 
     private static List<string> BuildExcelHeaders(IWorksheet sheet, int lastColumn)
     {
-        var headers = new List<string>(lastColumn);
-        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
+        var rawHeaders = new List<string?>(lastColumn);
         for (var columnIndex = 1; columnIndex <= lastColumn; columnIndex++)
         {
-            var rawHeader = sheet[1, columnIndex].DisplayText?.Trim();
-            var header = string.IsNullOrWhiteSpace(rawHeader) ? $"Column{columnIndex}" : rawHeader;
-            var uniqueHeader = header;
+            var rawHeader = sheet[1, columnIndex].DisplayText;
+            rawHeaders.Add(rawHeader);
+        }
+
+        return NormalizeHeaders(rawHeaders);
+    }
+
+    private static List<string> NormalizeHeaders(IEnumerable<string?> rawHeaders)
+    {
+        var normalized = new List<string>();
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var columnIndex = 1;
+
+        foreach (var raw in rawHeaders)
+        {
+            var baseHeader = string.IsNullOrWhiteSpace(raw) ? $"Column{columnIndex}" : raw.Trim();
+            var uniqueHeader = baseHeader;
             var suffix = 1;
             while (!used.Add(uniqueHeader))
             {
                 suffix++;
-                uniqueHeader = $"{header}_{suffix}";
+                uniqueHeader = $"{baseHeader}_{suffix}";
             }
-            headers.Add(uniqueHeader);
+
+            normalized.Add(uniqueHeader);
+            columnIndex++;
         }
 
-        return headers;
+        return normalized;
     }
 }

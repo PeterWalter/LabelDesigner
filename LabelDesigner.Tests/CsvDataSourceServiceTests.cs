@@ -79,4 +79,32 @@ public class CsvDataSourceServiceTests
                 File.Delete(path);
         }
     }
+
+    [Fact]
+    public async Task LoadAsync_normalizes_duplicate_csv_headers()
+    {
+        var service = new CsvDataSourceService();
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
+
+        try
+        {
+            const string csv = """
+            Item,Item,item
+            A,100,200
+            """;
+            await File.WriteAllTextAsync(path, csv, Encoding.UTF8);
+
+            var records = await service.LoadAsync(path);
+
+            records.Should().HaveCount(1);
+            records[0]["Item"].Should().Be("A");
+            records[0]["Item_2"].Should().Be("100");
+            records[0]["item_3"].Should().Be("200");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
 }
