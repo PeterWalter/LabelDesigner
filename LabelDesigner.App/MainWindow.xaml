@@ -84,19 +84,17 @@
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Recent">
-                        <StackPanel Orientation="Vertical" Spacing="4" Padding="4,6">
-                            <ComboBox x:Name="RecentFilesBox"
-                                ItemsSource="{Binding Designer.RecentFiles}"
-                                SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}"
-                                PlaceholderText="Select recent file…"
-                                Width="220"
-                                FontSize="11"/>
-                            <ribbon:RibbonButton Content="Open Recent" Command="{Binding Designer.OpenSelectedRecentCommand}"
-                                AllowedSizeModes="Normal"
-                                ToolTipService.ToolTip="Open the selected recent file">
-                                <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                            </ribbon:RibbonButton>
-                        </StackPanel>
+                        <ribbon:RibbonComboBox x:Name="RecentFilesBox"
+                            ItemsSource="{Binding Designer.RecentFiles}"
+                            SelectedItem="{Binding Designer.SelectedRecentFile, Mode=TwoWay}"
+                            PlaceholderText="Select recent file…"
+                            Width="220"
+                            FontSize="11"/>
+                        <ribbon:RibbonButton Content="Open Recent" Command="{Binding Designer.OpenSelectedRecentCommand}"
+                            AllowedSizeModes="Normal"
+                            ToolTipService.ToolTip="Open the selected recent file">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
                     <ribbon:RibbonGroup Header="Application">
                         <ribbon:RibbonButton Content="Settings" Click="OnSettingsTabClicked"
@@ -380,19 +378,17 @@
 
                     <!-- ── Panels ── -->
                     <ribbon:RibbonGroup Header="Panels">
-                        <StackPanel Orientation="Horizontal" Spacing="4" Padding="4,0">
-                            <ToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
-                                Padding="8,4"
-                                Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
-                                ToolTipService.ToolTip="Show/hide Layers panel"/>
-                            <ToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
-                                Padding="8,4"
-                                Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
-                                ToolTipService.ToolTip="Show/hide Properties panel"/>
-                            <Button Content="Reset" Click="OnResetLayout"
-                                Padding="8,4"
-                                ToolTipService.ToolTip="Restore default panel layout"/>
-                        </StackPanel>
+                        <ribbon:RibbonToggleButton x:Name="LayersToggle" Content="Layers" IsChecked="True"
+                            Padding="8,4"
+                            Checked="OnLayersPaneToggled" Unchecked="OnLayersPaneToggled"
+                            ToolTipService.ToolTip="Show/hide Layers panel"/>
+                        <ribbon:RibbonToggleButton x:Name="PropertiesToggle" Content="Properties" IsChecked="True"
+                            Padding="8,4"
+                            Checked="OnPropertiesPaneToggled" Unchecked="OnPropertiesPaneToggled"
+                            ToolTipService.ToolTip="Show/hide Properties panel"/>
+                        <ribbon:RibbonButton Content="Reset" Click="OnResetLayout"
+                            Padding="8,4"
+                            ToolTipService.ToolTip="Restore default panel layout"/>
                     </ribbon:RibbonGroup>
 
                 </ribbon:RibbonTab>
