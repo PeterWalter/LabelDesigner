@@ -892,6 +892,7 @@ public partial class DesignerViewModel : ObservableObject
         var json = await _persistence.SaveToJsonAsync(_scene.CurrentDocument);
         var clone = await _persistence.LoadFromJsonAsync(json);
         clone.Version = "2.0";
+        clone.Page.Dpi = (int)Math.Round(ppm * 25.4);
         foreach (var el in clone.AllElements)
         {
             el.Bounds = new RectD(
@@ -2614,6 +2615,14 @@ public partial class DesignerViewModel : ObservableObject
             {
                 // V2.0: bounds stored in mm → convert to screen pixels at current window DPI
                 ConvertMmBoundsToPixels(doc, PixelsPerMm);
+            }
+            else if (doc.Page.Dpi > 0)
+            {
+                // Legacy V1: bounds stored in pixels. If saved on a different DPI,
+                // rescale into current screen pixels using stored page DPI.
+                var currentDpi = PixelsPerMm * 25.4;
+                if (Math.Abs(currentDpi - doc.Page.Dpi) > 0.1)
+                    RescaleElementBounds(doc, currentDpi / doc.Page.Dpi);
             }
             else
             {
