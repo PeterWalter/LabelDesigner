@@ -5,6 +5,7 @@ using Syncfusion.UI.Xaml.DataGrid;
 using System.Data;
 using System.ComponentModel;
 using System.Linq;
+using System.Diagnostics;
 
 namespace LabelDesigner.App.Views;
 
@@ -67,11 +68,21 @@ public sealed partial class DataMergePaneView : UserControl
     {
         if (_vm == null) return;
 
-        _isRefreshingDataGrid = true;
-        EnsureGridColumns();
-        if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
-            CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
-        _isRefreshingDataGrid = false;
+        try
+        {
+            _isRefreshingDataGrid = true;
+            EnsureGridColumns();
+            if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
+                CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Data merge grid refresh skipped: {ex}");
+        }
+        finally
+        {
+            _isRefreshingDataGrid = false;
+        }
     }
 
     private void EnsureGridColumns()
@@ -87,17 +98,29 @@ public sealed partial class DataMergePaneView : UserControl
         CsvDataGrid.Columns.Clear();
         if (table != null)
         {
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (System.Data.DataColumn column in table.Columns)
             {
+                var mappingName = ToGridMappingName(column.ColumnName);
+                if (!used.Add(mappingName))
+                    continue;
+
                 CsvDataGrid.Columns.Add(new GridTextColumn
                 {
-                    MappingName = column.ColumnName,
+                    MappingName = mappingName,
                     HeaderText = column.ColumnName
                 });
             }
         }
 
         _lastSchemaSignature = signature;
+    }
+
+    private static string ToGridMappingName(string columnName)
+    {
+        // DataRowView columns bind reliably through indexer syntax and avoid
+        // collisions with reserved property names like "Item".
+        return $"[{columnName}]";
     }
 
     private void OnGridSelectionChanged(object sender, object e)
