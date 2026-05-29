@@ -99,7 +99,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
             ds.Clear(Colors.White);
             ds.Transform = Matrix3x2.CreateScale(scale);
 
-            var lookup = document.AllElements.ToDictionary(e => e.Id);
+            var lookup = BuildElementLookup(document);
             foreach (var layer in document.Layers)
             {
                 if (!layer.Visible)
@@ -145,7 +145,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
             ds.Clear(Colors.White);
             ds.Transform = Matrix3x2.CreateScale(scale);
 
-            var lookup = document.AllElements.ToDictionary(e => e.Id);
+            var lookup = BuildElementLookup(document);
             foreach (var layer in document.Layers)
             {
                 if (!layer.Visible)
@@ -169,6 +169,18 @@ public class PrintService : IPrintService, IDocumentRasterizer
         return await decoder.GetSoftwareBitmapAsync(
             BitmapPixelFormat.Bgra8,
             BitmapAlphaMode.Premultiplied);
+    }
+
+    private static Dictionary<Guid, DesignElement> BuildElementLookup(SceneDocument document)
+    {
+        var lookup = new Dictionary<Guid, DesignElement>();
+        foreach (var element in document.AllElements)
+        {
+            if (!lookup.ContainsKey(element.Id))
+                lookup[element.Id] = element;
+        }
+
+        return lookup;
     }
 
     private sealed class PrintSession : IDisposable

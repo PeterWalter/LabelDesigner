@@ -240,4 +240,26 @@ public class RenderingSeamTests
         Assert.Equal("Bottom layer", texts[0]);
         Assert.Equal("Top layer", texts[1]);
     }
+
+    [Fact]
+    public void Render_duplicate_element_ids_does_not_throw()
+    {
+        var renderer = new SceneCommandRenderer();
+        var duplicateId = Guid.NewGuid();
+        var doc = BuildDocument(d =>
+        {
+            var layer = AddVisibleLayer(d);
+            var first = new TextElement { Id = duplicateId, Text = "First", ZIndex = 0 };
+            var second = new TextElement { Id = duplicateId, Text = "Second", ZIndex = 1 };
+            layer.ElementIds.Add(duplicateId);
+            layer.ElementIds.Add(duplicateId);
+            d.AllElements.Add(first);
+            d.AllElements.Add(second);
+        });
+
+        var commands = renderer.Render(doc);
+        var textCommands = commands.OfType<DrawTextCommand>().ToList();
+
+        Assert.NotEmpty(textCommands);
+    }
 }

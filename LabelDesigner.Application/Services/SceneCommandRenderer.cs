@@ -15,7 +15,7 @@ public class SceneCommandRenderer : ISceneCommandRenderer
     public IReadOnlyList<DrawCommand> Render(SceneDocument document)
     {
         var commands = new List<DrawCommand>();
-        var lookup = document.AllElements.ToDictionary(e => e.Id);
+        var lookup = BuildElementLookup(document);
 
         foreach (var layer in document.Layers)
         {
@@ -34,6 +34,18 @@ public class SceneCommandRenderer : ISceneCommandRenderer
         }
 
         return commands.AsReadOnly();
+    }
+
+    private static Dictionary<Guid, DesignElement> BuildElementLookup(SceneDocument document)
+    {
+        var lookup = new Dictionary<Guid, DesignElement>();
+        foreach (var element in document.AllElements)
+        {
+            if (!lookup.ContainsKey(element.Id))
+                lookup[element.Id] = element;
+        }
+
+        return lookup;
     }
 
     private static void RenderElement(

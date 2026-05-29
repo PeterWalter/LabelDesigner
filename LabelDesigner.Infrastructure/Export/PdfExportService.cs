@@ -35,7 +35,7 @@ public class PdfExportService : IPdfExportService
         var page = doc.Pages.Add();
         var graphics = page.Graphics;
 
-        var lookup = document.AllElements.ToDictionary(e => e.Id);
+        var lookup = BuildElementLookup(document);
 
         foreach (var layer in document.Layers)
         {
@@ -222,4 +222,16 @@ public class PdfExportService : IPdfExportService
     }
 
     private static float MillimetersToPoints(double mm) => (float)(mm * 2.83465);
+
+    private static Dictionary<Guid, DesignElement> BuildElementLookup(SceneDocument document)
+    {
+        var lookup = new Dictionary<Guid, DesignElement>();
+        foreach (var element in document.AllElements)
+        {
+            if (!lookup.ContainsKey(element.Id))
+                lookup[element.Id] = element;
+        }
+
+        return lookup;
+    }
 }
