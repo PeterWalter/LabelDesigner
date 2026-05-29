@@ -2728,10 +2728,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         try
         {
-            var columns = records
-                .SelectMany(record => record.Keys)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var columns = NormalizeColumnNames(records.SelectMany(record => record.Keys));
 
             ReplaceDataMergeTable(BuildDataMergeTable(columns, records));
 
@@ -2909,8 +2906,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         var table = new DataTable("MergeData");
 
-        // Guard: skip null/empty column names (e.g. from trailing commas)
-        var validColumns = columns.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+        var validColumns = NormalizeColumnNames(columns);
 
         foreach (var column in validColumns)
             table.Columns.Add(column, typeof(string));
@@ -2947,11 +2943,7 @@ public partial class DesignerViewModel : ObservableObject
         _csvRecords = _dataMergeTable.Rows
             .Cast<DataRow>()
             .Where(row => row.RowState != DataRowState.Deleted)
-            .Select(row => (IReadOnlyDictionary<string, string>)_dataMergeTable.Columns
-                .Cast<DataColumn>()
-                .ToDictionary(
-                    column => column.ColumnName,
-                    column => row[column.ColumnName]?.ToString() ?? string.Empty))
+            .Select(row => (IReadOnlyDictionary<string, string>)CreateRowDictionary(_dataMergeTable, row))
             .ToList();
 
         var previousSelectedCount = _selectedMergeRows.Count;
@@ -3035,6 +3027,50 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPreviewMode));
         OnPropertyChanged(nameof(PreviewRecordText));
         OnPropertyChanged(nameof(MergePreviewDocument));
+    }
+
+    private static Dictionary<string, string> CreateRowDictionary(DataTable table, DataRow row)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var suffixes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (DataColumn column in table.Columns)
+        {
+            var baseName = string.IsNullOrWhiteSpace(column.ColumnName) ? "Column" : column.ColumnName.Trim();
+            if (!suffixes.TryGetValue(baseName, out var count))
+                count = 0;
+            count++;
+            suffixes[baseName] = count;
+
+            var key = count == 1 ? baseName : $"{baseName}_{count}";
+            dict[key] = row[column.ColumnName]?.ToString() ?? string.Empty;
+        }
+
+        return dict;
+    }
+
+    private static List<string> NormalizeColumnNames(IEnumerable<string?> rawColumns)
+    {
+        var normalized = new List<string>();
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var index = 1;
+
+        foreach (var raw in rawColumns)
+        {
+            var baseName = string.IsNullOrWhiteSpace(raw) ? $"Column{index}" : raw.Trim();
+            var unique = baseName;
+            var suffix = 1;
+            while (!used.Add(unique))
+            {
+                suffix++;
+                unique = $"{baseName}_{suffix}";
+            }
+
+            normalized.Add(unique);
+            index++;
+        }
+
+        return normalized;
     }
 
     private async Task<string?> PromptForWorksheetSelectionAsync(string excelPath)

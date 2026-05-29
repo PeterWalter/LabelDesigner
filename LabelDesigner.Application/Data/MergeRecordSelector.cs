@@ -23,9 +23,27 @@ public static class MergeRecordSelector
         return table.Rows
             .Cast<DataRow>()
             .Where(row => row.RowState != DataRowState.Deleted && selectedSet.Contains(row))
-            .Select(row => (IReadOnlyDictionary<string, string>)columns.ToDictionary(
-                column => column.ColumnName,
-                column => row[column.ColumnName]?.ToString() ?? string.Empty))
+            .Select(row => (IReadOnlyDictionary<string, string>)ToSafeDictionary(columns, row))
             .ToList();
+    }
+
+    private static Dictionary<string, string> ToSafeDictionary(IEnumerable<DataColumn> columns, DataRow row)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var suffixes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var column in columns)
+        {
+            var baseName = string.IsNullOrWhiteSpace(column.ColumnName) ? "Column" : column.ColumnName.Trim();
+            if (!suffixes.TryGetValue(baseName, out var count))
+                count = 0;
+            count++;
+            suffixes[baseName] = count;
+
+            var key = count == 1 ? baseName : $"{baseName}_{count}";
+            dict[key] = row[column.ColumnName]?.ToString() ?? string.Empty;
+        }
+
+        return dict;
     }
 }
