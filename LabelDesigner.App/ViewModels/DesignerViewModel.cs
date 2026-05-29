@@ -4,6 +4,7 @@ using LabelDesigner.Application.Data;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
+using LabelDesigner.Core.Utilities;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
 using LabelDesigner.App.Services;
@@ -2728,7 +2729,7 @@ public partial class DesignerViewModel : ObservableObject
     {
         try
         {
-            var columns = NormalizeColumnNames(records.SelectMany(record => record.Keys));
+            var columns = NormalizeColumnNames(GetDistinctRawColumns(records));
 
             ReplaceDataMergeTable(BuildDataMergeTable(columns, records));
 
@@ -3051,26 +3052,27 @@ public partial class DesignerViewModel : ObservableObject
 
     private static List<string> NormalizeColumnNames(IEnumerable<string?> rawColumns)
     {
-        var normalized = new List<string>();
-        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        return DataColumnNameNormalizer.NormalizeUnique(rawColumns);
+    }
+
+    private static List<string?> GetDistinctRawColumns(IReadOnlyList<IReadOnlyDictionary<string, string>> records)
+    {
+        var result = new List<string?>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var index = 1;
 
-        foreach (var raw in rawColumns)
+        foreach (var record in records)
         {
-            var baseName = string.IsNullOrWhiteSpace(raw) ? $"Column{index}" : raw.Trim();
-            var unique = baseName;
-            var suffix = 1;
-            while (!used.Add(unique))
+            foreach (var key in record.Keys)
             {
-                suffix++;
-                unique = $"{baseName}_{suffix}";
+                var canonical = DataColumnNameNormalizer.Canonicalize(key, index);
+                index++;
+                if (seen.Add(canonical))
+                    result.Add(key);
             }
-
-            normalized.Add(unique);
-            index++;
         }
 
-        return normalized;
+        return result;
     }
 
     private async Task<string?> PromptForWorksheetSelectionAsync(string excelPath)

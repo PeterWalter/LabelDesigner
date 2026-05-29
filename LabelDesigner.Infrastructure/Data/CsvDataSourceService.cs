@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using LabelDesigner.Core.Interfaces;
+using LabelDesigner.Core.Utilities;
 using Syncfusion.XlsIO;
 using System.Globalization;
 using System.Text.Json;
@@ -198,25 +199,6 @@ public class CsvDataSourceService : IDataSourceService
 
     private static List<string> NormalizeHeaders(IEnumerable<string?> rawHeaders)
     {
-        var normalized = new List<string>();
-        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var columnIndex = 1;
-
-        foreach (var raw in rawHeaders)
-        {
-            var baseHeader = string.IsNullOrWhiteSpace(raw) ? $"Column{columnIndex}" : raw.Trim();
-            var uniqueHeader = baseHeader;
-            var suffix = 1;
-            while (!used.Add(uniqueHeader))
-            {
-                suffix++;
-                uniqueHeader = $"{baseHeader}_{suffix}";
-            }
-
-            normalized.Add(uniqueHeader);
-            columnIndex++;
-        }
-
-        return normalized;
+        return DataColumnNameNormalizer.NormalizeUnique(rawHeaders);
     }
 }

@@ -150,4 +150,71 @@ public class CsvDataSourceServiceTests
                 File.Delete(path);
         }
     }
+
+    [Fact]
+    public async Task LoadAsync_normalizes_csv_headers_with_bom_and_whitespace_variants()
+    {
+        var service = new CsvDataSourceService();
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
+
+        try
+        {
+            const string csv = "\uFEFFItem, Item ,I\u200Btem\r\nA,100,200\r\n";
+            await File.WriteAllTextAsync(path, csv, Encoding.UTF8);
+
+            var records = await service.LoadAsync(path);
+            var target = records.Single(record =>
+                string.Equals(record["Item"], "A", StringComparison.Ordinal));
+
+            target["Item_2"].Should().Be("100");
+            target["Item_3"].Should().Be("200");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task LoadAsync_normalizes_excel_headers_with_bom_and_whitespace_variants()
+    {
+        var service = new CsvDataSourceService();
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+
+        try
+        {
+            using var excelEngine = new ExcelEngine();
+            var app = excelEngine.Excel;
+            app.DefaultVersion = ExcelVersion.Xlsx;
+            var workbook = app.Workbooks.Create(1);
+            try
+            {
+                var sheet = workbook.Worksheets[0];
+                sheet["A1"].Text = "Item";
+                sheet["B1"].Text = " Item ";
+                sheet["C1"].Text = "I\u200Btem";
+                sheet["A2"].Text = "A";
+                sheet["B2"].Text = "100";
+                sheet["C2"].Text = "200";
+                workbook.SaveAs(path);
+            }
+            finally
+            {
+                workbook.Close();
+            }
+
+            var records = await service.LoadAsync(path);
+            var target = records.Single(record =>
+                string.Equals(record["Item"], "A", StringComparison.Ordinal));
+
+            target["Item_2"].Should().Be("100");
+            target["Item_3"].Should().Be("200");
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
 }
