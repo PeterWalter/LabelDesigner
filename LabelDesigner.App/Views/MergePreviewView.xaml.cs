@@ -108,8 +108,7 @@ public sealed partial class MergePreviewView : UserControl
             (float)_viewport.Zoom,
             rect,
             vm.PixelsPerMm,
-            false,
-            null);
+            false);
     }
 
     private void FitToCanvas(SceneDocument document, CanvasControl sender)
