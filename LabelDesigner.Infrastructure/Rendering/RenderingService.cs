@@ -48,8 +48,8 @@ public class RenderService : IRenderService
         ds.Transform = Matrix3x2.CreateTranslation(-(float)viewport.X, -(float)viewport.Y)
                      * Matrix3x2.CreateScale(zoom);
 
-        float pageW = (float)document.Page.WidthMm * (float)pixelsPerMm;
-        float pageH = (float)document.Page.HeightMm * (float)pixelsPerMm;
+        float pageW = NormalizePageDimension((float)document.Page.WidthMm * (float)pixelsPerMm);
+        float pageH = NormalizePageDimension((float)document.Page.HeightMm * (float)pixelsPerMm);
         ds.FillRectangle(0, 0, pageW, pageH, Colors.White);
 
         if (showGrid && zoom > 0.5f)
@@ -62,9 +62,13 @@ public class RenderService : IRenderService
         }
 
         var m = document.Page.Margins;
-        ds.DrawRectangle((float)m.Left * (float)pixelsPerMm, (float)m.Top * (float)pixelsPerMm,
-            pageW - (float)m.Left * (float)pixelsPerMm - (float)m.Right * (float)pixelsPerMm,
-            pageH - (float)m.Top * (float)pixelsPerMm - (float)m.Bottom * (float)pixelsPerMm, Colors.Gray, 1);
+        var marginLeft = NormalizeCoordinate((float)m.Left * (float)pixelsPerMm);
+        var marginTop = NormalizeCoordinate((float)m.Top * (float)pixelsPerMm);
+        var marginRight = NormalizeCoordinate((float)m.Right * (float)pixelsPerMm);
+        var marginBottom = NormalizeCoordinate((float)m.Bottom * (float)pixelsPerMm);
+        var marginWidth = Math.Max(1f, pageW - marginLeft - marginRight);
+        var marginHeight = Math.Max(1f, pageH - marginTop - marginBottom);
+        ds.DrawRectangle(marginLeft, marginTop, marginWidth, marginHeight, Colors.Gray, 1);
 
         ds.DrawRectangle(0, 0, pageW, pageH, Colors.Black, 2);
 
@@ -84,13 +88,23 @@ public class RenderService : IRenderService
                 if (el == null) continue;
 
                 var local = ds.Transform;
-                ds.Transform = el.GetLocalTransform() * local;
-                ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
-                if (selectedSet.Contains(el.Id))
-                    DrawSelectionHandles(ds, el, zoom);
-                else if (hoveredSet.Contains(el.Id) && !selectedSet.Contains(el.Id))
-                    DrawHoverOutline(ds, el, zoom);
-                ds.Transform = local;
+                try
+                {
+                    ds.Transform = el.GetLocalTransform() * local;
+                    ElementRenderer.DrawElement(ds, el, lookup, _barcode, _svg);
+                    if (selectedSet.Contains(el.Id))
+                        DrawSelectionHandles(ds, el, zoom);
+                    else if (hoveredSet.Contains(el.Id) && !selectedSet.Contains(el.Id))
+                        DrawHoverOutline(ds, el, zoom);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Render skipped for element '{el.Id}': {ex.Message}");
+                }
+                finally
+                {
+                    ds.Transform = local;
+                }
             }
         }
 
@@ -174,5 +188,19 @@ public class RenderService : IRenderService
         }
 
         return lookup;
+    }
+
+    private static float NormalizePageDimension(float value)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value) || value <= 0f)
+            return 100f;
+        return Math.Clamp(value, 1f, 20000f);
+    }
+
+    private static float NormalizeCoordinate(float value)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value))
+            return 0f;
+        return Math.Clamp(value, -100000f, 100000f);
     }
 }

@@ -107,6 +107,8 @@ internal static class ElementRenderer
         CanvasDrawingSession ds, BarcodeElement b, IBarcodeService barcode, float scale)
     {
         var bounds = b.Bounds;
+        if (!IsFiniteRect(bounds))
+            return;
         float padding = 6 * scale, textHeight = 18 * scale;
         RectD barcodeRect = bounds;
         float tx = 0, ty = 0;
@@ -159,7 +161,7 @@ internal static class ElementRenderer
             {
                 HorizontalAlignment = CanvasHorizontalAlignment.Center,
                 VerticalAlignment = CanvasVerticalAlignment.Center,
-                FontSize = (float)b.TextFontSize * scale,
+                FontSize = NormalizeFontSize((float)b.TextFontSize * scale),
                 FontFamily = string.IsNullOrEmpty(b.TextFontFamily) ? "Segoe UI" : b.TextFontFamily,
                 FontWeight = fontWeight,
                 FontStyle = fontStyle
@@ -169,6 +171,9 @@ internal static class ElementRenderer
 
     private static void DrawText(CanvasDrawingSession ds, TextElement txt, float scale)
     {
+        if (!IsFiniteRect(txt.Bounds))
+            return;
+
         var alignment = txt.TextAlignment switch
         {
             TextAlignmentType.Center => CanvasHorizontalAlignment.Center,
@@ -186,7 +191,7 @@ internal static class ElementRenderer
 
         var format = new CanvasTextFormat
         {
-            FontSize           = (float)txt.FontSize * scale,
+            FontSize           = NormalizeFontSize((float)txt.FontSize * scale),
             FontFamily         = string.IsNullOrEmpty(txt.FontFamily) ? "Segoe UI" : txt.FontFamily,
             FontStyle          = fontStyle,
             FontWeight         = fontWeight,
@@ -212,10 +217,13 @@ internal static class ElementRenderer
 
     private static void DrawShape(CanvasDrawingSession ds, ShapeElement shape, float scale)
     {
+        if (!IsFiniteRect(shape.Bounds))
+            return;
+
         var b = shape.Bounds.ToWinRect();
         var fill   = ParseColor(shape.Fill, Colors.LightGray);
         var stroke = ParseColor(shape.Stroke, Colors.Black);
-        float sw = (float)shape.StrokeWidth * scale;
+        float sw = NormalizeStrokeWidth((float)shape.StrokeWidth * scale);
         var cx = new Vector2((float)(b.X + b.Width / 2), (float)(b.Y + b.Height / 2));
 
         if (shape.Type == ShapeType.Ellipse)
@@ -240,11 +248,14 @@ internal static class ElementRenderer
 
     private static void DrawLine(CanvasDrawingSession ds, LineElement line, float scale)
     {
+        if (!IsFinite(line.X1) || !IsFinite(line.Y1) || !IsFinite(line.X2) || !IsFinite(line.Y2))
+            return;
+
         ds.DrawLine(
             new Vector2((float)line.X1, (float)line.Y1),
             new Vector2((float)line.X2, (float)line.Y2),
             ParseColor(line.Stroke, Colors.Black),
-            (float)line.StrokeWidth * scale);
+            NormalizeStrokeWidth((float)line.StrokeWidth * scale));
     }
 
     private static CanvasBitmap? GetCachedSvgBitmap(
@@ -272,6 +283,9 @@ internal static class ElementRenderer
 
     private static void DrawImage(CanvasDrawingSession ds, ImageElement image, ISvgService svg)
     {
+        if (!IsFiniteRect(image.Bounds))
+            return;
+
         var b = image.Bounds.ToWinRect();
         try
         {
@@ -327,6 +341,9 @@ internal static class ElementRenderer
 
     private static void DrawSvg(CanvasDrawingSession ds, SvgElement svg, ISvgService svgService)
     {
+        if (!IsFiniteRect(svg.Bounds))
+            return;
+
         var b = svg.Bounds.ToWinRect();
         try
         {
@@ -394,5 +411,24 @@ internal static class ElementRenderer
             };
         }
         catch { return fallback; }
+    }
+
+    private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+
+    private static bool IsFiniteRect(RectD rect) =>
+        IsFinite(rect.X) && IsFinite(rect.Y) && IsFinite(rect.Width) && IsFinite(rect.Height);
+
+    private static float NormalizeFontSize(float size)
+    {
+        if (float.IsNaN(size) || float.IsInfinity(size) || size <= 0f)
+            return 12f;
+        return Math.Clamp(size, 1f, 2048f);
+    }
+
+    private static float NormalizeStrokeWidth(float width)
+    {
+        if (float.IsNaN(width) || float.IsInfinity(width) || width <= 0f)
+            return 1f;
+        return Math.Clamp(width, 0.25f, 256f);
     }
 }
