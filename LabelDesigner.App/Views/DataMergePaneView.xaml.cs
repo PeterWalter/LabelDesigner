@@ -1,6 +1,7 @@
 using LabelDesigner.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Syncfusion.UI.Xaml.DataGrid;
 using System.Data;
 using System.ComponentModel;
 using System.Linq;
@@ -11,6 +12,7 @@ public sealed partial class DataMergePaneView : UserControl
 {
     private DesignerViewModel? _vm;
     private bool _isRefreshingDataGrid;
+    private string? _lastSchemaSignature;
 
     private DesignerViewModel? VM => DataContext switch
     {
@@ -66,9 +68,36 @@ public sealed partial class DataMergePaneView : UserControl
         if (_vm == null) return;
 
         _isRefreshingDataGrid = true;
+        EnsureGridColumns();
         if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
             CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
         _isRefreshingDataGrid = false;
+    }
+
+    private void EnsureGridColumns()
+    {
+        var table = _vm?.DataMergeItemsSource;
+        var signature = table == null
+            ? string.Empty
+            : string.Join("|", table.Columns.Cast<System.Data.DataColumn>().Select(c => c.ColumnName));
+
+        if (string.Equals(_lastSchemaSignature, signature, StringComparison.Ordinal))
+            return;
+
+        CsvDataGrid.Columns.Clear();
+        if (table != null)
+        {
+            foreach (System.Data.DataColumn column in table.Columns)
+            {
+                CsvDataGrid.Columns.Add(new GridTextColumn
+                {
+                    MappingName = column.ColumnName,
+                    HeaderText = column.ColumnName
+                });
+            }
+        }
+
+        _lastSchemaSignature = signature;
     }
 
     private void OnGridSelectionChanged(object sender, object e)

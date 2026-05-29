@@ -241,7 +241,7 @@
                 <sfgrid:SfDataGrid x:Name="CsvDataGrid"
                                    Grid.Row="1"
                                    ItemsSource="{Binding Designer.DataMergeView}"
-                                   AutoGenerateColumnsMode="ResetAll"
+                                   AutoGenerateColumnsMode="None"
                                    AllowEditing="False"
                                    AllowFiltering="True"
                                    AllowSorting="True"
