@@ -4,7 +4,6 @@ using LabelDesigner.Application.Data;
 using LabelDesigner.Core.Enums;
 using LabelDesigner.Core.Interfaces;
 using LabelDesigner.Core.Models;
-using LabelDesigner.Core.Utilities;
 using LabelDesigner.Core.ValueObjects;
 using LabelDesigner.Infrastructure.Interfaces;
 using LabelDesigner.App.Services;
@@ -17,8 +16,7 @@ using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
-using System.Runtime.InteropServices;
+using System.Dynamic;
 
 namespace LabelDesigner.App.ViewModels;
 
@@ -206,17 +204,23 @@ public partial class DesignerViewModel : ObservableObject
 
     public ObservableCollection<string> AvailableDataFields { get; } = new();
     public ObservableCollection<MergeBindingItem> MergeBindings { get; } = new();
+    public ObservableCollection<ExpandoObject> DataMergeItemsSource { get; } = new();
+    public ObservableCollection<string> AvailableWorksheetNames { get; } = new();
+    public IReadOnlyList<DataMergeGridColumn> DataMergeColumns => _dataMergeColumns;
     public bool HasDataFields => AvailableDataFields.Count > 0;
     public bool HasMergeBindings => MergeBindings.Count > 0;
     public bool HasNoMergeBindings => !HasMergeBindings;
     public bool HasLoadedDataSourceButNoMergeBindings => HasLoadedDataSource && !HasMergeBindings;
-    public DataTable? DataMergeItemsSource => _dataMergeTable;
-    public System.Data.DataView? DataMergeView => _dataMergeTable?.DefaultView;
-    public bool HasLoadedDataSource => _dataMergeTable != null;
+    public bool HasLoadedDataSource => DataMergeItemsSource.Count > 0;
     public bool HasNoLoadedDataSource => !HasLoadedDataSource;
+    public bool HasMultipleWorksheets => AvailableWorksheetNames.Count > 1;
     public bool HasSelectedDataField => !string.IsNullOrWhiteSpace(SelectedDataField);
     public bool CanBindSelectedDataFieldToBarcode => HasSelectedDataField && IsBarcodeSelected;
     public bool CanBindSelectedDataFieldToText => HasSelectedDataField && IsTextSelected;
+    public bool HasSelectedMergeRecords => SelectedMergeRecordCount > 0;
+    public string PrintDataButtonText => HasSelectedMergeRecords
+        ? $"Print Selected ({SelectedMergeRecordCount})"
+        : "Print All";
     public string SelectedDataFieldToken => string.IsNullOrWhiteSpace(SelectedDataField)
         ? "{{ColumnName}}"
         : $"{{{{{SelectedDataField}}}}}";
@@ -245,8 +249,8 @@ public partial class DesignerViewModel : ObservableObject
                 return "No data source loaded";
 
             var summary = $"{Path.GetFileName(_loadedDataSourcePath)} ({_csvRecords.Count} row{(_csvRecords.Count == 1 ? string.Empty : "s")})";
-            if (!string.IsNullOrWhiteSpace(_scene.CurrentDocument.DataSource?.WorksheetName))
-                summary += $" • Sheet: {_scene.CurrentDocument.DataSource.WorksheetName}";
+            if (!string.IsNullOrWhiteSpace(SelectedWorksheetName))
+                summary += $" • Sheet: {SelectedWorksheetName}";
             if (SelectedMergeRecordCount > 0 && SelectedMergeRecordCount != _csvRecords.Count)
                 summary += $" • {SelectedMergeRecordCount} selected";
             return summary;
@@ -255,10 +259,16 @@ public partial class DesignerViewModel : ObservableObject
 
     // ── Merge preview ──────────────────────────────────────────────────────
     private List<IReadOnlyDictionary<string, string>> _csvRecords = new();
-    private DataTable? _dataMergeTable;
+    private readonly List<DataMergeGridColumn> _dataMergeColumns = new();
+    private readonly WorkbookSheetDataCache _worksheetDataCache = new();
     private SceneDocument? _previewDocument;
     private string? _loadedDataSourcePath;
-    private readonly HashSet<DataRow> _selectedMergeRows = new();
+    private string? _loadedWorksheetName;
+    private readonly HashSet<int> _selectedMergeRows = new();
+    private bool _isLoadingDataSource;
+    private bool _isPrintingWithData;
+    private bool _isApplyingWorksheetSelection;
+    private int _worksheetSwitchVersion;
 
     [ObservableProperty]
     public partial int WorkspaceTabIndex { get; set; }
@@ -273,7 +283,11 @@ public partial class DesignerViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewRecordText))]
-    public partial DataRowView? SelectedDataMergeRow { get; set; }
+    public partial ExpandoObject? SelectedDataMergeRow { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DataSourceSummary))]
+    public partial string? SelectedWorksheetName { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewRecordText))]
@@ -299,35 +313,52 @@ public partial class DesignerViewModel : ObservableObject
             RefreshMergeBindings();
     }
 
-    partial void OnSelectedDataMergeRowChanged(DataRowView? value)
+    partial void OnSelectedDataMergeRowChanged(ExpandoObject? value)
     {
-        if (_dataMergeTable == null || value == null)
-        {
-            PreviewRecordIndex = -1;
-            return;
-        }
-
-        var index = _dataMergeTable.Rows.IndexOf(value.Row);
-        PreviewRecordIndex = index >= 0 ? index : -1;
+        PreviewRecordIndex = DataMergeGridModelBuilder.TryGetRecordIndex(value, out var index)
+            && index >= 0
+            && index < _csvRecords.Count
+                ? index
+                : -1;
     }
 
-    public void SetSelectedMergeRows(IReadOnlyList<DataRowView> selectedRows)
+    partial void OnSelectedWorksheetNameChanged(string? value)
+    {
+        OnPropertyChanged(nameof(DataSourceSummary));
+
+        if (_isApplyingWorksheetSelection
+            || _isLoadingDataSource
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, _loadedWorksheetName, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var dataSource = _scene.CurrentDocument.DataSource;
+        if (dataSource == null || !IsExcelFilePath(dataSource.Path))
+            return;
+
+        _ = SwitchWorksheetAsync(dataSource.Path, value);
+    }
+
+    public void SetSelectedMergeRows(IReadOnlyList<ExpandoObject> selectedRows)
     {
         var previousCount = _selectedMergeRows.Count;
         _selectedMergeRows.Clear();
 
-        foreach (var rowView in selectedRows)
+        foreach (var row in selectedRows)
         {
-            if (rowView.Row.RowState != DataRowState.Deleted)
-                _selectedMergeRows.Add(rowView.Row);
+            if (DataMergeGridModelBuilder.TryGetRecordIndex(row, out var index)
+                && index >= 0
+                && index < _csvRecords.Count)
+            {
+                _selectedMergeRows.Add(index);
+            }
         }
-
-        if (_selectedMergeRows.Count == 0)
-            SelectedDataMergeRow = null;
 
         if (previousCount != _selectedMergeRows.Count)
         {
             OnPropertyChanged(nameof(SelectedMergeRecordCount));
+            OnPropertyChanged(nameof(HasSelectedMergeRecords));
+            OnPropertyChanged(nameof(PrintDataButtonText));
             OnPropertyChanged(nameof(DataSourceSummary));
         }
     }
@@ -1324,6 +1355,9 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task LoadDataSourceAsync()
     {
+        if (_isLoadingDataSource)
+            return;
+
         if (!TryGetWindowHandle(out var hwnd))
         {
             ShowErrorDialog("Error", "Could not access main window");
@@ -1340,36 +1374,34 @@ public partial class DesignerViewModel : ObservableObject
         var file = await picker.PickSingleFileAsync();
         if (file == null) return;
 
+        _isLoadingDataSource = true;
+        ++_worksheetSwitchVersion;
         try
         {
-            var extension = Path.GetExtension(file.Path);
-            string? worksheetName = null;
-            if (string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase))
+            var selectedWorksheetName = default(string);
+            if (IsExcelFilePath(file.Path))
             {
-                worksheetName = await PromptForWorksheetSelectionAsync(file.Path);
-                if (worksheetName == "__cancel__")
-                    return;
+                var worksheetNames = await _dataSource.GetWorksheetNamesAsync(file.Path);
+                selectedWorksheetName = ResolveWorksheetName(worksheetNames, null);
+                SetAvailableWorksheetNames(worksheetNames, selectedWorksheetName);
+            }
+            else
+            {
+                ClearWorksheetNames();
             }
 
-            var records = await _dataSource.LoadAsync(file.Path, worksheetName);
-            if (records == null || records.Count == 0)
-            {
-                ShowErrorDialog("Empty Data Source", "The selected file contains no data records.");
-                ClearDataMergeState();
-                return;
-            }
+            var gridModel = await GetOrLoadGridModelAsync(file.Path, selectedWorksheetName);
 
             var mergeMode = _scene.CurrentDocument.DataSource?.MergeMode ?? nameof(DataMergeMode.OneRecordPerPage);
             _scene.CurrentDocument.DataSource = new DataSourceConfig
             {
                 Type = Path.GetExtension(file.Path).TrimStart('.'),
                 Path = file.Path,
-                WorksheetName = worksheetName,
+                WorksheetName = selectedWorksheetName,
                 MergeMode = mergeMode
             };
 
-            LoadDataMergeRecords(records, file.Path);
+            ApplyGridModel(gridModel, file.Path, selectedWorksheetName);
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (FileNotFoundException ex)
@@ -1387,6 +1419,10 @@ public partial class DesignerViewModel : ObservableObject
             ShowErrorDialog("Data Source Error", $"Could not load data source: {ex.GetType().Name} — {ex.Message}");
             ClearDataMergeState();
         }
+        finally
+        {
+            _isLoadingDataSource = false;
+        }
     }
 
     [RelayCommand]
@@ -1397,16 +1433,22 @@ public partial class DesignerViewModel : ObservableObject
 
     private async Task PrintWithDataAsync()
     {
+        if (_isPrintingWithData)
+            return;
+
+        _isPrintingWithData = true;
         if (!TryGetWindowHandle(out var hwnd))
         {
             ShowErrorDialog("Print Error", "Could not access the application window.");
+            _isPrintingWithData = false;
             return;
         }
 
-        var ds = _scene.CurrentDocument.DataSource;
+        var ds = CloneDataSourceConfig(_scene.CurrentDocument.DataSource);
         if (ds == null) 
         { 
-            await PrintAsync(); 
+            await PrintAsync();
+            _isPrintingWithData = false;
             return; 
         }
 
@@ -1435,6 +1477,10 @@ public partial class DesignerViewModel : ObservableObject
         {
             ShowErrorDialog("Print Error", $"Could not open the Windows print window: {ex.GetType().Name} — {ex.Message}");
         }
+        finally
+        {
+            _isPrintingWithData = false;
+        }
     }
 
     [RelayCommand]
@@ -1450,7 +1496,7 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var ds = _scene.CurrentDocument.DataSource;
+            var ds = CloneDataSourceConfig(_scene.CurrentDocument.DataSource);
             var documents = ds == null
                 ? BuildCurrentPrintDocuments()
                 : await BuildMailMergePrintDocumentsAsync(ds);
@@ -1490,12 +1536,13 @@ public partial class DesignerViewModel : ObservableObject
     {
         try
         {
+            var selectionSnapshot = _selectedMergeRows.ToArray();
             var records = await GetActiveMergeRecordsAsync(dataSource);
             if (records == null || records.Count == 0)
                 return Array.Empty<SceneDocument>();
 
-            var selectedRecords = MergeRecordSelector.SelectActiveRecords(_dataMergeTable, _selectedMergeRows, records);
-            if (_selectedMergeRows.Count > 0 && selectedRecords.Count == 0)
+            var selectedRecords = MergeRecordSelector.SelectActiveRecords(selectionSnapshot, records);
+            if (selectionSnapshot.Length > 0 && selectedRecords.Count == 0)
                 return Array.Empty<SceneDocument>();
 
             var activeRecords = selectedRecords.Count > 0 ? selectedRecords : records;
@@ -2725,43 +2772,16 @@ public partial class DesignerViewModel : ObservableObject
         }
     }
 
-    private void LoadDataMergeRecords(IReadOnlyList<IReadOnlyDictionary<string, string>> records, string sourcePath)
+    private void LoadDataMergeRecords(
+        IReadOnlyList<IReadOnlyDictionary<string, string>> records,
+        string sourcePath,
+        string? worksheetName = null)
     {
         try
         {
-            var columns = NormalizeColumnNames(GetDistinctRawColumns(records));
-
-            ReplaceDataMergeTable(BuildDataMergeTable(columns, records));
-
-            AvailableDataFields.Clear();
-            foreach (var column in columns)
-                AvailableDataFields.Add(column);
-
-            if (string.IsNullOrWhiteSpace(SelectedDataField) || !AvailableDataFields.Contains(SelectedDataField))
-                SelectedDataField = AvailableDataFields.FirstOrDefault();
-
-            _loadedDataSourcePath = sourcePath;
-            PreviewRecordIndex = _dataMergeTable?.Rows.Count > 0 ? 0 : -1;
-            _selectedMergeRows.Clear();
-            
-            if (_dataMergeTable != null && _dataMergeTable.DefaultView != null && _dataMergeTable.DefaultView.Count > 0)
-                SelectedDataMergeRow = _dataMergeTable.DefaultView[0] as DataRowView;
-            else
-                SelectedDataMergeRow = null;
-            
-            SyncRecordsFromDataMergeTable();
-            WorkspaceTabIndex = 1;
-
-            OnPropertyChanged(nameof(HasDataFields));
-            OnPropertyChanged(nameof(DataMergeItemsSource));
-            OnPropertyChanged(nameof(DataMergeView));
-            OnPropertyChanged(nameof(HasLoadedDataSource));
-            OnPropertyChanged(nameof(HasNoLoadedDataSource));
-            OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
-            OnPropertyChanged(nameof(DataSourceSummary));
-            OnPropertyChanged(nameof(SelectedMergeRecordCount));
-            OnPropertyChanged(nameof(DataMergeActionSummary));
-            RefreshMergeBindings();
+            var gridModel = DataMergeGridModelBuilder.Build(records);
+            _worksheetDataCache.Store(sourcePath, worksheetName, gridModel);
+            ApplyGridModel(gridModel, sourcePath, worksheetName);
         }
         catch (Exception ex)
         {
@@ -2770,13 +2790,61 @@ public partial class DesignerViewModel : ObservableObject
         }
     }
 
+    private void ApplyGridModel(DataMergeGridModel gridModel, string sourcePath, string? worksheetName)
+    {
+        _csvRecords = gridModel.Records.ToList();
+
+        _dataMergeColumns.Clear();
+        _dataMergeColumns.AddRange(gridModel.Columns);
+
+        DataMergeItemsSource.Clear();
+        foreach (var row in gridModel.Rows)
+            DataMergeItemsSource.Add(row);
+
+        AvailableDataFields.Clear();
+        foreach (var column in gridModel.Columns)
+            AvailableDataFields.Add(column.HeaderText);
+
+        if (string.IsNullOrWhiteSpace(SelectedDataField) || !AvailableDataFields.Contains(SelectedDataField))
+            SelectedDataField = AvailableDataFields.FirstOrDefault();
+
+        _loadedDataSourcePath = sourcePath;
+        _loadedWorksheetName = NormalizeWorksheetName(worksheetName);
+        SetSelectedWorksheetNameSilently(_loadedWorksheetName);
+        _selectedMergeRows.Clear();
+        SelectedDataMergeRow = null;
+        PreviewRecordIndex = DataMergeItemsSource.Count > 0 ? 0 : -1;
+        WorkspaceTabIndex = 1;
+
+        OnPropertyChanged(nameof(HasDataFields));
+        OnPropertyChanged(nameof(DataMergeItemsSource));
+        OnPropertyChanged(nameof(DataMergeColumns));
+        OnPropertyChanged(nameof(HasLoadedDataSource));
+        OnPropertyChanged(nameof(HasNoLoadedDataSource));
+        OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
+        OnPropertyChanged(nameof(HasMultipleWorksheets));
+        OnPropertyChanged(nameof(DataSourceSummary));
+        OnPropertyChanged(nameof(SelectedMergeRecordCount));
+        OnPropertyChanged(nameof(HasSelectedMergeRecords));
+        OnPropertyChanged(nameof(PrintDataButtonText));
+        OnPropertyChanged(nameof(DataMergeActionSummary));
+        OnPropertyChanged(nameof(PreviewRecordCount));
+        OnPropertyChanged(nameof(PreviewRecordText));
+        RefreshMergeBindings();
+    }
+
     private void ClearDataMergeState()
     {
-        ReplaceDataMergeTable(null);
+        ++_worksheetSwitchVersion;
+        DataMergeItemsSource.Clear();
+        _dataMergeColumns.Clear();
+        ClearWorksheetNames();
+        _worksheetDataCache.Clear();
         AvailableDataFields.Clear();
         MergeBindings.Clear();
         _csvRecords = new();
         _loadedDataSourcePath = null;
+        _loadedWorksheetName = null;
         _selectedMergeRows.Clear();
         SelectedDataField = null;
         SelectedDataMergeRow = null;
@@ -2789,34 +2857,17 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(HasNoMergeBindings));
         OnPropertyChanged(nameof(HasLoadedDataSourceButNoMergeBindings));
         OnPropertyChanged(nameof(DataMergeItemsSource));
-        OnPropertyChanged(nameof(DataMergeView));
+        OnPropertyChanged(nameof(DataMergeColumns));
         OnPropertyChanged(nameof(HasLoadedDataSource));
         OnPropertyChanged(nameof(HasNoLoadedDataSource));
+        OnPropertyChanged(nameof(HasMultipleWorksheets));
         OnPropertyChanged(nameof(DataSourceSummary));
         OnPropertyChanged(nameof(SelectedMergeRecordCount));
+        OnPropertyChanged(nameof(HasSelectedMergeRecords));
+        OnPropertyChanged(nameof(PrintDataButtonText));
         OnPropertyChanged(nameof(PreviewRecordCount));
         OnPropertyChanged(nameof(PreviewRecordText));
         OnPropertyChanged(nameof(DataMergeActionSummary));
-    }
-
-    private void ReplaceDataMergeTable(DataTable? table)
-    {
-        if (_dataMergeTable != null)
-        {
-            _dataMergeTable.ColumnChanged -= OnDataMergeTableColumnChanged;
-            _dataMergeTable.RowChanged -= OnDataMergeTableRowChanged;
-            _dataMergeTable.RowDeleted -= OnDataMergeTableRowChanged;
-        }
-
-        _dataMergeTable = table;
-        _selectedMergeRows.Clear();
-
-        if (_dataMergeTable != null)
-        {
-            _dataMergeTable.ColumnChanged += OnDataMergeTableColumnChanged;
-            _dataMergeTable.RowChanged += OnDataMergeTableRowChanged;
-            _dataMergeTable.RowDeleted += OnDataMergeTableRowChanged;
-        }
     }
 
     /// <summary>Rebuilds MergeBindings from the current document elements and available CSV columns.</summary>
@@ -2901,88 +2952,16 @@ public partial class DesignerViewModel : ObservableObject
         return m.Success ? m.Groups[1].Value : null;
     }
 
-    private static DataTable BuildDataMergeTable(
-        IReadOnlyList<string> columns,
-        IReadOnlyList<IReadOnlyDictionary<string, string>> records)
-    {
-        var table = new DataTable("MergeData");
-
-        var validColumns = NormalizeColumnNames(columns);
-
-        foreach (var column in validColumns)
-            table.Columns.Add(column, typeof(string));
-
-        foreach (var record in records)
-        {
-            var row = table.NewRow();
-            foreach (var column in validColumns)
-                row[column] = record.TryGetValue(column, out var value) ? value : string.Empty;
-            table.Rows.Add(row);
-        }
-
-        return table;
-    }
-
-    private void OnDataMergeTableColumnChanged(object? sender, DataColumnChangeEventArgs e)
-    {
-        SyncRecordsFromDataMergeTable();
-    }
-
-    private void OnDataMergeTableRowChanged(object? sender, DataRowChangeEventArgs e)
-    {
-        if (e.Action == DataRowAction.Nothing)
-            return;
-
-        SyncRecordsFromDataMergeTable();
-    }
-
-    private void SyncRecordsFromDataMergeTable()
-    {
-        if (_dataMergeTable == null)
-            return;
-
-        _csvRecords = _dataMergeTable.Rows
-            .Cast<DataRow>()
-            .Where(row => row.RowState != DataRowState.Deleted)
-            .Select(row => (IReadOnlyDictionary<string, string>)CreateRowDictionary(_dataMergeTable, row))
-            .ToList();
-
-        var previousSelectedCount = _selectedMergeRows.Count;
-        _selectedMergeRows.RemoveWhere(row => row.RowState == DataRowState.Deleted || !ReferenceEquals(row.Table, _dataMergeTable));
-
-        OnPropertyChanged(nameof(PreviewRecordCount));
-        OnPropertyChanged(nameof(PreviewRecordText));
-        OnPropertyChanged(nameof(DataSourceSummary));
-        if (previousSelectedCount != _selectedMergeRows.Count)
-            OnPropertyChanged(nameof(SelectedMergeRecordCount));
-
-        if (_csvRecords.Count == 0)
-        {
-            PreviewRecordIndex = -1;
-            return;
-        }
-
-        if (PreviewRecordIndex >= _csvRecords.Count)
-        {
-            PreviewRecordIndex = _csvRecords.Count - 1;
-            return;
-        }
-
-        RefreshPreviewDocument();
-    }
-
     private async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> GetActiveMergeRecordsAsync(DataSourceConfig ds)
     {
-        if (!string.IsNullOrWhiteSpace(_loadedDataSourcePath) &&
-            string.Equals(_loadedDataSourcePath, ds.Path, StringComparison.OrdinalIgnoreCase))
-        {
-            SyncRecordsFromDataMergeTable();
+        if (IsCurrentLoadedDataSource(ds.Path, ds.WorksheetName))
             return _csvRecords;
-        }
+
+        if (_worksheetDataCache.TryGet(ds.Path, ds.WorksheetName, out var cachedModel) && cachedModel != null)
+            return cachedModel.Records;
 
         var records = await _dataSource.LoadAsync(ds.Path, ds.WorksheetName);
-        LoadDataMergeRecords(records, ds.Path);
-        return _csvRecords;
+        return records;
     }
 
     private async Task RestoreLoadedDataSourceAsync(DataSourceConfig? dataSource)
@@ -3002,14 +2981,22 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            var records = await _dataSource.LoadAsync(dataSource.Path, dataSource.WorksheetName);
-            if (records == null || records.Count == 0)
+            var worksheetNames = await GetAvailableWorksheetNamesAsync(dataSource.Path);
+            var selectedWorksheetName = ResolveWorksheetName(worksheetNames, dataSource.WorksheetName);
+            if (worksheetNames.Count > 0)
+                SetAvailableWorksheetNames(worksheetNames, selectedWorksheetName);
+            else
+                ClearWorksheetNames();
+
+            var gridModel = await GetOrLoadGridModelAsync(dataSource.Path, selectedWorksheetName);
+            if (gridModel.Records.Count == 0)
             {
                 ClearDataMergeState();
                 return;
             }
 
-            LoadDataMergeRecords(records, dataSource.Path);
+            dataSource.WorksheetName = selectedWorksheetName;
+            ApplyGridModel(gridModel, dataSource.Path, selectedWorksheetName);
         }
         catch (Exception ex)
         {
@@ -3030,86 +3017,129 @@ public partial class DesignerViewModel : ObservableObject
         OnPropertyChanged(nameof(MergePreviewDocument));
     }
 
-    private static Dictionary<string, string> CreateRowDictionary(DataTable table, DataRow row)
+    private async Task SwitchWorksheetAsync(string sourcePath, string worksheetName)
     {
-        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var suffixes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var previousWorksheetName = _loadedWorksheetName;
+        var switchVersion = ++_worksheetSwitchVersion;
 
-        foreach (DataColumn column in table.Columns)
+        try
         {
-            var baseName = string.IsNullOrWhiteSpace(column.ColumnName) ? "Column" : column.ColumnName.Trim();
-            if (!suffixes.TryGetValue(baseName, out var count))
-                count = 0;
-            count++;
-            suffixes[baseName] = count;
+            var gridModel = await GetOrLoadGridModelAsync(sourcePath, worksheetName);
+            if (switchVersion != _worksheetSwitchVersion)
+                return;
 
-            var key = count == 1 ? baseName : $"{baseName}_{count}";
-            dict[key] = row[column.ColumnName]?.ToString() ?? string.Empty;
-        }
+            ApplyGridModel(gridModel, sourcePath, worksheetName);
 
-        return dict;
-    }
-
-    private static List<string> NormalizeColumnNames(IEnumerable<string?> rawColumns)
-    {
-        return DataColumnNameNormalizer.NormalizeUnique(rawColumns);
-    }
-
-    private static List<string?> GetDistinctRawColumns(IReadOnlyList<IReadOnlyDictionary<string, string>> records)
-    {
-        var result = new List<string?>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var index = 1;
-
-        foreach (var record in records)
-        {
-            foreach (var key in record.Keys)
+            var dataSource = _scene.CurrentDocument.DataSource;
+            if (dataSource != null)
             {
-                var canonical = DataColumnNameNormalizer.Canonicalize(key, index);
-                index++;
-                if (seen.Add(canonical))
-                    result.Add(key);
+                dataSource.WorksheetName = worksheetName;
+                MarkDirty();
             }
         }
+        catch (Exception ex)
+        {
+            if (switchVersion != _worksheetSwitchVersion)
+                return;
 
-        return result;
+            SetSelectedWorksheetNameSilently(previousWorksheetName);
+            ShowErrorDialog("Worksheet Error", $"Could not load worksheet '{worksheetName}': {ex.Message}");
+        }
     }
 
-    private async Task<string?> PromptForWorksheetSelectionAsync(string excelPath)
+    private async Task<DataMergeGridModel> GetOrLoadGridModelAsync(string sourcePath, string? worksheetName)
     {
-        var worksheetNames = await _dataSource.GetWorksheetNamesAsync(excelPath);
-        if (worksheetNames.Count <= 1)
-            return worksheetNames.FirstOrDefault();
+        if (_worksheetDataCache.TryGet(sourcePath, worksheetName, out var cachedModel) && cachedModel != null)
+            return cachedModel;
 
-        var xamlRoot = App.MainWindow?.Content.XamlRoot;
-        if (xamlRoot == null)
-            return worksheetNames[0];
+        var records = await _dataSource.LoadAsync(sourcePath, worksheetName);
+        if (records == null || records.Count == 0)
+            throw new InvalidOperationException("The selected data source contains no data records.");
 
-        var combo = new ComboBox
+        var gridModel = DataMergeGridModelBuilder.Build(records);
+        _worksheetDataCache.Store(sourcePath, worksheetName, gridModel);
+        return gridModel;
+    }
+
+    private async Task<IReadOnlyList<string>> GetAvailableWorksheetNamesAsync(string sourcePath)
+    {
+        if (!IsExcelFilePath(sourcePath))
+            return Array.Empty<string>();
+
+        return await _dataSource.GetWorksheetNamesAsync(sourcePath);
+    }
+
+    private void SetAvailableWorksheetNames(IEnumerable<string> worksheetNames, string? selectedWorksheetName)
+    {
+        AvailableWorksheetNames.Clear();
+        foreach (var worksheetName in worksheetNames)
+            AvailableWorksheetNames.Add(worksheetName);
+
+        SetSelectedWorksheetNameSilently(selectedWorksheetName);
+        OnPropertyChanged(nameof(HasMultipleWorksheets));
+    }
+
+    private void ClearWorksheetNames()
+    {
+        AvailableWorksheetNames.Clear();
+        SetSelectedWorksheetNameSilently(null);
+        OnPropertyChanged(nameof(HasMultipleWorksheets));
+    }
+
+    private void SetSelectedWorksheetNameSilently(string? worksheetName)
+    {
+        _isApplyingWorksheetSelection = true;
+        SelectedWorksheetName = worksheetName;
+        _isApplyingWorksheetSelection = false;
+    }
+
+    private static string? ResolveWorksheetName(IReadOnlyList<string> worksheetNames, string? preferredWorksheetName)
+    {
+        if (worksheetNames.Count == 0)
+            return null;
+
+        if (!string.IsNullOrWhiteSpace(preferredWorksheetName))
         {
-            ItemsSource = worksheetNames,
-            SelectedIndex = 0,
-            MinWidth = 280
-        };
+            var match = worksheetNames.FirstOrDefault(name => string.Equals(name, preferredWorksheetName, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(match))
+                return match;
+        }
 
-        var panel = new StackPanel { Spacing = 8 };
-        panel.Children.Add(new TextBlock { Text = "Workbook has multiple sheets. Select sheet to load:" });
-        panel.Children.Add(combo);
+        return worksheetNames[0];
+    }
 
-        var dialog = new ContentDialog
+    private bool IsCurrentLoadedDataSource(string sourcePath, string? worksheetName)
+    {
+        return string.Equals(_loadedDataSourcePath, sourcePath, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(_loadedWorksheetName, NormalizeWorksheetName(worksheetName), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? NormalizeWorksheetName(string? worksheetName)
+    {
+        return string.IsNullOrWhiteSpace(worksheetName)
+            ? null
+            : worksheetName.Trim();
+    }
+
+    private static bool IsExcelFilePath(string sourcePath)
+    {
+        var extension = Path.GetExtension(sourcePath);
+        return string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static DataSourceConfig? CloneDataSourceConfig(DataSourceConfig? dataSource)
+    {
+        if (dataSource == null)
+            return null;
+
+        return new DataSourceConfig
         {
-            Title = "Select Excel Sheet",
-            Content = panel,
-            PrimaryButtonText = "Load",
-            CloseButtonText = "Cancel",
-            XamlRoot = xamlRoot
+            Type = dataSource.Type,
+            Path = dataSource.Path,
+            WorksheetName = dataSource.WorksheetName,
+            MergeMode = dataSource.MergeMode
         };
-
-        var result = await dialog.ShowAsync();
-        if (result != ContentDialogResult.Primary)
-            return "__cancel__";
-
-        return combo.SelectedItem as string ?? worksheetNames[0];
     }
 
     private string FormatMeasurement(double pixels)

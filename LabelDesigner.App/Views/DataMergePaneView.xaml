@@ -46,6 +46,18 @@
                             <TextBlock Text="Load Data"/>
                         </StackPanel>
                     </Button>
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Designer.HasMultipleWorksheets, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Sheet" FontSize="12"
+                                   Foreground="{ThemeResource AppMutedTextBrush}"
+                                   VerticalAlignment="Center"/>
+                        <ComboBox MinWidth="180"
+                                  MaxWidth="260"
+                                  ItemsSource="{Binding Designer.AvailableWorksheetNames}"
+                                  SelectedItem="{Binding Designer.SelectedWorksheetName, Mode=TwoWay}"
+                                  PlaceholderText="Worksheet"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
@@ -68,10 +80,10 @@
                     <Button Command="{Binding Designer.PrintWithDataCommand}"
                             Padding="12,4"
                             IsEnabled="{Binding Designer.HasLoadedDataSource}"
-                            ToolTipService.ToolTip="Print selected records (or all records when none are selected)">
+                            ToolTipService.ToolTip="Print the selected rows. If none are selected, all loaded rows are printed.">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
-                            <TextBlock Text="Print Data"/>
+                            <TextBlock Text="{Binding Designer.PrintDataButtonText}"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -222,8 +234,13 @@
                         Background="{ThemeResource AppSurfaceAltBrush}"
                         BorderBrush="{ThemeResource AppBorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <TextBlock Text="Data Records" FontWeight="SemiBold" FontSize="13"
-                               Foreground="{ThemeResource AppTextBrush}"/>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Data Records" FontWeight="SemiBold" FontSize="13"
+                                   Foreground="{ThemeResource AppTextBrush}"/>
+                        <TextBlock Text="Select one or more rows to print only those records."
+                                   FontSize="11"
+                                   Foreground="{ThemeResource AppMutedTextBrush}"/>
+                    </StackPanel>
                 </Border>
 
                 <!-- Empty state -->
@@ -240,14 +257,13 @@
 
                 <sfgrid:SfDataGrid x:Name="CsvDataGrid"
                                    Grid.Row="1"
-                                   ItemsSource="{Binding Designer.DataMergeView}"
+                                   ItemsSource="{Binding Designer.DataMergeItemsSource}"
                                    AutoGenerateColumnsMode="None"
                                    AllowEditing="False"
                                    AllowFiltering="True"
                                    AllowSorting="True"
                                    SelectionMode="Extended"
                                    NavigationMode="Row"
-                                   SelectedItem="{Binding Designer.SelectedDataMergeRow, Mode=TwoWay}"
                                    SelectionChanged="OnGridSelectionChanged"
                                    GridLinesVisibility="Both"
                                    HeaderRowHeight="36"

@@ -2,7 +2,7 @@ using LabelDesigner.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Syncfusion.UI.Xaml.DataGrid;
-using System.Data;
+using System.Dynamic;
 using System.ComponentModel;
 using System.Linq;
 using System.Diagnostics;
@@ -59,8 +59,8 @@ public sealed partial class DataMergePaneView : UserControl
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(DesignerViewModel.DataMergeView)
-            || e.PropertyName == nameof(DesignerViewModel.SelectedDataMergeRow))
+        if (e.PropertyName == nameof(DesignerViewModel.DataMergeItemsSource)
+            || e.PropertyName == nameof(DesignerViewModel.DataMergeColumns))
             DispatcherQueue.TryEnqueue(RefreshDataGrid);
     }
 
@@ -72,8 +72,6 @@ public sealed partial class DataMergePaneView : UserControl
         {
             _isRefreshingDataGrid = true;
             EnsureGridColumns();
-            if (_vm.SelectedDataMergeRow != null && !ReferenceEquals(CsvDataGrid.SelectedItem, _vm.SelectedDataMergeRow))
-                CsvDataGrid.SelectedItem = _vm.SelectedDataMergeRow;
         }
         catch (Exception ex)
         {
@@ -87,28 +85,23 @@ public sealed partial class DataMergePaneView : UserControl
 
     private void EnsureGridColumns()
     {
-        var table = _vm?.DataMergeItemsSource;
-        var signature = table == null
+        var columns = _vm?.DataMergeColumns;
+        var signature = columns == null
             ? string.Empty
-            : string.Join("|", table.Columns.Cast<System.Data.DataColumn>().Select(c => c.ColumnName));
+            : string.Join("|", columns.Select(column => $"{column.MappingName}:{column.HeaderText}"));
 
         if (string.Equals(_lastSchemaSignature, signature, StringComparison.Ordinal))
             return;
 
         CsvDataGrid.Columns.Clear();
-        if (table != null)
+        if (columns != null)
         {
-            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (System.Data.DataColumn column in table.Columns)
+            foreach (var column in columns)
             {
-                var mappingName = ToGridMappingName(column.ColumnName);
-                if (!used.Add(mappingName))
-                    continue;
-
                 CsvDataGrid.Columns.Add(new GridTextColumn
                 {
-                    MappingName = mappingName,
-                    HeaderText = column.ColumnName
+                    MappingName = column.MappingName,
+                    HeaderText = column.HeaderText
                 });
             }
         }
@@ -116,24 +109,15 @@ public sealed partial class DataMergePaneView : UserControl
         _lastSchemaSignature = signature;
     }
 
-    private static string ToGridMappingName(string columnName)
-    {
-        // DataRowView columns bind reliably through indexer syntax and avoid
-        // collisions with reserved property names like "Item".
-        return $"[{columnName}]";
-    }
-
     private void OnGridSelectionChanged(object sender, object e)
     {
         if (_isRefreshingDataGrid || _vm == null)
             return;
 
-        var selectedRows = CsvDataGrid.SelectedItems?.OfType<DataRowView>().ToList() ?? new List<DataRowView>();
+        var selectedRows = CsvDataGrid.SelectedItems?.OfType<ExpandoObject>().ToList() ?? new List<ExpandoObject>();
         _vm.SetSelectedMergeRows(selectedRows);
 
         if (selectedRows.Count > 0 && !ReferenceEquals(_vm.SelectedDataMergeRow, selectedRows[0]))
             _vm.SelectedDataMergeRow = selectedRows[0];
-        else if (selectedRows.Count == 0 && _vm.SelectedDataMergeRow != null)
-            _vm.SelectedDataMergeRow = null;
     }
 }
