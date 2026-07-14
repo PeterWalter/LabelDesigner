@@ -1255,6 +1255,7 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             var saveDoc = await BuildMmSaveDocumentAsync();
+            saveDoc.DataSource = null; // Templates should not be saved with merged datafile
             await _persistence.SaveAsync(saveDoc, file.Path);
             // Template save is an export — does NOT change the current document path
         }
@@ -2717,6 +2718,11 @@ public partial class DesignerViewModel : ObservableObject
         try
         {
             var doc = await _persistence.LoadAsync(filePath);
+            bool isTemplate = string.Equals(Path.GetExtension(filePath), ".ldtemplate", StringComparison.OrdinalIgnoreCase);
+            if (isTemplate)
+            {
+                doc.DataSource = null; // Templates should not be loaded with merged datafile
+            }
             if (doc.Version == "2.0")
             {
                 // V2.0: bounds stored in mm → convert to screen pixels at current window DPI
@@ -2743,7 +2749,6 @@ public partial class DesignerViewModel : ObservableObject
             }
             _scene.Load(doc);
             // Opening a template starts a new untitled document — don't track template path
-            bool isTemplate = string.Equals(Path.GetExtension(filePath), ".ldtemplate", StringComparison.OrdinalIgnoreCase);
             _currentFilePath = isTemplate ? null : filePath;
             if (!isTemplate)
             {
@@ -2751,7 +2756,14 @@ public partial class DesignerViewModel : ObservableObject
                 SelectedRecentFile = filePath;
             }
             ClearDirty();
-            await RestoreLoadedDataSourceAsync(doc.DataSource);
+            if (isTemplate)
+            {
+                ClearDataMergeState();
+            }
+            else
+            {
+                await RestoreLoadedDataSourceAsync(doc.DataSource);
+            }
             OnPropertyChanged(nameof(DataMergeModeIndex));
         }
         catch (FileNotFoundException ex)
