@@ -330,6 +330,22 @@
                             ToolTipService.ToolTip="Open the Windows print dialog for the current page">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Print Data" Command="{Binding Designer.PrintWithDataCommand}"
+                            AllowedSizeModes="Large"
+                            Background="{ThemeResource AppActiveLayerAccentBrush}"
+                            Foreground="{ThemeResource AppAccentButtonTextBrush}"
+                            ToolTipService.ToolTip="Print selected rows; if none selected, print all records using current merge mode">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <!-- Merge mode controls → small, stack -->
+                        <ribbon:RibbonButton Content="1/Page" Command="{Binding Designer.SetMergeModeOneRecordPerPageCommand}"
+                            ToolTipService.ToolTip="Merge mode: one data record per printed page">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8EF;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
+                        <ribbon:RibbonButton Content="Multi/Page" Command="{Binding Designer.SetMergeModeMultipleRecordsPerPageCommand}"
+                            ToolTipService.ToolTip="Merge mode: multiple data records tiled per page">
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
+                        </ribbon:RibbonButton>
                         <!-- Export formats → small, stack -->
                         <ribbon:RibbonButton Content="PDF" Command="{Binding Designer.ExportPdfCommand}"
                             ToolTipService.ToolTip="Export label as PDF">
@@ -355,21 +371,6 @@
                             AllowedSizeModes="Large"
                             ToolTipService.ToolTip="Show or hide the data merge editor">
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF0E2;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <!-- Merge mode controls → small, stack -->
-                        <ribbon:RibbonButton Content="1/Page" Command="{Binding Designer.SetMergeModeOneRecordPerPageCommand}"
-                            ToolTipService.ToolTip="Merge mode: one data record per printed page">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8EF;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Multi/Page" Command="{Binding Designer.SetMergeModeMultipleRecordsPerPageCommand}"
-                            ToolTipService.ToolTip="Merge mode: multiple data records tiled per page">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Print Data" Command="{Binding Designer.PrintWithDataCommand}"
-                            Background="{ThemeResource AppActiveLayerAccentBrush}"
-                            Foreground="{ThemeResource AppAccentButtonTextBrush}"
-                            ToolTipService.ToolTip="Print selected rows; if none selected, print all records using current merge mode">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
 

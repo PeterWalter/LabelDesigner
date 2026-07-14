@@ -9,8 +9,20 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource AppSurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
         <canvas:CanvasControl x:Name="Canvas"
+                              Grid.Row="0"
                               Draw="OnDraw"
                               ClearColor="White"/>
+                              
+        <StackPanel Grid.Row="1" x:Name="PaginationPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,8" Spacing="8">
+            <Button x:Name="PrevButton" Content="◄ Previous" Click="OnPrevClick" />
+            <TextBlock x:Name="PageText" VerticalAlignment="Center" FontWeight="SemiBold" />
+            <Button x:Name="NextButton" Content="Next ►" Click="OnNextClick" />
+        </StackPanel>
     </Grid>
 </UserControl>

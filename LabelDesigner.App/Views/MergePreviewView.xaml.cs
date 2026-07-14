@@ -14,6 +14,9 @@ public sealed partial class MergePreviewView : UserControl
     private PropertyChangedEventHandler? _propertyChangedHandler;
     private readonly CanvasViewport _viewport = new();
     private bool _firstDraw = true;
+    
+    private IReadOnlyList<SceneDocument>? _documents;
+    private int _currentIndex = 0;
 
     private DesignerViewModel? VM => DataContext switch
     {
@@ -31,9 +34,62 @@ public sealed partial class MergePreviewView : UserControl
         SizeChanged += OnSizeChanged;
     }
 
+    public void SetDocuments(IReadOnlyList<SceneDocument> documents)
+    {
+        _documents = documents;
+        _currentIndex = 0;
+        _firstDraw = true;
+        UpdatePagination();
+        if (CurrentDocument != null && Canvas.ActualWidth > 0 && Canvas.ActualHeight > 0)
+        {
+            FitToCanvas(CurrentDocument, Canvas);
+        }
+        Invalidate();
+    }
+
+    private SceneDocument? CurrentDocument => _documents != null && _documents.Count > 0 
+        ? _documents[_currentIndex] 
+        : _wiredVm?.MergePreviewDocument;
+
+    private void UpdatePagination()
+    {
+        if (_documents == null || _documents.Count <= 1)
+        {
+            PaginationPanel.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            PaginationPanel.Visibility = Visibility.Visible;
+            PrevButton.IsEnabled = _currentIndex > 0;
+            NextButton.IsEnabled = _currentIndex < _documents.Count - 1;
+            PageText.Text = $"Page {_currentIndex + 1} of {_documents.Count}";
+        }
+    }
+
+    private void OnPrevClick(object sender, RoutedEventArgs e)
+    {
+        if (_currentIndex > 0)
+        {
+            _currentIndex--;
+            UpdatePagination();
+            Invalidate();
+        }
+    }
+
+    private void OnNextClick(object sender, RoutedEventArgs e)
+    {
+        if (_documents != null && _currentIndex < _documents.Count - 1)
+        {
+            _currentIndex++;
+            UpdatePagination();
+            Invalidate();
+        }
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         WireViewModel();
+        UpdatePagination();
         Invalidate();
     }
 
@@ -74,10 +130,10 @@ public sealed partial class MergePreviewView : UserControl
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (_wiredVm == null || Canvas.ActualWidth <= 0 || Canvas.ActualHeight <= 0)
+        if (_wiredVm == null || Canvas.ActualWidth <= 0 || Canvas.ActualHeight <= 0 || CurrentDocument == null)
             return;
 
-        FitToCanvas(_wiredVm.MergePreviewDocument, Canvas);
+        FitToCanvas(CurrentDocument, Canvas);
     }
 
     private void Invalidate() => Canvas?.Invalidate();
@@ -88,7 +144,7 @@ public sealed partial class MergePreviewView : UserControl
         if (vm == null)
             return;
 
-        var document = vm.MergePreviewDocument;
+        var document = CurrentDocument;
 
         if (_firstDraw || sender.ActualWidth <= 0 || sender.ActualHeight <= 0)
         {

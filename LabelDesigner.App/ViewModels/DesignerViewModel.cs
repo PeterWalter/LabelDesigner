@@ -1512,6 +1512,7 @@ public partial class DesignerViewModel : ObservableObject
             {
                 DataContext = root?.DataContext
             };
+            preview.SetDocuments(documents);
 
             var dialog = new ContentDialog
             {
