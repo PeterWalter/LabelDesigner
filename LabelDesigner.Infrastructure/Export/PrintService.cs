@@ -20,6 +20,12 @@ public class PrintService : IPrintService, IDocumentRasterizer
 {
     private readonly IBarcodeService _barcode;
     private readonly ISvgService _svg;
+    private readonly SemaphoreSlim _printSemaphore = new(1, 1);
+    private readonly Dictionary<nint, PrintManager> _printManagers = new();
+    
+    private IReadOnlyList<ImageSource>? _currentPageSources;
+    private string _currentJobTitle = "Label";
+    private TaskCompletionSource<PrintTaskCompletion>? _printCompletion;
 
     /// <inheritdoc/>
     public double PixelsPerMm { get; set; } = 96.0 / 25.4;
@@ -57,14 +63,33 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
         if (!PrintManager.IsSupported())
             throw new InvalidOperationException("Printing is not supported on this device.");
-        var pageSources = await BuildPageSourcesAsync(documents);
 
-        using var session = new PrintSession(windowHandle, jobTitle, pageSources);
-        await PrintManagerInterop.ShowPrintUIForWindowAsync(windowHandle);
+        await _printSemaphore.WaitAsync();
+        try
+        {
+            if (!_printManagers.TryGetValue(windowHandle, out var printManager))
+            {
+                printManager = PrintManagerInterop.GetForWindow(windowHandle);
+                printManager.PrintTaskRequested += OnPrintTaskRequested;
+                _printManagers[windowHandle] = printManager;
+            }
 
-        var completion = await session.WaitForCompletionAsync();
-        if (completion == PrintTaskCompletion.Failed)
-            throw new InvalidOperationException("Windows could not complete the print job.");
+            _currentPageSources = await BuildPageSourcesAsync(documents);
+            _currentJobTitle = jobTitle;
+            _printCompletion = new TaskCompletionSource<PrintTaskCompletion>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            await PrintManagerInterop.ShowPrintUIForWindowAsync(windowHandle);
+
+            var completion = await _printCompletion.Task;
+            if (completion == PrintTaskCompletion.Failed)
+                throw new InvalidOperationException("Windows could not complete the print job.");
+        }
+        finally
+        {
+            _currentPageSources = null;
+            _printCompletion = null;
+            _printSemaphore.Release();
+        }
     }
 
     private async Task<IReadOnlyList<ImageSource>> BuildPageSourcesAsync(IReadOnlyList<SceneDocument> documents)
@@ -183,119 +208,81 @@ public class PrintService : IPrintService, IDocumentRasterizer
         return lookup;
     }
 
-    private sealed class PrintSession : IDisposable
+    private void OnPrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs args)
     {
-        private readonly PrintManager _printManager;
-        private readonly PrintDocument _printDocument;
-        private readonly IPrintDocumentSource _documentSource;
-        private readonly IReadOnlyList<ImageSource> _pageSources;
-        private readonly List<UIElement> _previewPages = new();
-        private readonly TaskCompletionSource<PrintTaskCompletion> _completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly string _jobTitle;
+        var printTask = args.Request.CreatePrintTask(_currentJobTitle, OnPrintTaskSourceRequested);
+        printTask.Completed += OnPrintTaskCompleted;
+    }
 
-        public PrintSession(nint hwnd, string jobTitle, IReadOnlyList<ImageSource> pageSources)
+    private void OnPrintTaskSourceRequested(PrintTaskSourceRequestedArgs args)
+    {
+        var printDocument = new PrintDocument();
+        var documentSource = printDocument.DocumentSource;
+        var previewPages = new List<UIElement>();
+        var pageSources = _currentPageSources ?? Array.Empty<ImageSource>();
+
+        printDocument.Paginate += (s, e) =>
         {
-            _jobTitle = jobTitle;
-            _pageSources = pageSources;
-
-            _printManager = PrintManagerInterop.GetForWindow(hwnd);
-            _printManager.PrintTaskRequested += OnPrintTaskRequested;
-
-            _printDocument = new PrintDocument();
-            _documentSource = _printDocument.DocumentSource;
-            _printDocument.Paginate += OnPaginate;
-            _printDocument.GetPreviewPage += OnGetPreviewPage;
-            _printDocument.AddPages += OnAddPages;
-        }
-
-        public Task<PrintTaskCompletion> WaitForCompletionAsync()
-        {
-            return _completion.Task;
-        }
-
-        public void Dispose()
-        {
-            _printManager.PrintTaskRequested -= OnPrintTaskRequested;
-            _printDocument.Paginate -= OnPaginate;
-            _printDocument.GetPreviewPage -= OnGetPreviewPage;
-            _printDocument.AddPages -= OnAddPages;
-        }
-
-        private void OnPrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs args)
-        {
-            var printTask = args.Request.CreatePrintTask(_jobTitle, OnPrintTaskSourceRequested);
-            printTask.Completed += OnPrintTaskCompleted;
-        }
-
-        private void OnPrintTaskSourceRequested(PrintTaskSourceRequestedArgs args)
-        {
-            args.SetSource(_documentSource);
-        }
-
-        private void OnPrintTaskCompleted(PrintTask sender, PrintTaskCompletedEventArgs args)
-        {
-            _completion.TrySetResult(args.Completion);
-        }
-
-        private void OnPaginate(object sender, PaginateEventArgs e)
-        {
-            _previewPages.Clear();
-
+            previewPages.Clear();
             var pageDescription = e.PrintTaskOptions.GetPageDescription(1);
-            for (int i = 0; i < _pageSources.Count; i++)
-                _previewPages.Add(BuildPreviewPage(_pageSources[i], pageDescription, i + 1, _pageSources.Count));
+            for (int i = 0; i < pageSources.Count; i++)
+                previewPages.Add(BuildPreviewPage(pageSources[i], pageDescription, i + 1, pageSources.Count));
+            printDocument.SetPreviewPageCount(previewPages.Count, PreviewPageCountType.Final);
+        };
 
-            _printDocument.SetPreviewPageCount(_previewPages.Count, PreviewPageCountType.Final);
-        }
-
-        private void OnGetPreviewPage(object sender, GetPreviewPageEventArgs e)
+        printDocument.GetPreviewPage += (s, e) =>
         {
-            if (e.PageNumber >= 1 && e.PageNumber <= _previewPages.Count)
-                _printDocument.SetPreviewPage(e.PageNumber, _previewPages[e.PageNumber - 1]);
-        }
+            if (e.PageNumber >= 1 && e.PageNumber <= previewPages.Count)
+                printDocument.SetPreviewPage(e.PageNumber, previewPages[e.PageNumber - 1]);
+        };
 
-        private void OnAddPages(object sender, AddPagesEventArgs e)
+        printDocument.AddPages += (s, e) =>
         {
-            foreach (var page in _previewPages)
-                _printDocument.AddPage(page);
+            foreach (var page in previewPages)
+                printDocument.AddPage(page);
+            printDocument.AddPagesComplete();
+        };
 
-            _printDocument.AddPagesComplete();
-        }
+        args.SetSource(documentSource);
+    }
 
-        private static UIElement BuildPreviewPage(
-            ImageSource bitmapSource,
-            PrintPageDescription pageDescription,
-            int pageNumber,
-            int totalPages)
+    private void OnPrintTaskCompleted(PrintTask sender, PrintTaskCompletedEventArgs args)
+    {
+        _printCompletion?.TrySetResult(args.Completion);
+    }
+
+    private static UIElement BuildPreviewPage(
+        ImageSource bitmapSource,
+        PrintPageDescription pageDescription,
+        int pageNumber,
+        int totalPages)
+    {
+        var page = new Grid
         {
-            var page = new Grid
-            {
-                Width = pageDescription.PageSize.Width,
-                Height = pageDescription.PageSize.Height,
-                Background = new SolidColorBrush(Colors.White)
-            };
+            Width = pageDescription.PageSize.Width,
+            Height = pageDescription.PageSize.Height,
+            Background = new SolidColorBrush(Colors.White)
+        };
 
-            // Place the label image inside the printer's imageable area.
-            // No additional padding, borders, or page number chrome.
-            var imageableRect = pageDescription.ImageableRect;
+        // Place the label image inside the printer's imageable area.
+        // No additional padding, borders, or page number chrome.
+        var imageableRect = pageDescription.ImageableRect;
 
-            var image = new Image
-            {
-                Source = bitmapSource,
-                Stretch = Stretch.Uniform,
-                Width = imageableRect.Width,
-                Height = imageableRect.Height,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(imageableRect.X, imageableRect.Y, 0, 0)
-            };
+        var image = new Image
+        {
+            Source = bitmapSource,
+            Stretch = Stretch.Uniform,
+            Width = imageableRect.Width,
+            Height = imageableRect.Height,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(imageableRect.X, imageableRect.Y, 0, 0)
+        };
 
-            page.Children.Add(image);
-            page.Measure(pageDescription.PageSize);
-            page.Arrange(new Rect(0, 0, pageDescription.PageSize.Width, pageDescription.PageSize.Height));
-            page.UpdateLayout();
-            return page;
-        }
+        page.Children.Add(image);
+        page.Measure(pageDescription.PageSize);
+        page.Arrange(new Rect(0, 0, pageDescription.PageSize.Width, pageDescription.PageSize.Height));
+        page.UpdateLayout();
+        return page;
     }
 }
