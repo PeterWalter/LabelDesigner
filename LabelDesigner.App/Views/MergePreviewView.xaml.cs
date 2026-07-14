@@ -156,7 +156,13 @@ public sealed partial class MergePreviewView : UserControl
         if (document == null) return;
 
         var rect = new RectD(_viewport.OffsetX, _viewport.OffsetY, sender.ActualWidth, sender.ActualHeight);
-        vm.RenderService.RenderScene(
+        RenderPreview(vm, args, document, rect);
+    }
+
+    private void RenderPreview(DesignerViewModel vm, CanvasDrawEventArgs args, SceneDocument document, RectD rect)
+    {
+        var renderService = vm.RenderService;
+        renderService.RenderScene(
             args.DrawingSession,
             document,
             Array.Empty<Guid>(),
