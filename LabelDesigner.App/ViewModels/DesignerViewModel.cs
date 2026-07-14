@@ -938,11 +938,12 @@ public partial class DesignerViewModel : ObservableObject
 
         // If window DPI differs from the DPI used when default elements were created,
         // rescale all element bounds so they remain at the intended mm positions.
-        if (Math.Abs(newPpm - oldPpm) > 0.01 && oldPpm > 0)
+        if (IsValidPixelsPerMm(newPpm) && IsValidPixelsPerMm(oldPpm) && Math.Abs(newPpm - oldPpm) > 0.01)
             RescaleElementBounds(_scene.CurrentDocument, newPpm / oldPpm);
 
         // Update so repeated calls (window moved to different monitor) rescale correctly.
-        _constructionPixelsPerMm = newPpm;
+        if (IsValidPixelsPerMm(newPpm))
+            _constructionPixelsPerMm = newPpm;
 
         OnPropertyChanged(nameof(PixelsPerMm));
         OnPropertyChanged(nameof(CursorText));
@@ -978,11 +979,19 @@ public partial class DesignerViewModel : ObservableObject
     // Converts a loaded document's element bounds from mm → screen pixels
     // using the current PixelsPerMm. Only applied to V2.0 documents.
     private static void ConvertMmBoundsToPixels(SceneDocument doc, double ppm)
-        => RescaleElementBounds(doc, ppm);
+    {
+        if (!IsValidPixelsPerMm(ppm))
+            return;
+
+        RescaleElementBounds(doc, ppm);
+    }
 
     // Multiplies all element bounds (and line endpoints) by the given scale factor.
     private static void RescaleElementBounds(SceneDocument doc, double scale)
     {
+        if (double.IsNaN(scale) || double.IsInfinity(scale) || scale <= 0)
+            return;
+
         foreach (var el in doc.AllElements)
         {
             el.Bounds = new RectD(
@@ -995,6 +1004,11 @@ public partial class DesignerViewModel : ObservableObject
             }
         }
     }
+
+    private static bool IsValidPixelsPerMm(double value) =>
+        !double.IsNaN(value) &&
+        !double.IsInfinity(value) &&
+        value > 0.01;
 
     private void SetInteractionState(InteractionState state)
     {
@@ -1307,7 +1321,25 @@ public partial class DesignerViewModel : ObservableObject
         {
             await Task.Yield();
             _printService.PixelsPerMm = DpiService.PixelsPerMm;
-            await _printService.PrintAsync(BuildCurrentPrintDocuments(), hwnd, "Label");
+
+            // Apply data merge if a data source is loaded; otherwise print raw template
+            var ds = CloneDataSourceConfig(_scene.CurrentDocument.DataSource);
+            IReadOnlyList<SceneDocument> documents;
+            string jobTitle;
+            if (ds != null)
+            {
+                documents = await BuildMailMergePrintDocumentsAsync(ds);
+                if (documents.Count == 0)
+                    documents = BuildCurrentPrintDocuments();
+                jobTitle = BuildMailMergeJobTitle(ds, documents.Count);
+            }
+            else
+            {
+                documents = BuildCurrentPrintDocuments();
+                jobTitle = "Label";
+            }
+
+            await _printService.PrintAsync(documents, hwnd, jobTitle);
         }
         catch (Exception ex)
         {
@@ -1339,8 +1371,20 @@ public partial class DesignerViewModel : ObservableObject
 
         try
         {
-            await _pdfExportService.ExportAsync(_scene.CurrentDocument, file.Path,
-                new Core.Interfaces.PdfExportOptions { PixelsPerMm = DpiService.PixelsPerMm });
+            var options = new Core.Interfaces.PdfExportOptions { PixelsPerMm = DpiService.PixelsPerMm };
+            var ds = CloneDataSourceConfig(_scene.CurrentDocument.DataSource);
+            if (ds != null)
+            {
+                // Export all merged records as a multi-page PDF
+                var documents = await BuildMailMergePrintDocumentsAsync(ds);
+                if (documents.Count == 0)
+                    documents = BuildCurrentPrintDocuments();
+                await _pdfExportService.ExportAsync(documents, file.Path, options);
+            }
+            else
+            {
+                await _pdfExportService.ExportAsync(_scene.CurrentDocument, file.Path, options);
+            }
         }
         catch (Exception ex)
         {

@@ -5,6 +5,7 @@ namespace LabelDesigner.Core.Interfaces;
 public interface IPdfExportService
 {
     Task ExportAsync(SceneDocument document, string outputPath, PdfExportOptions options);
+    Task ExportAsync(IReadOnlyList<SceneDocument> documents, string outputPath, PdfExportOptions options);
 }
 
 public class PdfExportOptions

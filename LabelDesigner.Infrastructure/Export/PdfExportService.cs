@@ -21,29 +21,38 @@ public class PdfExportService : IPdfExportService
         _barcode = barcode;
     }
 
-    public async Task ExportAsync(SceneDocument document, string outputPath, PdfExportOptions options)
+    public Task ExportAsync(SceneDocument document, string outputPath, PdfExportOptions options)
+        => ExportAsync(new[] { document }, outputPath, options);
+
+    public async Task ExportAsync(IReadOnlyList<SceneDocument> documents, string outputPath, PdfExportOptions options)
     {
+        if (documents.Count == 0)
+            throw new InvalidOperationException("No documents to export.");
+
         // Convert canvas screen-pixels to PDF points: 72pt/in ÷ (PixelsPerMm × 25.4 mm/in)
         float pointsPerPixel = 72f / (float)(options.PixelsPerMm * 25.4);
 
         using var doc = new PdfDocument();
-        doc.PageSettings.Size = new Syncfusion.Drawing.SizeF(
-            MillimetersToPoints(document.Page.WidthMm),
-            MillimetersToPoints(document.Page.HeightMm));
         doc.PageSettings.Margins.All = 0;
 
-        var page = doc.Pages.Add();
-        var graphics = page.Graphics;
-
-        var lookup = BuildElementLookup(document);
-
-        foreach (var layer in document.Layers)
+        foreach (var sceneDoc in documents)
         {
-            if (!layer.Visible) continue;
-            foreach (var id in layer.ElementIds)
+            doc.PageSettings.Size = new Syncfusion.Drawing.SizeF(
+                MillimetersToPoints(sceneDoc.Page.WidthMm),
+                MillimetersToPoints(sceneDoc.Page.HeightMm));
+
+            var page = doc.Pages.Add();
+            var graphics = page.Graphics;
+            var lookup = BuildElementLookup(sceneDoc);
+
+            foreach (var layer in sceneDoc.Layers)
             {
-                if (!lookup.TryGetValue(id, out var el) || !el.Visible) continue;
-                DrawElementToPdf(graphics, el, lookup, doc, pointsPerPixel);
+                if (!layer.Visible) continue;
+                foreach (var id in layer.ElementIds)
+                {
+                    if (!lookup.TryGetValue(id, out var el) || !el.Visible) continue;
+                    DrawElementToPdf(graphics, el, lookup, doc, pointsPerPixel);
+                }
             }
         }
 
