@@ -33,7 +33,7 @@
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
-        <ribbon:SfRibbon x:Name="AppRibbon" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppBorderBrush}" BorderThickness="0,0,0,1">
+        <ribbon:SfRibbon x:Name="AppRibbon" Background="{ThemeResource AppSurfaceBrush}" BorderBrush="{ThemeResource AppActiveLayerAccentBrush}" BorderThickness="0,0,0,3">
 
             <ribbon:SfRibbon.Tabs>
 
@@ -54,8 +54,10 @@
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Save" Command="{Binding Designer.SaveDocumentCommand}"
                             AllowedSizeModes="Large"
+                            Background="{ThemeResource AppActiveLayerAccentBrush}"
+                            Foreground="{ThemeResource AppAccentButtonTextBrush}"
                             ToolTipService.ToolTip="Save document (Ctrl+S)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74E;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE74E;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Save As" Command="{Binding Designer.SaveAsDocumentCommand}"
                             AllowedSizeModes="Large"
@@ -323,8 +325,10 @@
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Print" Command="{Binding Designer.PrintCommand}"
                             AllowedSizeModes="Large"
+                            Background="{ThemeResource AppActiveLayerAccentBrush}"
+                            Foreground="{ThemeResource AppAccentButtonTextBrush}"
                             ToolTipService.ToolTip="Open the Windows print dialog for the current page">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <!-- Export formats → small, stack -->
                         <ribbon:RibbonButton Content="PDF" Command="{Binding Designer.ExportPdfCommand}"
@@ -342,8 +346,10 @@
                         <!-- Primary data actions → Large -->
                         <ribbon:RibbonButton Content="Select Data" Command="{Binding Designer.LoadDataSourceCommand}"
                             AllowedSizeModes="Large"
+                            Background="{ThemeResource AppActiveLayerAccentBrush}"
+                            Foreground="{ThemeResource AppAccentButtonTextBrush}"
                             ToolTipService.ToolTip="Select data source file for data merge (CSV, Excel, JSON)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Merge Panel" Command="{Binding Designer.ToggleDataMergePaneCommand}"
                             AllowedSizeModes="Large"
@@ -360,8 +366,10 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xF16B;" FontFamily="Segoe Fluent Icons"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                         <ribbon:RibbonButton Content="Print Data" Command="{Binding Designer.PrintWithDataCommand}"
+                            Background="{ThemeResource AppActiveLayerAccentBrush}"
+                            Foreground="{ThemeResource AppAccentButtonTextBrush}"
                             ToolTipService.ToolTip="Print selected rows; if none selected, print all records using current merge mode">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
+                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE749;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource AppAccentButtonTextBrush}"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
 

@@ -30,7 +30,8 @@
                     <SolidColorBrush x:Key="AppSelectedTextBrush" Color="#FFFFFF"/>
                     <!-- Active layer -->
                     <SolidColorBrush x:Key="AppActiveLayerBgBrush" Color="#EBF3FE"/>
-                    <SolidColorBrush x:Key="AppActiveLayerAccentBrush" Color="#0078D4"/>
+                    <SolidColorBrush x:Key="AppActiveLayerAccentBrush" Color="#005A9E"/> <!-- Darker for professional impact -->
+                    <SolidColorBrush x:Key="AppAccentButtonTextBrush" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="AppActivePillBgBrush" Color="#0078D4"/>
                     <SolidColorBrush x:Key="AppActivePillTextBrush" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="AppLockedPillBgBrush" Color="#FFF3E0"/>
@@ -56,7 +57,8 @@
                     <SolidColorBrush x:Key="AppSelectedTextBrush" Color="#FFFFFF"/>
                     <!-- Active layer -->
                     <SolidColorBrush x:Key="AppActiveLayerBgBrush" Color="#142033"/>
-                    <SolidColorBrush x:Key="AppActiveLayerAccentBrush" Color="#60CDFF"/>
+                    <SolidColorBrush x:Key="AppActiveLayerAccentBrush" Color="#0078D4"/> <!-- More vibrant for impact -->
+                    <SolidColorBrush x:Key="AppAccentButtonTextBrush" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="AppActivePillBgBrush" Color="#003F6C"/>
                     <SolidColorBrush x:Key="AppActivePillTextBrush" Color="#60CDFF"/>
                     <SolidColorBrush x:Key="AppLockedPillBgBrush" Color="#3D2500"/>
