@@ -77,7 +77,10 @@
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBlock Text="Font Family" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBox Text="{Binding Designer.Properties.FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
+                        <ComboBox ItemsSource="{Binding Designer.Properties.SystemFontFamilies}"
+                            Text="{Binding Designer.Properties.FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            IsEditable="True"
+                            HorizontalAlignment="Stretch"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsTextSelected, Converter={StaticResource BoolToVisibility}}">
@@ -141,7 +144,10 @@
                         <!-- Barcode text formatting -->
                         <TextBlock Text="Text Font Family" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBox Text="{Binding Designer.Properties.BarcodeTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PropBox}"
+                        <ComboBox ItemsSource="{Binding Designer.Properties.SystemFontFamilies}"
+                            Text="{Binding Designer.Properties.BarcodeTextFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            IsEditable="True"
+                            HorizontalAlignment="Stretch"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBlock Text="Text Font Size" FontSize="11" Foreground="{ThemeResource AppMutedTextBrush}" Margin="0,4,0,2"
                             Visibility="{Binding Designer.IsBarcodeSelected, Converter={StaticResource BoolToVisibility}}"/>

@@ -19,6 +19,25 @@ public partial class PropertiesViewModel : ObservableObject
 
     public Action? RequestRedraw { get; set; }
 
+    public List<string> SystemFontFamilies { get; } = new()
+    {
+        "Segoe UI",
+        "Arial",
+        "Arial Black",
+        "Calibri",
+        "Cambria",
+        "Consolas",
+        "Courier New",
+        "Georgia",
+        "Impact",
+        "Segoe Fluent Icons",
+        "Segoe MDL2 Assets",
+        "Tahoma",
+        "Times New Roman",
+        "Trebuchet MS",
+        "Verdana"
+    };
+
     public PropertiesViewModel(IUndoRedoService undoRedo)
     {
         _undoRedo = undoRedo;
