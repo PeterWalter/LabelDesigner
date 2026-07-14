@@ -88,11 +88,11 @@ internal static class ElementRenderer
         float scale = 1f)
     {
         if (el is BarcodeElement b) DrawBarcode(ds, b, barcode, scale);
-        else if (el is TextElement txt) DrawText(ds, txt, scale);
-        else if (el is ShapeElement shape) DrawShape(ds, shape, scale);
-        else if (el is LineElement line) DrawLine(ds, line, scale);
-        else if (el is ImageElement image) DrawImage(ds, image, svg);
-        else if (el is SvgElement svgEl) DrawSvg(ds, svgEl, svg);
+        else if (el is TextElement txt) DrawText(ds, txt);
+        else if (el is ShapeElement shape) DrawShape(ds, shape);
+        else if (el is LineElement line) DrawLine(ds, line);
+        else if (el is ImageElement image) DrawImage(ds, image, svg, scale);
+        else if (el is SvgElement svgEl) DrawSvg(ds, svgEl, svg, scale);
         else if (el is ContainerElement container)
         {
             foreach (var childId in container.ChildIds)
@@ -109,7 +109,7 @@ internal static class ElementRenderer
         var bounds = b.Bounds;
         if (!IsFiniteRect(bounds))
             return;
-        float padding = 6 * scale, textHeight = 18 * scale;
+        float padding = 6, textHeight = 18;
         RectD barcodeRect = bounds;
         float tx = 0, ty = 0;
         string text = b.DisplayText;
@@ -129,20 +129,24 @@ internal static class ElementRenderer
                 ty = (float)(bounds.Y + bounds.Height - textHeight / 2);
                 break;
             case BarcodeTextPosition.Left:
-                barcodeRect = new(bounds.X + 60 * scale, bounds.Y,
-                    bounds.Width - 60 * scale, bounds.Height);
-                tx = (float)(bounds.X + 30 * scale);
+                barcodeRect = new(bounds.X + 60, bounds.Y,
+                    bounds.Width - 60, bounds.Height);
+                tx = (float)(bounds.X + 30);
                 ty = (float)(bounds.Y + bounds.Height / 2);
                 break;
             case BarcodeTextPosition.Right:
                 barcodeRect = new(bounds.X, bounds.Y,
-                    bounds.Width - 60 * scale, bounds.Height);
-                tx = (float)(bounds.X + bounds.Width - 30 * scale);
+                    bounds.Width - 60, bounds.Height);
+                tx = (float)(bounds.X + bounds.Width - 30);
                 ty = (float)(bounds.Y + bounds.Height / 2);
                 break;
         }
 
-        var bmp = GetCachedBarcodeBitmap(ds, barcode, b.Value, b.Symbology, (int)barcodeRect.Width, (int)barcodeRect.Height);
+        // Generate the barcode bitmap at high resolution (scaled), but draw onto unscaled bounds since ds.Transform scales it.
+        int bmpW = (int)Math.Max(1, Math.Round(barcodeRect.Width * scale));
+        int bmpH = (int)Math.Max(1, Math.Round(barcodeRect.Height * scale));
+
+        var bmp = GetCachedBarcodeBitmap(ds, barcode, b.Value, b.Symbology, bmpW, bmpH);
         if (bmp != null)
         {
             ds.DrawImage(bmp, barcodeRect.ToWinRect());
@@ -161,7 +165,7 @@ internal static class ElementRenderer
             {
                 HorizontalAlignment = CanvasHorizontalAlignment.Center,
                 VerticalAlignment = CanvasVerticalAlignment.Center,
-                FontSize = NormalizeFontSize((float)b.TextFontSize * scale),
+                FontSize = NormalizeFontSize((float)b.TextFontSize),
                 FontFamily = string.IsNullOrEmpty(b.TextFontFamily) ? "Segoe UI" : b.TextFontFamily,
                 FontWeight = fontWeight,
                 FontStyle = fontStyle
@@ -169,7 +173,7 @@ internal static class ElementRenderer
         }
     }
 
-    private static void DrawText(CanvasDrawingSession ds, TextElement txt, float scale)
+    private static void DrawText(CanvasDrawingSession ds, TextElement txt)
     {
         if (!IsFiniteRect(txt.Bounds))
             return;
@@ -191,7 +195,7 @@ internal static class ElementRenderer
 
         var format = new CanvasTextFormat
         {
-            FontSize           = NormalizeFontSize((float)txt.FontSize * scale),
+            FontSize           = NormalizeFontSize((float)txt.FontSize),
             FontFamily         = string.IsNullOrEmpty(txt.FontFamily) ? "Segoe UI" : txt.FontFamily,
             FontStyle          = fontStyle,
             FontWeight         = fontWeight,
@@ -209,13 +213,13 @@ internal static class ElementRenderer
 
         if (txt.Underline)
         {
-            float y = (float)(txt.Bounds.Y + txt.FontSize * scale + 2);
+            float y = (float)(txt.Bounds.Y + txt.FontSize + 2);
             ds.DrawLine((float)txt.Bounds.X, y,
                 (float)(txt.Bounds.X + txt.Bounds.Width), y, color, 1);
         }
     }
 
-    private static void DrawShape(CanvasDrawingSession ds, ShapeElement shape, float scale)
+    private static void DrawShape(CanvasDrawingSession ds, ShapeElement shape)
     {
         if (!IsFiniteRect(shape.Bounds))
             return;
@@ -223,7 +227,7 @@ internal static class ElementRenderer
         var b = shape.Bounds.ToWinRect();
         var fill   = ParseColor(shape.Fill, Colors.LightGray);
         var stroke = ParseColor(shape.Stroke, Colors.Black);
-        float sw = NormalizeStrokeWidth((float)shape.StrokeWidth * scale);
+        float sw = NormalizeStrokeWidth((float)shape.StrokeWidth);
         var cx = new Vector2((float)(b.X + b.Width / 2), (float)(b.Y + b.Height / 2));
 
         if (shape.Type == ShapeType.Ellipse)
@@ -246,7 +250,7 @@ internal static class ElementRenderer
         }
     }
 
-    private static void DrawLine(CanvasDrawingSession ds, LineElement line, float scale)
+    private static void DrawLine(CanvasDrawingSession ds, LineElement line)
     {
         if (!IsFinite(line.X1) || !IsFinite(line.Y1) || !IsFinite(line.X2) || !IsFinite(line.Y2))
             return;
@@ -255,7 +259,7 @@ internal static class ElementRenderer
             new Vector2((float)line.X1, (float)line.Y1),
             new Vector2((float)line.X2, (float)line.Y2),
             ParseColor(line.Stroke, Colors.Black),
-            NormalizeStrokeWidth((float)line.StrokeWidth * scale));
+            NormalizeStrokeWidth((float)line.StrokeWidth));
     }
 
     private static CanvasBitmap? GetCachedSvgBitmap(
@@ -281,7 +285,7 @@ internal static class ElementRenderer
         return bitmap;
     }
 
-    private static void DrawImage(CanvasDrawingSession ds, ImageElement image, ISvgService svg)
+    private static void DrawImage(CanvasDrawingSession ds, ImageElement image, ISvgService svg, float scale = 1f)
     {
         if (!IsFiniteRect(image.Bounds))
             return;
@@ -294,7 +298,9 @@ internal static class ElementRenderer
                 CanvasBitmap? bitmap = null;
                 if (Path.GetExtension(image.SourcePath).Equals(".svg", StringComparison.OrdinalIgnoreCase))
                 {
-                    bitmap = GetCachedSvgBitmap(ds, svg, image.SourcePath, Math.Max(1, (int)b.Width), Math.Max(1, (int)b.Height));
+                    int bmpW = (int)Math.Max(1, Math.Round(b.Width * scale));
+                    int bmpH = (int)Math.Max(1, Math.Round(b.Height * scale));
+                    bitmap = GetCachedSvgBitmap(ds, svg, image.SourcePath, bmpW, bmpH);
                 }
                 else
                 {
@@ -339,7 +345,7 @@ internal static class ElementRenderer
         ds.DrawLine((float)b.Right, (float)b.Top, (float)b.Left, (float)b.Bottom, Colors.DarkGray, 1);
     }
 
-    private static void DrawSvg(CanvasDrawingSession ds, SvgElement svg, ISvgService svgService)
+    private static void DrawSvg(CanvasDrawingSession ds, SvgElement svg, ISvgService svgService, float scale = 1f)
     {
         if (!IsFiniteRect(svg.Bounds))
             return;
@@ -349,7 +355,9 @@ internal static class ElementRenderer
         {
             if (!string.IsNullOrEmpty(svg.SourcePath) && System.IO.File.Exists(svg.SourcePath))
             {
-                var bitmap = GetCachedSvgBitmap(ds, svgService, svg.SourcePath, Math.Max(1, (int)b.Width), Math.Max(1, (int)b.Height));
+                int bmpW = (int)Math.Max(1, Math.Round(b.Width * scale));
+                int bmpH = (int)Math.Max(1, Math.Round(b.Height * scale));
+                var bitmap = GetCachedSvgBitmap(ds, svgService, svg.SourcePath, bmpW, bmpH);
 
                 if (bitmap == null)
                     return;
