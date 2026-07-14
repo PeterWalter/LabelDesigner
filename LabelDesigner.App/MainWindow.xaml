@@ -71,18 +71,7 @@
                             <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8A1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
                         </ribbon:RibbonButton>
                     </ribbon:RibbonGroup>
-                    <ribbon:RibbonGroup Header="Data">
-                        <ribbon:RibbonButton Content="Select Data" Command="{Binding Designer.LoadDataSourceCommand}"
-                            AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Select data source file (CSV, Excel, JSON)">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F4;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                        <ribbon:RibbonButton Content="Data Merge" Command="{Binding Designer.ToggleDataMergePaneCommand}"
-                            AllowedSizeModes="Large"
-                            ToolTipService.ToolTip="Show or hide the data merge editor">
-                            <ribbon:RibbonButton.Icon><FontIcon Glyph="&#xE8F1;" FontFamily="Segoe MDL2 Assets"/></ribbon:RibbonButton.Icon>
-                        </ribbon:RibbonButton>
-                    </ribbon:RibbonGroup>
+                    <!-- Duplicated Data Group Removed -->
                     <ribbon:RibbonGroup Header="Recent">
                         <ribbon:RibbonComboBox x:Name="RecentFilesBox"
                             ItemsSource="{Binding Designer.RecentFiles}"
