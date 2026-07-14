@@ -26,6 +26,8 @@ public class PrintService : IPrintService, IDocumentRasterizer
     private IReadOnlyList<ImageSource>? _currentPageSources;
     private string _currentJobTitle = "Label";
     private TaskCompletionSource<PrintTaskCompletion>? _printCompletion;
+    private Microsoft.UI.Dispatching.DispatcherQueue? _dispatcherQueue;
+    private PrintDocument? _currentPrintDocument;
 
     /// <inheritdoc/>
     public double PixelsPerMm { get; set; } = 96.0 / 25.4;
@@ -76,6 +78,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
             _currentPageSources = await BuildPageSourcesAsync(documents);
             _currentJobTitle = jobTitle;
+            _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
             _printCompletion = new TaskCompletionSource<PrintTaskCompletion>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             await PrintManagerInterop.ShowPrintUIForWindowAsync(windowHandle);
@@ -88,6 +91,7 @@ public class PrintService : IPrintService, IDocumentRasterizer
         {
             _currentPageSources = null;
             _printCompletion = null;
+            _currentPrintDocument = null;
             _printSemaphore.Release();
         }
     }
@@ -216,31 +220,69 @@ public class PrintService : IPrintService, IDocumentRasterizer
 
     private void OnPrintTaskSourceRequested(PrintTaskSourceRequestedArgs args)
     {
-        var printDocument = new PrintDocument();
-        var documentSource = printDocument.DocumentSource;
+        if (_dispatcherQueue == null)
+        {
+            throw new InvalidOperationException("DispatcherQueue is not initialized.");
+        }
+
+        if (_dispatcherQueue.HasThreadAccess)
+        {
+            CreateAndSetPrintDocumentSource(args);
+        }
+        else
+        {
+            using var cts = new System.Threading.ManualResetEventSlim(false);
+            Exception? exception = null;
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                try
+                {
+                    CreateAndSetPrintDocumentSource(args);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                finally
+                {
+                    cts.Set();
+                }
+            });
+            cts.Wait();
+            if (exception != null)
+            {
+                throw new InvalidOperationException("Error creating print document source on UI thread.", exception);
+            }
+        }
+    }
+
+    private void CreateAndSetPrintDocumentSource(PrintTaskSourceRequestedArgs args)
+    {
+        _currentPrintDocument = new PrintDocument();
+        var documentSource = _currentPrintDocument.DocumentSource;
         var previewPages = new List<UIElement>();
         var pageSources = _currentPageSources ?? Array.Empty<ImageSource>();
 
-        printDocument.Paginate += (s, e) =>
+        _currentPrintDocument.Paginate += (s, e) =>
         {
             previewPages.Clear();
             var pageDescription = e.PrintTaskOptions.GetPageDescription(1);
             for (int i = 0; i < pageSources.Count; i++)
                 previewPages.Add(BuildPreviewPage(pageSources[i], pageDescription, i + 1, pageSources.Count));
-            printDocument.SetPreviewPageCount(previewPages.Count, PreviewPageCountType.Final);
+            _currentPrintDocument.SetPreviewPageCount(previewPages.Count, PreviewPageCountType.Final);
         };
 
-        printDocument.GetPreviewPage += (s, e) =>
+        _currentPrintDocument.GetPreviewPage += (s, e) =>
         {
             if (e.PageNumber >= 1 && e.PageNumber <= previewPages.Count)
-                printDocument.SetPreviewPage(e.PageNumber, previewPages[e.PageNumber - 1]);
+                _currentPrintDocument.SetPreviewPage(e.PageNumber, previewPages[e.PageNumber - 1]);
         };
 
-        printDocument.AddPages += (s, e) =>
+        _currentPrintDocument.AddPages += (s, e) =>
         {
             foreach (var page in previewPages)
-                printDocument.AddPage(page);
-            printDocument.AddPagesComplete();
+                _currentPrintDocument.AddPage(page);
+            _currentPrintDocument.AddPagesComplete();
         };
 
         args.SetSource(documentSource);
